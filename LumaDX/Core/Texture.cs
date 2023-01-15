@@ -7,7 +7,7 @@ namespace LumaDX;
 /// <summary>
 /// Class for handling OpenGL texture objects
 /// </summary>
-public class Texture
+public class Texture : IDisposable
 {
     private int handle;
     private int unit;
@@ -208,7 +208,7 @@ public class Texture
     /// <summary>
     /// Delete the OpenGL texture object
     /// </summary>
-    public void Delete() => GL.DeleteTexture(handle);
+    public void Dispose() => GL.DeleteTexture(handle);
 
     /// <summary>
     /// Get the OpenGL handle of the texture for manipulation beyond this class

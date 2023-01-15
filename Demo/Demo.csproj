@@ -5,6 +5,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,9 +19,9 @@
             <_DemoAssets Include="Assets\**\*.*" />
         </ItemGroup>
         <RemoveDir Directories="$(OutDir)Shaders/" />
-        <Copy SourceFiles="@(_LibShaders)" DestinationFiles="@(_LibShaders->'$(OutDir)\Shaders\LumaDX\%(RecursiveDir)%(Filename)%(Extension)')"/>
-        <Copy SourceFiles="@(_DemoShaders)" DestinationFiles="@(_DemoShaders->'$(OutDir)\Shaders\%(RecursiveDir)%(Filename)%(Extension)')"/>
-        <Copy SourceFiles="@(_DemoAssets)" DestinationFiles="@(_DemoAssets->'$(OutDir)\Assets\%(RecursiveDir)%(Filename)%(Extension)')"/>
+        <Copy SourceFiles="@(_LibShaders)" DestinationFiles="@(_LibShaders->'$(OutDir)\Shaders\LumaDX\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(_DemoShaders)" DestinationFiles="@(_DemoShaders->'$(OutDir)\Shaders\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(_DemoAssets)" DestinationFiles="@(_DemoAssets->'$(OutDir)\Assets\%(RecursiveDir)%(Filename)%(Extension)')" />
     </Target>
 
 </Project>

@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
-public class PostProcessing
+public class PostProcessing : IDisposable
 {
     public static void Draw() => GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
@@ -209,17 +209,17 @@ public class PostProcessing
     
     
 
-    public void Delete()
+    public void Dispose()
     {
-        ReadFbo.Delete();
-        WriteFbo.Delete();
+        ReadFbo.Dispose();
+        WriteFbo.Dispose();
         
         foreach (var program in shaderPrograms.Values)
         {
-            program.Delete();
+            program.Dispose();
         }
         
-        BlitShader.Delete();
+        BlitShader.Dispose();
         
     }
 }

@@ -4,7 +4,7 @@ using SharpFont;
 
 namespace LumaDX;
 
-public class TextRenderer
+public class TextRenderer : IDisposable
 {
     private VertexArray vao;
     private Dictionary<char, GlChar> GlChars;
@@ -147,10 +147,10 @@ public class TextRenderer
         if (textShader.Compiled) textShader.Uniform2("screenSize", new Vector2(screenSize.X,screenSize.Y));
     }
 
-    public void Delete()
+    public void Dispose()
     {
-        vao.Delete();
+        vao.Dispose();
         foreach (var glChar in GlChars.Values) { GL.DeleteTexture(glChar.TextureId); }
-        textShader.Delete();
+        textShader.Dispose();
     }
 }

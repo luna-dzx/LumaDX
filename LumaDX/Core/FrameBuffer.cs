@@ -4,7 +4,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace LumaDX;
 
-public class FrameBuffer
+public class FrameBuffer : IDisposable
 {
     private int handle = -1;
     
@@ -254,7 +254,7 @@ public class FrameBuffer
     }
     
 
-    public void Delete()
+    public void Dispose()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
 
@@ -390,7 +390,7 @@ public class GeometryBuffer : FrameBuffer
 
 
 
-public class DepthMap
+public class DepthMap : IDisposable
 {
 
     public readonly ShaderProgram Shader;
@@ -494,18 +494,17 @@ public class DepthMap
         return this;
     }
 
-    public DepthMap Delete()
+    public void Dispose()
     {
         GL.DeleteTexture(TextureHandle);
         GL.DeleteFramebuffer(Handle);
-        Shader.Delete();
-        return this;
+        Shader.Dispose();
     }
 
 }
 
 
-public class CubeDepthMap
+public class CubeDepthMap : IDisposable
 {
     public readonly ShaderProgram Shader;
     
@@ -642,12 +641,11 @@ public class CubeDepthMap
         return this;
     }
 
-    public CubeDepthMap Delete()
+    public void Dispose()
     {
         GL.DeleteTexture(TextureHandle);
         GL.DeleteFramebuffer(Handle);
-        Shader.Delete();
-        return this;
+        Shader.Dispose();
     }
 
 }

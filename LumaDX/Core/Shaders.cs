@@ -384,6 +384,7 @@ public class ShaderProgram : IDisposable
     /// <remarks>this cannot work for a standard shader, only ones with #version luma-dx</remarks>
     public ShaderProgram SetActive(ShaderType shader, string sectionName)
     {
+        this.Use();
         if (!sections.ContainsKey(shader)) throw new Exception("No multi-shader sections in shader of type "+shader);
         
         GL.Uniform1(

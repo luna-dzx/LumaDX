@@ -33,12 +33,14 @@ public class Game1 : Game
     
     ImGuiController _controller;
     
+    bool mouseLocked = true;
+    System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
+    
 
     protected override void Initialize()
     {
         glState = new StateHandler();
-        glState.ClearColor = Color4.Teal;
-        
+
         shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl", 
             ShaderLocation + "fragment.glsl", 
@@ -85,6 +87,8 @@ public class Game1 : Game
     {
         textRenderer = new TextRenderer(48,Window.Size);
         player.UpdateProjection(shader);
+        
+        Window.CursorState = CursorState.Grabbed;
     }
     
     protected override void Resize(ResizeEventArgs newWin)
@@ -93,24 +97,55 @@ public class Game1 : Game
         textRenderer.UpdateScreenSize(newWin.Size);
     }
 
+
+    Vector2 playerMousePos = Vector2.Zero;
+
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(shader, args, Window.KeyboardState, GetRelativeMouse()*3f);
+        player.Update(shader, args, Window.KeyboardState, playerMousePos);
         shader.Uniform3("cameraPos", player.Position);
     }
-    
-    
-    protected override void KeyboardHandling(FrameEventArgs args, KeyboardState keyboardState)
+
+    protected override void MouseMove(MouseMoveEventArgs moveInfo)
     {
-        if (keyboardState.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
-        if (keyboardState.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
-        if (keyboardState.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
-        if (keyboardState.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
+        if (mouseLocked)
+        {
+            playerMousePos += moveInfo.Delta;
+        }
     }
 
+    bool focusWindow = false;
+    bool checkFocus = false;
+
+    protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
+    {
+        if (k.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
+        if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
+        if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
+        if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
+        
+        if (k.IsKeyPressed(Keys.Enter)) // unlock mouse
+        {
+            if (mouseLocked)
+            {
+                mouseLocked = false;
+                Window.CursorState = CursorState.Normal;
+                focusWindow = true;
+            }
+        }
+    }
+
+    protected override void MouseHandling(FrameEventArgs args, MouseState mouseState)
+    {
+        if (mouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
+        {
+            checkFocus = true;
+        }
+    }
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
         texture.Use();
@@ -127,7 +162,21 @@ public class Game1 : Game
         glState.SaveState();
         
         _controller.Update((float)args.Time);
-        ImGui.ShowDemoWindow();
+        if (focusWindow)
+        {
+            ImGui.SetWindowFocus();
+            focusWindow = false;
+        }
+
+        if (checkFocus)
+        {
+            if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.AnyWindow))
+            {
+                Window.CursorState = CursorState.Grabbed;
+                mouseLocked = true;
+            }
+        }
+        ImGui.ColorPicker3("BgCol", ref bgCol);
         _controller.Render();
         
         // TODO: Implement all parts of the ImGui Save/Restore into this function

@@ -16,6 +16,7 @@
     <ItemGroup>
         <PackageReference Include="AssimpNet" Version="5.0.0-beta1" />
         <PackageReference Include="BmpSharp" Version="0.2.0" />
+        <PackageReference Include="ImGui.NET" Version="1.89.2" />
         <PackageReference Include="OpenTK" Version="4.7.4" />
         <PackageReference Include="StbImageSharp" Version="2.27.8" />
         <PackageReference Include="SharpFontCore" Version="0.1.1" />

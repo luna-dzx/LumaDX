@@ -7,7 +7,7 @@ namespace LumaDX;
 /// <summary>
 /// Simplifying VAOs and VBOs (for managing large amounts of data on the GPU)
 /// </summary>
-public class VertexArray
+public class VertexArray : IDisposable
 {
     private readonly int handle;
     private BufferUsageHint _bufferUsageHint;
@@ -78,6 +78,8 @@ public class VertexArray
     /// <returns>the VBO id where we allocated this memory</returns>
     public int EmptyBuffer(int size, BufferTarget target, int buffer = -1)
     {
+        this.Use();
+        
         if (buffer == -1) { buffer = GL.GenBuffer(); }
         // bind buffer for storing data
         GL.BindBuffer(target,buffer);
@@ -87,6 +89,21 @@ public class VertexArray
         
         return buffer;
     }
+
+    /// <summary>
+    /// To resize an index buffer you need to bind another vertex buffer from the VAO
+    /// </summary>
+    /// <param name="size">New size for the buffer</param>
+    /// <param name="vertexBuffer">A vertex buffer on this VAO</param>
+    /// <param name="target">The target of the vertex buffer</param>
+    public void ResizeIndexBuffer(int size, int vertexBuffer, BufferTarget target = BufferTarget.ArrayBuffer)
+    {
+        GL.BindBuffer(target, vertexBuffer);
+        this.Use();
+        GL.BufferData(BufferTarget.ElementArrayBuffer, size, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+    }
+    
+    
 
     /// <summary>
     /// Creates a buffer on the GPU and then sets up that buffer for data storage
@@ -168,6 +185,23 @@ public class VertexArray
 
         GL.EnableVertexAttribArray(layoutLocation);
     }
+    
+    public void SetupBuffer(int layoutLocation, VertexAttribPointerType type, int dataLength=3, int stride = 3, int offset=0, bool normalized = false)
+    {
+        this.Use();
+
+        GL.VertexAttribPointer(
+            layoutLocation, // shader layout location
+            dataLength, // size (num values)
+            type, // variable type
+            normalized, // normalize data (set to "length 1")
+            stride, // space in bytes between each vertex attrib
+            offset // data offset
+        );
+
+        GL.EnableVertexAttribArray(layoutLocation);
+    }
+    
 
 
     /// <summary>
@@ -182,7 +216,7 @@ public class VertexArray
     /// <summary>
     /// Remove VAO from video memory
     /// </summary>
-    public void Delete()
+    public void Dispose()
     {
         GL.DeleteVertexArray(handle);
         ErrorCode error = GL.GetError();

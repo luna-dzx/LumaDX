@@ -47,53 +47,54 @@ public struct GlState
 public class StateHandler
 {
 
-    private GlState _state;
-
+    public GlState ActiveState;
+    public GlState StoredState;
 
     public StateHandler() : this(new GlState()) { }
     public StateHandler(GlState state) { LoadState(state); }
 
     public void LoadState(GlState state)
     {
-        _state = state;
-        DepthTest = _state.DepthTest;
-        DepthMask = _state.DepthMask;
-        DepthFunc = _state.DepthFunc;
+        ActiveState = state;
+        DepthTest = ActiveState.DepthTest;
+        DepthMask = ActiveState.DepthMask;
+        DepthFunc = ActiveState.DepthFunc;
         
-        DoCulling = _state.DoCulling;
-        CullFace = _state.CullFace;
+        DoCulling = ActiveState.DoCulling;
+        CullFace = ActiveState.CullFace;
 
-        ClearColor = _state.ClearColor;
-        ClearBuffers = _state.ClearBuffers;
+        ClearColor = ActiveState.ClearColor;
+        ClearBuffers = ActiveState.ClearBuffers;
 
-        Blending = _state.Blending;
-        BlendSrc = _state.BlendSrc;
-        BlendDst = _state.BlendDst;
+        Blending = ActiveState.Blending;
+        BlendSrc = ActiveState.BlendSrc;
+        BlendDst = ActiveState.BlendDst;
     }
-    
-    
-    
+
+    public void LoadState() => LoadState(StoredState);
+    public void SaveState() => StoredState = ActiveState;
+
     public bool DepthTest
     {
         set
         {
-            _state.DepthTest = value;
+            ActiveState.DepthTest = value;
             if (value) GL.Enable(EnableCap.DepthTest);
             else GL.Disable(EnableCap.DepthTest);
         }
 
-        get => _state.DepthTest;
+        get => ActiveState.DepthTest;
     }
     
     public bool DepthMask
     {
         set
         {
-            _state.DepthMask = value;
+            ActiveState.DepthMask = value;
             GL.DepthMask(value);
         }
 
-        get => _state.DepthMask;
+        get => ActiveState.DepthMask;
         
     }
 
@@ -101,11 +102,11 @@ public class StateHandler
     {
         set
         {
-            _state.DepthFunc = value;
+            ActiveState.DepthFunc = value;
             GL.DepthFunc(value);
         }
 
-        get => _state.DepthFunc;
+        get => ActiveState.DepthFunc;
     }
     
     
@@ -113,22 +114,22 @@ public class StateHandler
     {
         set
         {
-            _state.DoCulling = value;
+            ActiveState.DoCulling = value;
             if (value) GL.Enable(EnableCap.CullFace);
             else GL.Disable(EnableCap.CullFace);
         }
 
-        get => _state.DoCulling;
+        get => ActiveState.DoCulling;
     }
 
     public CullFaceMode CullFace
     {
         set
         {
-            _state.CullFace = value;
+            ActiveState.CullFace = value;
             GL.CullFace(value);
         }
-        get => _state.CullFace;
+        get => ActiveState.CullFace;
     }
     
     
@@ -136,17 +137,17 @@ public class StateHandler
     {
         set
         {
-            _state.ClearColor = value;
-            GL.ClearColor(_state.ClearColor);
+            ActiveState.ClearColor = value;
+            GL.ClearColor(ActiveState.ClearColor);
         }
 
-        get => _state.ClearColor;
+        get => ActiveState.ClearColor;
     }    
     
     public ClearBufferMask ClearBuffers
     {
-        set => _state.ClearBuffers = value;
-        get => _state.ClearBuffers;
+        set => ActiveState.ClearBuffers = value;
+        get => ActiveState.ClearBuffers;
     }
 
     public void Clear() {GL.Clear(ClearBuffers);}
@@ -155,11 +156,11 @@ public class StateHandler
     {
         set
         {
-            _state.Blending = value;
+            ActiveState.Blending = value;
             if (value) GL.Enable(EnableCap.Blend);
             else GL.Disable(EnableCap.Blend);
         }
-        get => _state.Blending;
+        get => ActiveState.Blending;
     }
 
 
@@ -167,20 +168,20 @@ public class StateHandler
     {
         set
         {
-            GL.BlendFunc(value,_state.BlendDst);
-            _state.BlendSrc = value;
+            GL.BlendFunc(value,ActiveState.BlendDst);
+            ActiveState.BlendSrc = value;
         }
-        get => _state.BlendSrc;
+        get => ActiveState.BlendSrc;
     }
     
     public BlendingFactor BlendDst
     {
         set
         {
-            GL.BlendFunc(_state.BlendSrc,value);
-            _state.BlendDst = value;
+            GL.BlendFunc(ActiveState.BlendSrc,value);
+            ActiveState.BlendDst = value;
         }
-        get => _state.BlendDst;
+        get => ActiveState.BlendDst;
     }
 
     public void BlendFunc(BlendingFactor sFactor, BlendingFactor dFactor)

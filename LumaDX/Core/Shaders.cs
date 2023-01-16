@@ -5,7 +5,7 @@ using static LumaDX.Objects;
 
 namespace LumaDX;
 
-public class Shader
+public class Shader : IDisposable
 {
     public readonly int ID;
 
@@ -45,13 +45,13 @@ public class Shader
     /// <summary>
     /// Delete this shader object
     /// </summary>
-    public void Delete() => GL.DeleteShader(ID);
+    public void Dispose() => GL.DeleteShader(ID);
     
 
 }
 
 
-public class ShaderProgram
+public class ShaderProgram : IDisposable
 {
 
     public int NUM_LIGHTS = 64;
@@ -399,7 +399,7 @@ public class ShaderProgram
     /// Remove shader program from video memory
     /// </summary>
     /// <exception cref="Exception">error code for if deleting fails</exception>
-    public void Delete()
+    public void Dispose()
     {
         GL.DeleteProgram(handle);
         ErrorCode error = GL.GetError();

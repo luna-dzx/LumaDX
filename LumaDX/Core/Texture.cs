@@ -7,7 +7,7 @@ namespace LumaDX;
 /// <summary>
 /// Class for handling OpenGL texture objects
 /// </summary>
-public class Texture
+public class Texture : IDisposable
 {
     private int handle;
     private int unit;
@@ -83,6 +83,31 @@ public class Texture
             pixelType,
             pointer
         );
+
+        return this;
+    }
+
+    /// <summary>
+    /// Load Image data from an IntPtr, and also set-up mip-mapping
+    /// </summary>
+    /// <param name="pointer">IntPtr to the start of the data</param>
+    /// <param name="width">Width in pixels</param>
+    /// <param name="height">Height in pixels></param>
+    /// <param name="levels">Number of mip-mapping levels to generate</param>
+    /// <param name="internalFormat">Specify size of pixel data</param>
+    /// <param name="pixelFormat">Specify order/format of data within each pixel</param>
+    /// <param name="pixelType">Specify the data type that each part of each pixel is (e.g. Red in RGBA)</param>
+    /// <returns></returns>
+    public Texture LoadPtrMipMapped(IntPtr pointer, int width, int height, int levels,
+        SizedInternalFormat internalFormat = SizedInternalFormat.Rgba8,
+        PixelFormat pixelFormat = PixelFormat.Rgba, PixelType pixelType = PixelType.UnsignedByte)
+    {
+        this.Use();
+        
+        GL.TexStorage2D((TextureTarget2d)target, levels, internalFormat, width, height);
+        GL.TexSubImage2D(target, 0, 0, 0, width, height, pixelFormat, pixelType, pointer);
+
+        GL.GenerateMipmap((GenerateMipmapTarget)target);
 
         return this;
     }
@@ -165,6 +190,12 @@ public class Texture
         Wrapping(TextureParameterName.TextureWrapT,wrapMode);
         return this;
     }
+
+    /// <summary>
+    /// Set the max mip-mapping level
+    /// </summary>
+    /// <param name="level">Maximum mip-mapping level</param>
+    public Texture MaxLevel(int level) { this.Use(); GL.TexParameter(target, TextureParameterName.TextureMaxLevel, level); return this; }
     
     
     /// <summary>
@@ -208,7 +239,7 @@ public class Texture
     /// <summary>
     /// Delete the OpenGL texture object
     /// </summary>
-    public void Delete() => GL.DeleteTexture(handle);
+    public void Dispose() => GL.DeleteTexture(handle);
 
     /// <summary>
     /// Get the OpenGL handle of the texture for manipulation beyond this class

@@ -194,6 +194,108 @@ public class Model : VertexArray
     }
     
     
+    // THIS IS TEMPORARY, FIX PLS
+    
+    
+    public static (Model[],Texture[]) FromFile(
+        string directory,
+        string fileName,
+        PostProcessSteps postProcessFlags = PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs
+        )
+    {
+        Scene scene; //"../../../../../../0 Assets/backpack/backpack.obj"
+        AssimpContext importer = new AssimpContext();
+
+        scene = importer.ImportFile(directory+fileName, postProcessFlags);//,PostProcessPreset.TargetRealTimeMaximumQuality);
+
+        
+        int vertexCount = scene.Meshes.Sum(mesh => mesh.VertexCount);
+        int indexCount = scene.Meshes.Sum(mesh => mesh.Faces.Sum(face => face.IndexCount));
+
+
+        Model[] models = new Model[scene.Meshes.Count];
+        Texture[] textures = new Texture[scene.Meshes.Count];
+        int meshCount = 0;
+
+        foreach (Mesh mesh in scene.Meshes)
+        {
+            textures[meshCount] = new Texture(directory+scene.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath, 0);
+            
+            
+            var vertices = new float[vertexCount * 3];
+            var normals = new float[vertexCount * 3];
+            var tangents = new float[vertexCount * 3];
+            var texCoords = new float[vertexCount * 2];
+            var indices = new int[indexCount];
+        
+            int indexOffset = 0;
+            int vertexIndex = 0;
+            
+            
+            
+            for (int i = 0; i < mesh.VertexCount; i++)
+            {
+                vertices[vertexIndex*3] = mesh.Vertices[i].X / 100f;
+                vertices[vertexIndex*3 +1] = mesh.Vertices[i].Y / 100f;
+                vertices[vertexIndex*3 +2] = mesh.Vertices[i].Z / 100f;
+
+
+                normals[vertexIndex*3] = mesh.Normals[i].X;
+                normals[vertexIndex*3 +1] = mesh.Normals[i].Y;
+                normals[vertexIndex*3 +2] = mesh.Normals[i].Z;
+
+
+
+                if (mesh.Tangents.Count > 0)
+                {
+                    tangents[vertexIndex*3] = mesh.Tangents[i].X;
+                    tangents[vertexIndex*3 +1] = mesh.Tangents[i].Y;
+                    tangents[vertexIndex*3 +2] = mesh.Tangents[i].Z;
+                }
+
+                
+                texCoords[vertexIndex*2] = mesh.TextureCoordinateChannels[0][i].X;
+                texCoords[vertexIndex*2 +1] = mesh.TextureCoordinateChannels[0][i].Y;
+
+                vertexIndex++;
+            }
+
+            int numIndices = 0;
+            foreach (Face face in mesh.Faces)
+            {
+                foreach (int index in face.Indices)
+                {
+                    indices[indexOffset+numIndices] = indexOffset+index;
+                    numIndices++;
+                }
+            }
+
+            indexOffset += numIndices;
+            
+            
+            var finalMesh = new Objects.Mesh(
+                vertices: vertices,
+                indices: indices,
+                texCoords: texCoords,
+                normals: normals,
+                tangents: tangents
+            );
+
+            models[meshCount] = new Model(finalMesh);
+            meshCount++;
+
+
+        }
+        
+        
+
+
+        return (models,textures);
+
+    }
+    
+    
+    
 
     /// <summary>
     /// Loads all mesh data to the VAO

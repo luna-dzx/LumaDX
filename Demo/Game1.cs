@@ -6,7 +6,6 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-
 namespace Demo;
 
 public class Game1 : Game
@@ -21,17 +20,21 @@ public class Game1 : Game
     FirstPersonPlayer player;
     Model backpack;
     Model cube;
-
+    
+    Model[] scene;
+    Texture[] textures;
+    
+    Vector3 scenePosition = new (0f, 0f, -5f);
+    Vector3 sceneRotation = new (-MathF.PI/2f, 0f, 0f);
+    
     Objects.Light light;
     Objects.Material material;
-
-    Texture texture;
-    Texture normalMap;
-    Texture specular;
 
     private Vector3 rotation = Vector3.Zero;
     
     ImGuiController _controller;
+    
+    DepthMap depthMap;
     
     bool mouseLocked = true;
     System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
@@ -47,22 +50,31 @@ public class Game1 : Game
             true);
         
         player = new FirstPersonPlayer(Window.Size)
-            .SetPosition(new Vector3(0,0,6))
+            .SetPosition(new Vector3(-3.8289409f, -0.14746195f, -25.35519f))
             .SetDirection(new Vector3(0, 0, 1));
-        
+        player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
+        player.UpdateProjection(shader);
+
         const string BackpackDir = "Assets/backpack/";
         backpack = Model.FromFile(BackpackDir,"backpack.obj",out _ ,
             postProcessFlags: PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
+        
+        
+        (scene,textures) = Model.FromFile("Assets/dust2/source/","de_dust2.obj", PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals);
+        
+        
+        depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
+        
+        depthMap.ProjectOrthographic(60f,50f,3f,100f);
+        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
+        
+        depthMap.UniformTexture("depthMap",shader,1);
+        
 
-        texture = new Texture(BackpackDir+"diffuse.bmp",0);
-        specular = new Texture(BackpackDir+"specular.bmp",1);
-        normalMap = new Texture(BackpackDir+"normal.bmp",2);
+        light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
+        material = PresetMaterial.Silver.SetAmbient(0.05f);
         
-        light = new Objects.Light().PointMode().SetPosition(new Vector3(-2f,2f,5f)).SetAmbient(0.1f);
-        material = PresetMaterial.Silver.SetAmbient(0.01f);
-        
-        cube = new Model(PresetMesh.Cube)
-            .UpdateTransform(shader,light.Position,Vector3.Zero,0.2f);
+        cube = new Model(PresetMesh.Cube).UpdateTransform(shader,light.Position,Vector3.Zero,0.2f);
 
         glState.DepthTest = true;
         glState.DoCulling = true;
@@ -72,10 +84,8 @@ public class Game1 : Game
 
 
         
-        shader.UniformMaterial("material",material,texture,specular)
-            .UniformLight("light",light)
-            .UniformTexture("normalMap",normalMap);
-
+        shader.UniformMaterial("material", material, textures[0])
+            .UniformLight("light", light);
 
         glState.Blending = true;
         
@@ -145,16 +155,34 @@ public class Game1 : Game
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        GL.Enable(EnableCap.CullFace);
+        depthMap.DrawMode();
+        GL.PolygonMode(MaterialFace.FrontAndBack,PolygonMode.Fill);
+        foreach (var model in scene) model.Draw(depthMap.Shader, scenePosition, sceneRotation, 1f);
+        
+        shader.Use();
+        depthMap.ReadMode();
+
+        //GL.CullFace(CullFaceMode.Back);
+        GL.Disable(EnableCap.CullFace);
+        GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
+        
+        
         glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
-        texture.Use();
-        
-        shader.SetActive(ShaderType.FragmentShader, "scene");
         backpack.Draw(shader,rotation:rotation,scale:1f);
-
-        shader.SetActive(ShaderType.FragmentShader, "light");
         cube.Draw(shader);
+
+        for (int i = 0; i < scene.Length; i++)
+        {
+            textures[i].Use();
+            scene[i].Draw(shader, scenePosition, sceneRotation, 1f);
+        }
+
+        
+        
+        
 
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
         textRenderer.Draw("Hello World!", 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
@@ -192,8 +220,16 @@ public class Game1 : Game
 
         backpack.Dispose();
         cube.Dispose();
+        
+        for (int i = 0; i < scene.Length; i++)
+        {
+            textures[i].Dispose();
+            scene[i].Dispose();
+        }
 
         shader.Dispose();
+        
+        depthMap.Dispose();
         
         textRenderer.Dispose();
         _controller.Dispose();

@@ -406,6 +406,8 @@ public class DepthMap : IDisposable
     public Vector3 Direction;
 
 
+    public DepthMap(Vector2i size, Vector3 position, Vector3 direction) : this(Constants.LibraryShaderPath + "DepthMap/",size,position,direction) { }
+
     public DepthMap(string shaderPath, Vector2i size, Vector3 position, Vector3 direction)
     {
         Handle = GL.GenFramebuffer();

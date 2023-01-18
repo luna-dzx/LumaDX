@@ -697,7 +697,7 @@ public class ShaderProgram : IDisposable
     /// <returns>current object for ease of use</returns>
     public ShaderProgram Uniform4(string name, uint v0, uint v1, uint v2, uint v3) { GL.Uniform4(GetUniform(name), v0,v1,v2,v3); return this; }
     
-    public ShaderProgram UniformMat4(string name, ref Matrix4 matrix) { GL.UniformMatrix4(GetUniform(name),false,ref matrix); return this; }
+    public ShaderProgram UniformMat4(string name, ref Matrix4 matrix) { this.Use(); GL.UniformMatrix4(GetUniform(name),false,ref matrix); return this; }
 
     #endregion
 

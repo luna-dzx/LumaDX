@@ -27,6 +27,11 @@ vec3 lx_BasePhong(in vec3 normal, in vec3 fragPos, in vec3 cameraPos, in vec2 te
     {
         baseTexSample = vec3(texture(material.baseTex, texCoords));
     }
+    
+    // possibly temporary? removes really buggy lighting when completely black
+    if (dot(baseTexSample,baseTexSample) == 0.0){
+        baseTexSample += vec3(0.01);
+    }
 
     if (textureMode > 1)
     {

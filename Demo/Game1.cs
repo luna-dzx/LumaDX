@@ -137,6 +137,7 @@ public class Game1 : Game
             deltaCounter -= 1.0;
             framesCounted = 0;
         }
+        
     }
 
     protected override void MouseMove(MouseMoveEventArgs moveInfo)
@@ -165,6 +166,11 @@ public class Game1 : Game
                 Window.CursorState = CursorState.Normal;
                 focusWindow = true;
             }
+        }
+        
+        if (k.IsKeyPressed(Keys.N))
+        {
+            player.NoClip = !player.NoClip;
         }
     }
 

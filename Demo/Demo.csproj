@@ -12,9 +12,10 @@
       <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
     </ItemGroup>
 
-    <Target Name="Shaders" AfterTargets="Build">
+    <Target Name="CopyFiles" AfterTargets="Build">
         <ItemGroup>
             <_LibShaders Include="$(SolutionDir)LumaDX\Shaders\**\*.*" />
+            <_LibDependencies Include="$(SolutionDir)LumaDX\Dependencies\**\*.*" />
             <_DemoShaders Include="Shaders\**\*.*" />
             <_DemoAssets Include="Assets\**\*.*" />
         </ItemGroup>
@@ -22,6 +23,7 @@
         <Copy SourceFiles="@(_LibShaders)" DestinationFiles="@(_LibShaders->'$(OutDir)\Shaders\LumaDX\%(RecursiveDir)%(Filename)%(Extension)')" />
         <Copy SourceFiles="@(_DemoShaders)" DestinationFiles="@(_DemoShaders->'$(OutDir)\Shaders\%(RecursiveDir)%(Filename)%(Extension)')" />
         <Copy SourceFiles="@(_DemoAssets)" DestinationFiles="@(_DemoAssets->'$(OutDir)\Assets\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(_LibDependencies)" DestinationFiles="@(_LibDependencies->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
     </Target>
 
 </Project>

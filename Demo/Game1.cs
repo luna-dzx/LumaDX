@@ -18,9 +18,7 @@ public class Game1 : Game
     ShaderProgram shader;
 
     FirstPersonPlayer player;
-    Model backpack;
-    Model cube;
-    
+
     Model[] scene;
     Texture[] textures;
     
@@ -39,6 +37,8 @@ public class Game1 : Game
     bool mouseLocked = true;
     System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
     
+    Collision collision;
+    
 
     protected override void Initialize()
     {
@@ -54,12 +54,22 @@ public class Game1 : Game
             .SetDirection(new Vector3(0, 0, 1));
         player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
         player.UpdateProjection(shader);
+        
+        collision = new Collision();
 
-        const string BackpackDir = "Assets/backpack/";
-        backpack = Model.FromFile(BackpackDir,"backpack.obj",out _ ,
-            postProcessFlags: PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
+        collision.position = player.Position;
+        collision.eRadius = new Vector3(0.2f,0.5f,0.2f);
         
         
+        
+        AssimpContext importer = new AssimpContext();
+        importer.SetConfig(new Assimp.Configs.NormalSmoothingAngleConfig(66.0f));
+        var model = importer.ImportFile("Assets/dust2/source/de_dust2.obj",
+            PostProcessPreset.TargetRealTimeMaximumQuality);
+
+        collision.world = Maths.GetTriangles(model,scenePosition,sceneRotation,collision.eRadius);
+
+
         (scene,textures) = Model.FromFile("Assets/dust2/source/","de_dust2.obj", PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals);
         
         
@@ -74,7 +84,6 @@ public class Game1 : Game
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
         material = PresetMaterial.Silver.SetAmbient(0.05f);
         
-        cube = new Model(PresetMesh.Cube).UpdateTransform(shader,light.Position,Vector3.Zero,0.2f);
 
         glState.DepthTest = true;
         glState.DoCulling = true;
@@ -112,7 +121,7 @@ public class Game1 : Game
 
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(shader, args, Window.KeyboardState, playerMousePos);
+        player.Update(shader, args, Window.KeyboardState, playerMousePos, collision);
         shader.Uniform3("cameraPos", player.Position);
     }
 
@@ -155,35 +164,34 @@ public class Game1 : Game
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        #region Shadow Map
+        
+        // culling for better shadows
         GL.Enable(EnableCap.CullFace);
+        
         depthMap.DrawMode();
-        GL.PolygonMode(MaterialFace.FrontAndBack,PolygonMode.Fill);
         foreach (var model in scene) model.Draw(depthMap.Shader, scenePosition, sceneRotation, 1f);
         
         shader.Use();
         depthMap.ReadMode();
-
-        //GL.CullFace(CullFaceMode.Back);
+        
+        // TODO: use glState for this
         GL.Disable(EnableCap.CullFace);
         GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
         
+        #endregion
         
         glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
-
-        backpack.Draw(shader,Vector3.Zero,rotation,1f);
-        cube.Draw(shader);
 
         for (int i = 0; i < scene.Length; i++)
         {
             textures[i].Use();
             scene[i].Draw(shader, scenePosition, sceneRotation, 1f);
         }
-
         
+        #region UI
         
-        
-
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
         textRenderer.Draw("Hello World!", 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
 
@@ -210,6 +218,8 @@ public class Game1 : Game
         // TODO: Implement all parts of the ImGui Save/Restore into this function
         glState.LoadState();
         
+        #endregion
+        
         Window.SwapBuffers();
     }
 
@@ -218,9 +228,6 @@ public class Game1 : Game
         GL.BindVertexArray(0);
         GL.UseProgram(0);
 
-        backpack.Dispose();
-        cube.Dispose();
-        
         for (int i = 0; i < scene.Length; i++)
         {
             textures[i].Dispose();

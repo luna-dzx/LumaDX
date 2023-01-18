@@ -137,6 +137,74 @@ public class FirstPersonPlayer : Player
 
         return this;
     }
+    
+    
+    public bool NoClip;
+    private Vector3 gravity = Vector3.UnitY*-0.1f;
+    
+    public Player Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos, Collision collision)
+    {
+        var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
+        yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
+        pitch += (relativeMousePos.Y - lastMousePos.Y) * Sensitivity;
+
+        yaw %= 360;
+        pitch %= 360;
+
+        // 90 degrees gives gimbal locking so lock to 89
+        if (capPitch) pitch = Math.Clamp(pitch, -89f, 89f);
+
+        Camera.Direction = Matrix3.CreateRotationY(MathHelper.DegreesToRadians(yaw)) * Matrix3.CreateRotationX(MathHelper.DegreesToRadians(pitch)) * -Vector3.UnitZ;
+        
+        Vector3 up = ((keyboardState.IsKeyDown(Keys.Space) ?1:0) - (keyboardState.IsKeyDown(Keys.LeftControl) ?1:0)) * Speed * (float)args.Time* Vector3.UnitY;
+        
+        Vector3 directionFlat = Camera.Direction;
+        directionFlat.Y = 0;
+        directionFlat.Normalize();
+
+        
+
+        if (NoClip)
+        {
+            Velocity = (input.Z * Camera.Direction.Normalized() + input.X * (rightTransform * directionFlat))*2f + up;
+            
+            Position += Velocity;
+            gravity = Vector3.Zero;
+        }
+        else
+        {
+            Velocity = input.Z * directionFlat + input.X * (rightTransform * directionFlat);
+            
+            collision.position = Position;
+            var (grounded,newGrav) = collision.CollideAndSlide(Velocity,gravity);
+
+            gravity = newGrav;
+            if (!grounded)
+            {
+                gravity -= Vector3.UnitY * 0.15f * (float)args.Time;
+                if (Vector3.Dot(gravity, gravity) > 0.04f) gravity = Vector3.UnitY * -0.2f;
+            }
+            else
+            {
+                gravity = Vector3.Zero;
+                if (keyboardState.IsKeyDown(Keys.Space)) gravity += 0.04f*Vector3.UnitY;
+            }
+            
+            Position = collision.position;
+        }
+        
+        
+        
+        Camera.Position = Position + new Vector3(0f, 0.25f, 0f);
+
+        isCameraFlipped = (Math.Abs(pitch) + 90) % 360 >= 180;
+        
+        lastMousePos = relativeMousePos;
+
+        return this;
+    }
+    
+    
 
     
     /// <summary>
@@ -148,9 +216,9 @@ public class FirstPersonPlayer : Player
     /// <param name="relativeMousePos"></param>
     /// <returns></returns>
     public FirstPersonPlayer Update(ShaderProgram shaderProgram, FrameEventArgs args, KeyboardState keyboardState,
-        Vector2 relativeMousePos)
+        Vector2 relativeMousePos, Collision collision)
     {
-        Update(args, keyboardState, relativeMousePos);
+        Update(args, keyboardState, relativeMousePos, collision);
         UpdateView(shaderProgram);
         return this;
     }

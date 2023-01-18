@@ -118,11 +118,25 @@ public class Game1 : Game
 
 
     Vector2 playerMousePos = Vector2.Zero;
+    
+    private double deltaCounter = 0.0;
+    private int framesCounted = 0;
+
+    int frameRate = 0;
 
     protected override void UpdateFrame(FrameEventArgs args)
     {
         player.Update(shader, args, Window.KeyboardState, playerMousePos, collision);
         shader.Uniform3("cameraPos", player.Position);
+
+        deltaCounter += args.Time;
+        framesCounted++;
+        if (deltaCounter > 1.0)
+        {
+            frameRate = framesCounted;
+            deltaCounter -= 1.0;
+            framesCounted = 0;
+        }
     }
 
     protected override void MouseMove(MouseMoveEventArgs moveInfo)
@@ -194,7 +208,7 @@ public class Game1 : Game
 
         glState.DepthTest = false;
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
-        textRenderer.Draw("Hello World!", 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
+        textRenderer.Draw(""+frameRate, 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
         glState.DepthTest = true;
         
         glState.SaveState();

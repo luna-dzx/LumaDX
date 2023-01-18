@@ -171,7 +171,7 @@ public class Game1 : Game
         glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
-        backpack.Draw(shader,rotation:rotation,scale:1f);
+        backpack.Draw(shader,Vector3.Zero,rotation,1f);
         cube.Draw(shader);
 
         for (int i = 0; i < scene.Length; i++)

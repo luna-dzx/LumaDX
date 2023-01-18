@@ -493,18 +493,23 @@ public class Model : VertexArray
 
 
     }
-
-    public void Draw(ShaderProgram program, Vector3 position = default, Vector3 rotation = default, float scale = 0f, int instanceCount = 1, PrimitiveType renderMode = PrimitiveType.Triangles)
+    
+    
+    /// <summary>
+    /// Draw with a new Model Matrix made from the parameters
+    /// </summary>
+    public void Draw(ShaderProgram program, Vector3 position, Vector3 rotation, float scale, int instanceCount = 1, PrimitiveType renderMode = PrimitiveType.Triangles)
     {
-        if (position == default && rotation == default && scale == 0f)
-        {
-            UpdateTransform(program);
-        }
-        else
-        {
-            UpdateTransform(program, position, rotation, scale);
-        }
-        
+        UpdateTransform(program, position, rotation, scale);
+        Draw(instanceCount, renderMode);
+    }
+    
+    /// <summary>
+    /// Draw after loading the transformation matrix to the GPU
+    /// </summary>
+    public void Draw(ShaderProgram program, int instanceCount = 1, PrimitiveType renderMode = PrimitiveType.Triangles)
+    {
+        UpdateTransform(program);
         Draw(instanceCount, renderMode);
     }
 

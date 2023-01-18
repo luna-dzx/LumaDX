@@ -191,10 +191,12 @@ public class Game1 : Game
         }
         
         #region UI
-        
+
+        glState.DepthTest = false;
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
         textRenderer.Draw("Hello World!", 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
-
+        glState.DepthTest = true;
+        
         glState.SaveState();
         
         _controller.Update((float)args.Time);

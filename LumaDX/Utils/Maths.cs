@@ -260,10 +260,29 @@ public class Maths
         
         // No (valid) solutions
         return false;
-        
+
+    }
+
+    public static float Max(params float[] values)
+    {
+        float max = values[0];
+        for (int i = 1; i < values.Length; i++)
+        {
+            max = MathF.Max(max, values[i]);
+        }
+        return max;
     }
     
-    public const float VeryCloseDistance = 0.001f;
     
+    public static Vector3 Largest(params Vector3[] values)
+    {
+        Vector3 vec = values[0];
+        for (int i = 1; i < values.Length; i++)
+        {
+            vec = (vec.LengthSquared > values[i].LengthSquared) ? vec : values[i];
+        }
+        return vec;
+    }
     
+
 }

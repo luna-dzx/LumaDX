@@ -75,50 +75,50 @@ public static class Collision
     /// <returns></returns>
     public static (Vector3,Vector3) CollideAndSlide(Vector3 position, Vector3 vel, Vector3 gravity, Vector3 eRadius, ref bool grounded)
     {
-        float velocityLenSquared = Vector3.Dot(vel, vel);
-        float gravityLenSquared = Vector3.Dot(gravity, gravity);
-
-
-        Vector3 eSpacePosition = position / eRadius;
-        Vector3 eSpaceVelocity = vel / eRadius;
-
-        Vector3 finalPosition = eSpacePosition;
+        // Adjust scene relative to ellipsoid scale in order to treat the ellipsoid as a sphere
+        position /= eRadius;
+        vel /= eRadius;
 
         List<Maths.Triangle> toCheck;
         
-        
+        #region Horizontal
+
         // if we aren't moving, don't check horizontal collisions
-        if (velocityLenSquared != 0.0f && !float.IsNaN(velocityLenSquared))
+        if (vel.LengthSquared != 0.0f && !float.IsNaN(vel.LengthSquared))
         {
 
-            toCheck = GetCloseTriangles(finalPosition, eSpaceVelocity);
-            finalPosition = CollideWithWorld(eSpacePosition,eSpaceVelocity, ref toCheck);
+            toCheck = GetCloseTriangles(position, vel);
+            position = CollideWithWorld(position,vel, ref toCheck);
             
         }
+        
+        #endregion
 
+        #region Vertical
+        
         grounded = true;
         Vector3 newGrav = gravity;
-        if (!float.IsNaN(gravityLenSquared)) // we may still want this step if gravity == 0.0 for the grounded check (walking off a platform)
+        if (!float.IsNaN(gravity.LengthSquared)) // we may still want this step if gravity == 0.0 for the grounded check (walking off a platform)
         {
-            eSpaceVelocity = gravity / eRadius;
-            newGrav = eSpaceVelocity;
+            vel = gravity / eRadius;
+            newGrav = vel;
             float len = newGrav.Length;
             if (len > 0f) GravityDirection = newGrav.Normalized();
             
             grounded = false;
    
-            toCheck = GetCloseTriangles(finalPosition, eSpaceVelocity);
+            toCheck = GetCloseTriangles(position, vel);
             
             #region Grounded Check
 
             foreach (var triangle in toCheck)
             {
-                if (grounded || !(Vector3.Dot(finalPosition - triangle.Center, GravityDirection) < 0f)) continue; // only check triangles in the direction of gravity
+                if (grounded || !(Vector3.Dot(position - triangle.Center, GravityDirection) < 0f)) continue; // only check triangles in the direction of gravity
                 
                 // lambda for the intersection of the line (pos + lambda x direction) and the plane
-                float lambda = (triangle.Plane.Value - Vector3.Dot(triangle.Plane.Normal, finalPosition)) / Vector3.Dot(triangle.Plane.Normal, GravityDirection);
-                Vector3 point = finalPosition + lambda * GravityDirection;
-                Vector3 pointToPos = finalPosition - point;
+                float lambda = (triangle.Plane.Value - Vector3.Dot(triangle.Plane.Normal, position)) / Vector3.Dot(triangle.Plane.Normal, GravityDirection);
+                Vector3 point = position + lambda * GravityDirection;
+                Vector3 pointToPos = position - point;
                 if (!(pointToPos.LengthSquared < 1.5) || !Maths.CheckPointInTriangle(triangle, point)) continue;
                 
                 // hitting your head on a roof
@@ -135,13 +135,12 @@ public static class Collision
             
             #endregion
 
-            finalPosition = CollideWithWorld(finalPosition, eSpaceVelocity, ref toCheck);
+            position = CollideWithWorld(position, vel, ref toCheck);
         }
         
+        #endregion
 
-        finalPosition *= eRadius;
-
-        return (finalPosition,newGrav*eRadius);
+        return (position * eRadius, newGrav * eRadius);
     }
     
 

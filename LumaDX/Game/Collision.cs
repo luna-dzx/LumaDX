@@ -2,19 +2,9 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
-public class Collision
+public static class Collision
 {
-    public Vector3 eRadius;
-
-    public Vector3 position;
-
-    private bool checkGrounded;
-    private bool grounded;
-
-    public Maths.Triangle[] world;
-    public List<Maths.Triangle> toCheck;
-
-    private Vector3 newGrav;
+    public static Maths.Triangle[] World = Array.Empty<Maths.Triangle>();
 
     /// <summary>
     /// Get a list of all the triangles which are close enough to the player (reject every triangle that we definitely aren't colliding with).
@@ -22,13 +12,13 @@ public class Collision
     /// </summary>
     /// <param name="pos">The player's current position</param>
     /// <param name="vel">The player's current velocity</param>
-    private List<Maths.Triangle> GetCloseTriangles(Vector3 pos, Vector3 vel)
+    private static List<Maths.Triangle> GetCloseTriangles(Vector3 pos, Vector3 vel)
     {
         // usually when calculating distances, you would use a Sqrt() operation
         // this is inefficient, so instead we do comparisons with all the distances squared (ignoring the square root step)
         
         List<Maths.Triangle> closeTriangles = new List<Maths.Triangle>();
-        foreach (var triangle in world)
+        foreach (var triangle in World)
         {
             // here we find an approximation of the distance from the player to this triangle
             // we do this by working out the maximum possible distance from the triangle ignoring its rotation
@@ -76,12 +66,15 @@ public class Collision
     }
     
     
-    
-    public (bool,Vector3) CollideAndSlide(Vector3 vel, Vector3 gravity)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="vel"></param>
+    /// <param name="gravity"></param>
+    /// <param name="grounded"></param>
+    /// <returns></returns>
+    public static (Vector3,Vector3) CollideAndSlide(Vector3 position, Vector3 vel, Vector3 gravity, Vector3 eRadius, ref bool grounded)
     {
-
-        checkGrounded = false;
-        
         float velocityLenSquared = Vector3.Dot(vel, vel);
         float gravityLenSquared = Vector3.Dot(gravity, gravity);
 
@@ -90,167 +83,208 @@ public class Collision
         Vector3 eSpaceVelocity = vel / eRadius;
 
         Vector3 finalPosition = eSpacePosition;
+
+        List<Maths.Triangle> toCheck;
+        
         
         // if we aren't moving, don't check horizontal collisions
         if (velocityLenSquared != 0.0f && !float.IsNaN(velocityLenSquared))
         {
 
             toCheck = GetCloseTriangles(finalPosition, eSpaceVelocity);
-            finalPosition = CollideWithWorld(eSpacePosition,eSpaceVelocity );
+            finalPosition = CollideWithWorld(eSpacePosition,eSpaceVelocity, ref toCheck);
             
         }
 
         grounded = true;
+        Vector3 newGrav = gravity;
         if (!float.IsNaN(gravityLenSquared)) // we may still want this step if gravity == 0.0 for the grounded check (walking off a platform)
         {
             eSpaceVelocity = gravity / eRadius;
             newGrav = eSpaceVelocity;
             float len = newGrav.Length;
             if (len > 0f) GravityDirection = newGrav.Normalized();
-
-            checkGrounded = true;
+            
             grounded = false;
    
             toCheck = GetCloseTriangles(finalPosition, eSpaceVelocity);
-            finalPosition = CollideWithWorld(finalPosition, eSpaceVelocity);
+            
+            #region Grounded Check
+
+            foreach (var triangle in toCheck)
+            {
+                if (grounded || !(Vector3.Dot(finalPosition - triangle.Center, GravityDirection) < 0f)) continue; // only check triangles in the direction of gravity
+                
+                // lambda for the intersection of the line (pos + lambda x direction) and the plane
+                float lambda = (triangle.Plane.Value - Vector3.Dot(triangle.Plane.Normal, finalPosition)) / Vector3.Dot(triangle.Plane.Normal, GravityDirection);
+                Vector3 point = finalPosition + lambda * GravityDirection;
+                Vector3 pointToPos = finalPosition - point;
+                if (!(pointToPos.LengthSquared < 1.5) || !Maths.CheckPointInTriangle(triangle, point)) continue;
+                
+                // hitting your head on a roof
+                if (GravityDirection.Y > 0)
+                {
+                    newGrav = Vector3.Zero;
+                    continue;
+                }
+
+                // hitting the ground
+                grounded = true;
+            }
+            
+            
+            #endregion
+
+            finalPosition = CollideWithWorld(finalPosition, eSpaceVelocity, ref toCheck);
         }
         
 
         finalPosition *= eRadius;
 
-        position = finalPosition;
-
-        return (grounded,newGrav*eRadius);
+        return (finalPosition,newGrav*eRadius);
     }
     
 
-    public Vector3 CollideWithWorld(Vector3 pos, Vector3 vel, int recursionDepth = 0)
+    public static Vector3 CollideWithWorld(Vector3 pos, Vector3 vel, ref List<Maths.Triangle> toCheck, int recursionDepth = 0)
     {
+        // base case of maximum accuracy (otherwise could go forever bouncing between 2 walls if we're stuck)
         if (recursionDepth > 5) return pos;
 
-        var (point,distance) = CheckCollision(pos, vel);
-        if (distance >= float.PositiveInfinity) return pos + vel; // if we didn't find any collisions, you are free to move
-
-        // collision
-
-        Vector3 destinationPoint = pos + vel;
-        Vector3 newBasePoint = pos;
         
-        // prevent player from getting too close to the object
-        if (distance <= Constants.CollisionAccuracy)
+        // find the closest point of intersection with the scene
+        var (intersection,distToIntersection) = SceneIntersection(pos, vel, ref toCheck);
+        
+        // if we never intersected with the scene, move
+        if (distToIntersection >= float.PositiveInfinity) return pos + vel;
+        
+        
+        #region Collision
+        
+        Vector3 destinationPoint = pos + vel;
+
+        // If player extremely close to scene
+        #region Move Player Out Of Scene
+
+        if (distToIntersection <= Constants.CollisionAccuracy)
         {
+            // redirect vector away from surface, and move the position here
             Vector3 v = vel.Normalized();
-            float newLength = (distance - Constants.CollisionAccuracy);
-            newBasePoint = pos + v*newLength;
+            float newLength = (distToIntersection - Constants.CollisionAccuracy);
+            pos += v*newLength;
 
             // move sliding plane back against the player
-            point -= Constants.CollisionAccuracy * v;
+            intersection -= Constants.CollisionAccuracy * v;
         }
+        
+        #endregion
+        
+        
+        // by here, we have moved until we are pushed up against the triangle and we now want to slide against the triangle
+        
+        Maths.Plane slidingPlane = Maths.Plane.FromNormalAndPoint((pos - intersection), intersection);
 
-        Vector3 slidePlaneOrigin = point;
-        Vector3 slidePlaneNormal = newBasePoint - point;
-        slidePlaneNormal.Normalize();
-        Maths.Plane slidingPlane = new Maths.Plane(slidePlaneNormal, Vector3.Dot(slidePlaneNormal, slidePlaneOrigin));
+        // from the intersection point to destination along the sliding plane
+        vel = (destinationPoint - slidingPlane.SignedDistance(destinationPoint) * slidingPlane.Normal) - intersection;
+        
+        // if we're already close enough to our destination, return
+        if (vel.LengthSquared < Constants.CollisionAccuracy*Constants.CollisionAccuracy) return pos;
 
-        Vector3 newDestinationPoint = destinationPoint - slidingPlane.SignedDistance(destinationPoint) * slidePlaneNormal;
-        Vector3 newVelocity = newDestinationPoint - point;
-
-        float newVelLenSquared = newVelocity.LengthSquared;
-        if (newVelLenSquared < Constants.CollisionAccuracy*Constants.CollisionAccuracy) return newBasePoint;
-        //if (newVelLenSquared > 1f) newVelocity /= MathF.Sqrt(newVelLenSquared);
-
-        checkGrounded = false;
-        return CollideWithWorld(newBasePoint,newVelocity, recursionDepth+1);
+        // recursively check for more collisions with the new position and velocity
+        return CollideWithWorld(pos,vel, ref toCheck, recursionDepth+1);
+        
+        #endregion
     }
 
-    public Vector3 GravityDirection = -Vector3.UnitY;
+    public static Vector3 GravityDirection = -Vector3.UnitY;
 
-    public (Vector3,float) CheckCollision(Vector3 positionE, Vector3 velocity)
+    /// <summary>
+    /// Check Intersections with the Entire Scene
+    /// </summary>
+    /// <param name="positionE">The Player's Position</param>
+    /// <param name="velocity"><The Player's Velocity/param>
+    /// <param name="checkGrounded">Set to true to run a check</param>
+    /// /// <returns>IntersectionPoint (closest point of intersection with all of the triangles), Distance (to intersection point)</returns>
+    public static (Vector3,float) SceneIntersection(Vector3 positionE, Vector3 velocity, ref List<Maths.Triangle> toCheck)
     {
-        // defining functions here so we don't have to pass in position and velocity
+        float velocitySquaredLength = velocity.LengthSquared;
         
-        bool CheckEdge(Vector3 p0, Vector3 p1, ref float t, ref Vector3 collisionPoint)
+        #region Local Functions
+        
+        // defining functions here so we don't have to pass in position and velocity, etc.
+
+        bool CheckPoint(Vector3 point, ref float lowestCollisionTime, ref Vector3 collisionPoint)
         {
-            Vector3 edge = p1 - p0;
-            Vector3 posToVertex = p0 - positionE;
-        
-            float edgeSquaredLength = Vector3.Dot(edge,edge);
-
-            float edgeDotVelocity = Vector3.Dot(edge,velocity);
-            float edgeDotBaseToVertex = Vector3.Dot(edge,posToVertex);
-
             float a, b, c;
-            // Calculate parameters for equation
-            a = edgeSquaredLength*-velocity.LengthSquared +
-                edgeDotVelocity*edgeDotVelocity;
-            b = edgeSquaredLength*(2f*Vector3.Dot(velocity,posToVertex))-
-                2f*edgeDotVelocity*edgeDotBaseToVertex;
-            c = edgeSquaredLength*(1f-posToVertex.LengthSquared)+
-                edgeDotBaseToVertex*edgeDotBaseToVertex;
-            // Does the swept sphere collide against infinite edge?
-        
-            if (Maths.GetLowestRoot(a,b,c, t, out float newT) && newT < t) {
-                // Check if intersection is within line segment:
-                float f=(edgeDotVelocity*newT-edgeDotBaseToVertex)/
-                        edgeSquaredLength;
-                if (f >= 0.0 && f <= 1.0) {
-                    // intersection took place within segment.
-                    t = newT;
-                    collisionPoint = p0 + f*edge;
-                    return true;
-                }
+            
+            a = velocitySquaredLength;
+            b = 2f*(Vector3.Dot(velocity,positionE-point));
+            c = (point-positionE).LengthSquared - 1f;
+            if (Maths.GetLowestRoot(a,b,c, lowestCollisionTime, out float collisionTime)) {
+                lowestCollisionTime = collisionTime;
+                collisionPoint = point;
+                return true;
             }
 
             return false;
         }
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        float nearestDistance = float.PositiveInfinity;
-        Vector3 intersectionPoint = Vector3.Zero;
 
-
-        float velocitySquaredLength = velocity.LengthSquared;
-
-        foreach (var triangle in toCheck)
+        bool CheckEdge(Vector3 p0, Vector3 p1, ref float lowestCollisionTime, ref Vector3 collisionPoint)
         {
+            // forming an infinite line which the 2 vertices lie on
+            Vector3 lineDir = p1 - p0;
+            Vector3 posToLine = p0 - positionE;
+        
+            // length squared of the edge between the 2 vertices
+            float lineLength = Vector3.Dot(lineDir,lineDir);
+            
+            float dirDotVel = Vector3.Dot(lineDir,velocity);
+            float lineDotPos = Vector3.Dot(lineDir,posToLine);
 
-            if (checkGrounded && !grounded && Vector3.Dot(positionE - triangle.Center, GravityDirection) < 0f) // only check triangles in the direction of gravity
-            {
-                // lambda for the intersection of the line (pos + lambda x direction) and the plane
-                float lambda = (triangle.Plane.Value - Vector3.Dot(triangle.Plane.Normal, positionE)) / Vector3.Dot(triangle.Plane.Normal, GravityDirection);
-                Vector3 point = positionE + lambda * GravityDirection;
-                Vector3 pointToPos = positionE - point;
-                if (pointToPos.LengthSquared < 1.5 && Maths.CheckPointInTriangle(triangle, point))
-                {
-                    if (GravityDirection.Y > 0)
-                    {
-                        newGrav = Vector3.Zero;
-                    }
-                    else
-                    {
-                        grounded = true;
-                    }
-                    
+            float a, b, c;
+            // Form quadratic for the 2 (or less) intersection points of the sphere and the line
+            // (the line being that which passes through both vertices of the edge)
+            a = lineLength*-velocity.LengthSquared + dirDotVel*dirDotVel;
+            b = lineLength*(2f*Vector3.Dot(velocity,posToLine))- 2f*dirDotVel*lineDotPos;
+            c = lineLength*(1f-posToLine.LengthSquared)+ lineDotPos*lineDotPos;
+
+            // if there was an intersection between 0 < t < collisionTime (where t is how far we are travelling across the velocity vector)
+            if (Maths.GetLowestRoot(a,b,c, lowestCollisionTime, out float collisionTime)) {
+
+                // "intersection" is a value between 0 and 1 representing where along the line the intersection took place
+                float intersection =(dirDotVel*collisionTime-lineDotPos)/ lineLength;
+
+                // if this intersection was on the triangle's edge (and not on the rest of this line, which stretches out to infinity)
+                if (intersection >= 0.0 && intersection <= 1.0) {
+                    lowestCollisionTime = collisionTime; // set a new lowest collision time
+                    collisionPoint = p0 + intersection*lineDir; // move along the line to the point of intersection
+                    return true;
                 }
             }
             
-            
-            float signedDistToTrianglePlane = triangle.Plane.SignedDistance(positionE);
-   
+            // otherwise, discard this result
+            return false;
+        }
 
+        #endregion
+
+        float nearestDistance = float.PositiveInfinity;
+        Vector3 intersectionPoint = Vector3.Zero;
+
+        foreach (var triangle in toCheck)
+        {
+            float signedDistToTrianglePlane = triangle.Plane.SignedDistance(positionE);
             float normalDotVelocity = Vector3.Dot(triangle.Plane.Normal, velocity);
 
-            float t0 = 0;
-            float t1 = 0;
+            // value between 0 and 1 representing how far along the velocity vector the collision happens
+            float collisionTime = 1f;
+            
+            // bounds of collisionTime
+            float timeMin = 0;
+            float timeMax = 0;
 
+            #region Collision Time Bounds
+            
             bool embeddedInPlane = false;
 
             if (MathF.Abs(normalDotVelocity) == 0.0f) // normal is perpendicular to velocity
@@ -259,122 +293,90 @@ public class Collision
 
                 // otherwise, this must be an embedded sphere, which can only
                 // collide against a vertex or an edge, not the whole triangle
-                t0 = 0f;
-                t1 = 1f;
+                timeMin = 0f;
+                timeMax = 1f;
                 embeddedInPlane = true;
             }
             else
             {
-                t0 = (1f - signedDistToTrianglePlane) / normalDotVelocity;
-                t1 = (-1f - signedDistToTrianglePlane) / normalDotVelocity;
+                timeMin = (1f - signedDistToTrianglePlane) / normalDotVelocity;
+                timeMax = (-1f - signedDistToTrianglePlane) / normalDotVelocity;
 
-                if (t0 > t1)
+                if (timeMin > timeMax)
                 {
-                    (t0, t1) = (t1, t0);
+                    (timeMin, timeMax) = (timeMax, timeMin);
                 } // swap so t0 is smaller;
 
-                if (t0 > 1f || t1 < 0f)
+                if (timeMin > 1f || timeMax < 0f)
                 {
                     // impossible for the sphere to collide with this triangle
-                    continue;
+                    continue; // continue to next triangle
                 }
 
-                t0 = Math.Clamp(t0, 0f, 1f);
-                t1 = Math.Clamp(t1, 0f, 1f);
-
+                // time represents distance across the velocity vector so impossible for this to be outside the range 0,1 if there was a collision
+                // (only check for collisions which lie along the velocity vector)
+                timeMin = Math.Clamp(timeMin, 0f, 1f);
             }
-
-                
+            
+            #endregion
+            
             Vector3 collisionPoint = Vector3.Zero;
             bool colliding = false;
-            float t = 1f;
 
-            if (!embeddedInPlane)
+            #region Touching Triangle
+            
+            if (!embeddedInPlane) // if there was a single intersection point, we can skip the heavier calculations
             {
-                Vector3 planeIntersectionPoint = (positionE - triangle.Plane.Normal) + t0 * velocity;
+                // find the single intersection point
+                Vector3 planeIntersectionPoint = (positionE - triangle.Plane.Normal) + timeMin * velocity;
 
+                // if this point actually lies within the triangle
                 if (Maths.CheckPointInTriangle(triangle, planeIntersectionPoint))
                 {
                     colliding = true;
-                    t = t0;
+                    collisionTime = timeMin;
                     collisionPoint = planeIntersectionPoint;
-          
                 }
-
             }
+            
+            #endregion
 
-
-
+            #region Points and Edges
             if (!colliding)
             {
-
-                float newT;
-
-                float a, b, c;
                 // Check against points:
-                a = velocitySquaredLength;
-                
-                #region Point 0
-                
-                // P0
-                b = 2f*(Vector3.Dot(velocity,positionE-triangle.Point0));
-                c = (triangle.Point0-positionE).LengthSquared - 1f;
-                if (Maths.GetLowestRoot(a,b,c, t, out newT) && newT < t) {
-                    t = newT;
-                    colliding = true;
-                    collisionPoint = triangle.Point0;
-                }
-                
-                #endregion
-                
-                #region Point 1
+                if(CheckPoint(triangle.Point0,ref collisionTime, ref collisionPoint)) colliding = true;
+                if(CheckPoint(triangle.Point1,ref collisionTime, ref collisionPoint)) colliding = true;
+                if(CheckPoint(triangle.Point2,ref collisionTime, ref collisionPoint)) colliding = true;
 
-                // P1
-                b = 2f*(Vector3.Dot(velocity,positionE-triangle.Point1));
-                c = (triangle.Point1-positionE).LengthSquared - 1f;
-                if (Maths.GetLowestRoot(a,b,c, t, out newT) && newT < t) {
-                    t = newT;
-                    colliding = true;
-                    collisionPoint = triangle.Point1;
-                }
-                
-                #endregion
-                
-                #region Point 2
-                
-                // P2
-                b = 2f*(Vector3.Dot(velocity,positionE-triangle.Point2));
-                c = (triangle.Point2-positionE).LengthSquared - 1f;
-                if (Maths.GetLowestRoot(a,b,c, t, out newT) && newT < t) {
-                    t = newT;
-                    colliding = true;
-                    collisionPoint = triangle.Point2;
-                }
-                
-                #endregion
-                
-                    
                 // Check against edges:
+                if (CheckEdge(triangle.Point0,triangle.Point1, ref collisionTime, ref collisionPoint)) colliding = true;
+                if (CheckEdge(triangle.Point1,triangle.Point2, ref collisionTime, ref collisionPoint)) colliding = true;
+                if (CheckEdge(triangle.Point2,triangle.Point0, ref collisionTime, ref collisionPoint)) colliding = true;
                 
-                if (CheckEdge(triangle.Point0,triangle.Point1, ref t, ref collisionPoint)) colliding = true;
-                if (CheckEdge(triangle.Point1,triangle.Point2, ref t, ref collisionPoint)) colliding = true;
-                if (CheckEdge(triangle.Point2,triangle.Point0, ref t, ref collisionPoint)) colliding = true;
-                
-
-
-
+                // After this, if there was a collision, collisionTime will be the minimum of all 3 points and all 3 edges,
+                // with collisionPoint being the closest to the player's current position
             }
+            #endregion
 
+            #region Final Checks
+            
+            // we have checked all valid ways of colliding, so if this is still false we must not be colliding with this triangle
             if (!colliding) continue;
                 
-            float distToCollision = t * MathF.Sqrt(velocitySquaredLength);
+            // was this the closest collision?
+            float distToCollision = collisionTime * MathF.Sqrt(velocitySquaredLength);
             if (!(distToCollision < nearestDistance)) continue; // if we already found a closer collision, ignore this
             
-            
+            // set this as the new closest collision and carry on
             nearestDistance = distToCollision;
             intersectionPoint = collisionPoint;
+            
+            #endregion
         }
 
+        // nearestDistance -> the closest distance to all of the triangles we checked
+        // intersectionPoint -> the point at which we are colliding with the closest of these triangles
         return (intersectionPoint, nearestDistance);
     }
 }

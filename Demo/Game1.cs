@@ -36,9 +36,6 @@ public class Game1 : Game
     
     bool mouseLocked = true;
     System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
-    
-    Collision collision;
-    
 
     protected override void Initialize()
     {
@@ -55,19 +52,15 @@ public class Game1 : Game
         player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
         player.UpdateProjection(shader);
         
-        collision = new Collision();
+        player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);
 
-        collision.position = player.Position;
-        collision.eRadius = new Vector3(0.2f,0.5f,0.2f);
-        
-        
-        
+
         AssimpContext importer = new AssimpContext();
         importer.SetConfig(new Assimp.Configs.NormalSmoothingAngleConfig(66.0f));
         var model = importer.ImportFile("Assets/dust2/source/de_dust2.obj",
             PostProcessPreset.TargetRealTimeMaximumQuality);
 
-        collision.world = Maths.GetTriangles(model,scenePosition,sceneRotation,collision.eRadius);
+        Collision.World = Maths.GetTriangles(model,scenePosition,sceneRotation,player.EllipsoidRadius);
 
 
         (scene,textures) = Model.FromFile("Assets/dust2/source/","de_dust2.obj", PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals);
@@ -126,7 +119,7 @@ public class Game1 : Game
 
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(shader, args, Window.KeyboardState, playerMousePos, collision);
+        player.Update(shader, args, Window.KeyboardState, playerMousePos);
         shader.Uniform3("cameraPos", player.Position);
 
         deltaCounter += args.Time;

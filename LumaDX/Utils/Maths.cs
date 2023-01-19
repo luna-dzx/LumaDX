@@ -227,6 +227,15 @@ public class Maths
     }
     
 
+    /// <summary>
+    /// Get the lowest root of a quadratic between 0 and maxR
+    /// </summary>
+    /// <param name="a">The x^2 coefficient of the quadratic</param>
+    /// <param name="b">The x coefficient of the quadratic</param>
+    /// <param name="c">The constant of the quadratic</param>
+    /// <param name="maxR">The maximum value of these roots</param>
+    /// <param name="root">The lowest root (or 0 if none are valid)</param>
+    /// <returns>Whether or not there was a valid solution</returns>
     public static bool GetLowestRoot(float a, float b, float c, float maxR,
         out float root)
     {

@@ -100,6 +100,7 @@ public class FirstPersonPlayer : Player
     private bool capPitch = true;
     private bool isCameraFlipped = false;
     
+    /*
     /// <summary>
     /// Move and rotate the player and camera, as well as updating the camera's view
     /// </summary>
@@ -136,13 +137,14 @@ public class FirstPersonPlayer : Player
         lastMousePos = relativeMousePos;
 
         return this;
-    }
+    }*/
     
     
     public bool NoClip;
     private Vector3 gravity = Vector3.UnitY*-0.1f;
+    public Vector3 EllipsoidRadius = new (0.2f,0.5f,0.2f);
     
-    public Player Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos, Collision collision)
+    public Player Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
         var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
         yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
@@ -175,8 +177,8 @@ public class FirstPersonPlayer : Player
         {
             Velocity = input.Z * directionFlat + input.X * (rightTransform * directionFlat);
             
-            collision.position = Position;
-            var (grounded,newGrav) = collision.CollideAndSlide(Velocity,gravity);
+            bool grounded = false;
+            (Position,var newGrav) = Collision.CollideAndSlide(Position,Velocity,gravity, EllipsoidRadius, ref grounded);
 
             gravity = newGrav;
             if (!grounded)
@@ -189,8 +191,6 @@ public class FirstPersonPlayer : Player
                 gravity = Vector3.Zero;
                 if (keyboardState.IsKeyDown(Keys.Space)) gravity += 0.04f*Vector3.UnitY;
             }
-            
-            Position = collision.position;
         }
         
         
@@ -215,10 +215,9 @@ public class FirstPersonPlayer : Player
     /// <param name="keyboardState"></param>
     /// <param name="relativeMousePos"></param>
     /// <returns></returns>
-    public FirstPersonPlayer Update(ShaderProgram shaderProgram, FrameEventArgs args, KeyboardState keyboardState,
-        Vector2 relativeMousePos, Collision collision)
+    public FirstPersonPlayer Update(ShaderProgram shaderProgram, FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
-        Update(args, keyboardState, relativeMousePos, collision);
+        Update(args, keyboardState, relativeMousePos);
         UpdateView(shaderProgram);
         return this;
     }

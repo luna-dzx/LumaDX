@@ -458,6 +458,13 @@ public class Model : VertexArray
         return this;
     }
 
+    public Model SetMatrix(ShaderProgram shader, Matrix4 matrix)
+    {
+        transform = matrix;
+        UpdateTransform(shader);
+        return this;
+    }
+
 
     /// <summary>
     /// Draw the object based on the current configuration

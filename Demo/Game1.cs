@@ -5,6 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace Demo;
 
@@ -33,7 +34,14 @@ public class Game1 : Game
     ImGuiController _controller;
     
     DepthMap depthMap;
-    
+
+    private Model point;
+
+
+    Portal portal1;
+    Portal portal2;
+
+
     bool mouseLocked = true;
     System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
 
@@ -49,10 +57,15 @@ public class Game1 : Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(-3.8289409f, -0.14746195f, -25.35519f))
             .SetDirection(new Vector3(0, 0, 1));
-        player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
+        //player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
+
+        player.Camera.SetDepth(0.005f,100f);
         player.UpdateProjection(shader);
-        
+
         player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);
+
+        portal1 = new Portal(Window.Size,new Vector3(-3.869124f, 0.1f-0.67031336f, -22.706884f), Vector3.Zero);
+        portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 0.1f+1.8358815f, 0.7277828f), Vector3.Zero);
 
 
         AssimpContext importer = new AssimpContext();
@@ -64,6 +77,9 @@ public class Game1 : Game
 
 
         (scene,textures) = Model.FromFile("Assets/dust2/source/","de_dust2.obj", PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals);
+
+
+        point = new Model(new float[3]);
         
         
         depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
@@ -72,6 +88,10 @@ public class Game1 : Game
         depthMap.UniformMatrix(shader, "lightSpaceMatrix");
         
         depthMap.UniformTexture("depthMap",shader,1);
+
+
+        portal1.FrameBuffer.UniformTexture("sceneSample", shader, 2);
+        portal2.FrameBuffer.UniformTexture("sceneSample", shader, 2);
         
 
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
@@ -82,7 +102,7 @@ public class Game1 : Game
         glState.DoCulling = true;
         glState.DepthMask = true;
 
-        shader.EnableGammaCorrection();
+        shader.DisableGammaCorrection();
 
 
         
@@ -90,8 +110,7 @@ public class Game1 : Game
             .UniformLight("light", light);
 
         glState.Blending = true;
-        
-        
+
         _controller = new ImGuiController(Window);
     }
 
@@ -120,7 +139,6 @@ public class Game1 : Game
     protected override void UpdateFrame(FrameEventArgs args)
     {
         player.Update(shader, args, Window.KeyboardState, playerMousePos);
-        shader.Uniform3("cameraPos", player.Position);
 
         deltaCounter += args.Time;
         framesCounted++;
@@ -131,6 +149,23 @@ public class Game1 : Game
             framesCounted = 0;
         }
         
+        portal1.Update(player.Camera.Position, player.Camera.Direction, portal2);
+        portal2.Update(player.Camera.Position, player.Camera.Direction, portal1);
+        
+        
+        bool t1 = portal1.Teleport(portal2,player, out Vector3 pos1);
+        bool t2 = portal2.Teleport(portal1,player, out Vector3 pos2);
+
+        if (t1)
+        {
+            player.Position = pos1;
+        }
+        else if (t2)
+        {
+            player.Position = pos2;
+        }
+        
+        Console.WriteLine(player.Position);
     }
 
     protected override void MouseMove(MouseMoveEventArgs moveInfo)
@@ -177,6 +212,9 @@ public class Game1 : Game
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        // we shouldn't really be doing this... but it looks good!
+        shader.EnableGammaCorrection();
+        
         #region Shadow Map
         
         // culling for better shadows
@@ -194,6 +232,16 @@ public class Game1 : Game
         
         #endregion
         
+        //shader.DisableGammaCorrection();
+
+        
+        #region Portal 2 Sample
+        portal2.StartSample();
+
+        shader.UniformMat4("lx_View", ref portal2.ViewMatrix);
+        shader.SetActive(ShaderType.FragmentShader, "scene");
+        shader.Uniform3("cameraPos",portal2.RelativeCameraPos);
+        
         glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
@@ -203,11 +251,87 @@ public class Game1 : Game
             scene[i].Draw(shader, scenePosition, sceneRotation, 1f);
         }
         
+        shader.UniformMat4("lx_View", ref player.Camera.ViewMatrix);
+
+        portal2.EndSample();
+        #endregion
+        
+        
+        #region Portal 1 Sample
+        portal1.StartSample();
+
+        shader.UniformMat4("lx_View", ref portal1.ViewMatrix);
+        shader.SetActive(ShaderType.FragmentShader, "scene");
+        shader.Uniform3("cameraPos",portal1.RelativeCameraPos);
+        
+        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
+        glState.Clear();
+
+        for (int i = 0; i < scene.Length; i++)
+        {
+            textures[i].Use();
+            scene[i].Draw(shader, scenePosition, sceneRotation, 1f);
+        }
+        
+        shader.UniformMat4("lx_View", ref player.Camera.ViewMatrix);
+
+        portal1.EndSample();
+        #endregion
+        
+
+
+        shader.SetActive(ShaderType.FragmentShader, "scene");
+        shader.Uniform3("cameraPos", player.Position);
+        
+        
+        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
+        glState.Clear();
+
+        for (int i = 0; i < scene.Length; i++)
+        {
+            textures[i].Use();
+            scene[i].Draw(shader, scenePosition, sceneRotation, 1f);
+        }
+
+        #region Draw Portals
+        
+        GL.ActiveTexture(TextureUnit.Texture0);
+        textures[0].Use();
+        
+        GL.ActiveTexture(TextureUnit.Texture2);
+
+        shader.SetActive(ShaderType.FragmentShader, "portal");
+        
+        portal1.FrameBuffer.UseTexture(0);
+        portal1.Draw(shader);
+        
+        portal2.FrameBuffer.UseTexture(0);
+        portal2.Draw(shader);
+        
+        
+
+        
+        /*
+        glState.DepthTest = false;
+        shader.SetActive(ShaderType.FragmentShader, "point");
+        GL.PointSize(10f);
+        point.Draw(shader,_triangle0.Point0, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,_triangle0.Point1, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,_triangle0.Point2, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        
+        point.Draw(shader,_triangle1.Point0, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,_triangle1.Point1, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,_triangle1.Point2, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        glState.DepthTest = true;
+        */
+
+        #endregion
+        
         #region UI
 
         glState.DepthTest = false;
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
-        textRenderer.Draw(""+frameRate, 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
+        //textRenderer.Draw(""+frameRate, 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
         glState.DepthTest = true;
         
         glState.SaveState();
@@ -234,7 +358,7 @@ public class Game1 : Game
         glState.LoadState();
         
         #endregion
-        
+
         Window.SwapBuffers();
     }
 
@@ -252,6 +376,9 @@ public class Game1 : Game
         shader.Dispose();
         
         depthMap.Dispose();
+
+        portal1.Dispose();
+        portal2.Dispose();
         
         textRenderer.Dispose();
         _controller.Dispose();

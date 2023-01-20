@@ -180,6 +180,17 @@ public class FrameBuffer : IDisposable
         return this;
     }
     
+    // TEMPORARY THING, REMOVE THIS PLS
+    public FrameBuffer UniformTexture(string name, ShaderProgram shaderProgram, int textureUnit = 0)
+    {
+        shaderProgram.Use();
+        GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
+        GL.BindTexture(TextureTarget.Texture2D,colourAttachments[0].Handle);
+        shaderProgram.Uniform1(name, textureUnit);
+        return this;
+    }
+    
+    
     public FrameBuffer UniformTextures(int shader, string[] names, int offset=0)
     {
         GL.UseProgram(shader);

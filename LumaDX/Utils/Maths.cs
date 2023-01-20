@@ -217,15 +217,18 @@ public class Maths
         Vector3 cp2 = Vector3.Cross(b - a, p2 - a);
         return Vector3.Dot(cp1, cp2) >= 0;
     }
-
-    public static bool CheckPointInTriangle(Triangle triangle, Vector3 point)
+    
+    
+    public static bool CheckPointInTriangle(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 point)
     {
-        return (SameSide(point, triangle.Point0, triangle.Point1, triangle.Point2)&&
-                SameSide(point, triangle.Point1, triangle.Point0, triangle.Point2)&&
-                SameSide(point, triangle.Point2, triangle.Point0, triangle.Point1)
+        return (SameSide(point, p0, p1, p2)&&
+                SameSide(point, p1, p0, p2)&&
+                SameSide(point, p2, p0, p1)
             );
     }
-    
+
+    public static bool CheckPointInTriangle(Triangle triangle, Vector3 point) => CheckPointInTriangle(triangle.Point0,triangle.Point1,triangle.Point2,point);
+
 
     /// <summary>
     /// Get the lowest root of a quadratic between 0 and maxR

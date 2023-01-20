@@ -199,11 +199,10 @@ public static class Collision
     /// <summary>
     /// Check Intersections with the Entire Scene
     /// </summary>
-    /// <param name="positionE">The Player's Position</param>
+    /// <param name="position">The Player's Position</param>
     /// <param name="velocity"><The Player's Velocity/param>
-    /// <param name="checkGrounded">Set to true to run a check</param>
     /// /// <returns>IntersectionPoint (closest point of intersection with all of the triangles), Distance (to intersection point)</returns>
-    public static (Vector3,float) SceneIntersection(Vector3 positionE, Vector3 velocity, ref List<Maths.Triangle> toCheck)
+    public static (Vector3,float) SceneIntersection(Vector3 position, Vector3 velocity, ref List<Maths.Triangle> toCheck)
     {
         float velocitySquaredLength = velocity.LengthSquared;
         
@@ -216,8 +215,8 @@ public static class Collision
             float a, b, c;
             
             a = velocitySquaredLength;
-            b = 2f*(Vector3.Dot(velocity,positionE-point));
-            c = (point-positionE).LengthSquared - 1f;
+            b = 2f*(Vector3.Dot(velocity,position-point));
+            c = (point-position).LengthSquared - 1f;
             if (Maths.GetLowestRoot(a,b,c, lowestCollisionTime, out float collisionTime)) {
                 lowestCollisionTime = collisionTime;
                 collisionPoint = point;
@@ -232,7 +231,7 @@ public static class Collision
         {
             // forming an infinite line which the 2 vertices lie on
             Vector3 lineDir = p1 - p0;
-            Vector3 posToLine = p0 - positionE;
+            Vector3 posToLine = p0 - position;
         
             // length squared of the edge between the 2 vertices
             float lineLength = Vector3.Dot(lineDir,lineDir);
@@ -272,7 +271,7 @@ public static class Collision
 
         foreach (var triangle in toCheck)
         {
-            float signedDistToTrianglePlane = triangle.Plane.SignedDistance(positionE);
+            float signedDistToTrianglePlane = triangle.Plane.SignedDistance(position);
             float normalDotVelocity = Vector3.Dot(triangle.Plane.Normal, velocity);
 
             // value between 0 and 1 representing how far along the velocity vector the collision happens
@@ -327,7 +326,7 @@ public static class Collision
             if (!embeddedInPlane) // if there was a single intersection point, we can skip the heavier calculations
             {
                 // find the single intersection point
-                Vector3 planeIntersectionPoint = (positionE - triangle.Plane.Normal) + timeMin * velocity;
+                Vector3 planeIntersectionPoint = (position - triangle.Plane.Normal) + timeMin * velocity;
 
                 // if this point actually lies within the triangle
                 if (Maths.CheckPointInTriangle(triangle, planeIntersectionPoint))

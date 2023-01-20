@@ -11,6 +11,11 @@ vec3 lx_GammaCorrect(vec3 colour, float gamma)
     return pow(colour, vec3(gamma));
 }
 
+float lx_GammaCorrect(float value, float gamma)
+{
+    return pow(value, gamma);
+}
+
 float lx_Diffuse(in vec3 normal, in vec3 fragPos, in vec3 lightPos)
 {
     return max(dot(normal, lightPos - fragPos), 0.0);

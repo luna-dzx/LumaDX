@@ -77,6 +77,7 @@ public class FirstPersonPlayer : Player
     public FirstPersonPlayer SetPosition(Vector3 position)
     {
         Position = position;
+        LastPosition = Position;
         return this;
     }
         
@@ -139,6 +140,8 @@ public class FirstPersonPlayer : Player
         return this;
     }*/
     
+    public Vector3 LastPosition = Vector3.Zero;
+    
     
     public bool NoClip;
     private Vector3 gravity = Vector3.UnitY*-0.1f;
@@ -146,6 +149,8 @@ public class FirstPersonPlayer : Player
     
     public Player Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
+        LastPosition = Position;
+        
         var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
         yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
         pitch += (relativeMousePos.Y - lastMousePos.Y) * Sensitivity;

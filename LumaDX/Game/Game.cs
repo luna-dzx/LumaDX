@@ -49,10 +49,12 @@ public abstract class Game : IDisposable
     /// <param name="nativeWindowSettings"></param>
     /// <param name="debugging">whether to attach the more detailed debug callback to OpenGLs error output</param>
     /// <returns>window object for ease of use</returns>
-    public GameWindow InitWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, bool debugging = true)
+    public GameWindow InitWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, bool debugging = true, VSyncMode vsync = VSyncMode.On)
     {
         Window = new GameWindow(gameWindowSettings, nativeWindowSettings);
         SetFunctions();
+
+        Window.VSync = vsync;
 
         if (debugging)
         {

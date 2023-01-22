@@ -188,13 +188,13 @@ public class FirstPersonPlayer : Player
             gravity = newGrav;
             if (!grounded)
             {
-                gravity -= Vector3.UnitY * 0.15f * (float)args.Time;
+                gravity -= Vector3.UnitY * 0.3f * (float)args.Time;
                 if (Vector3.Dot(gravity, gravity) > 0.04f) gravity = Vector3.UnitY * -0.2f;
             }
             else
             {
                 gravity = Vector3.Zero;
-                if (keyboardState.IsKeyDown(Keys.Space)) gravity += 0.04f*Vector3.UnitY;
+                if (keyboardState.IsKeyDown(Keys.Space)) gravity += 0.08f*Vector3.UnitY;
             }
         }
         

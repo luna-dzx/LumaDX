@@ -29,8 +29,6 @@ public class Game1 : Game
     Objects.Light light;
     Objects.Material material;
 
-    private Vector3 rotation = Vector3.Zero;
-    
     ImGuiController _controller;
     
     DepthMap depthMap;
@@ -57,13 +55,13 @@ public class Game1 : Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(-3.8289409f, -0.14746195f, -25.35519f))
             .SetDirection(new Vector3(0, 0, 1));
-        //player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
+        player.Camera.SetFov(MathHelper.DegreesToRadians(80f));
         player.UpdateProjection(shader);
 
         player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);
 
-        portal1 = new Portal(Window.Size,new Vector3(-3.869124f, 0.1f-0.6703f, -22.706884f), Vector3.Zero);
-        portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 0.1f+1.8359f, 0.7277828f), Vector3.Zero);
+        portal1 = new Portal(Window.Size,new Vector3(-3.869124f, -0.679837f, -22.706884f), Vector3.Zero);
+        portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 1.8839195f, 0.7277828f), Vector3.Zero);
 
 
         AssimpContext importer = new AssimpContext();
@@ -179,11 +177,6 @@ public class Game1 : Game
 
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
     {
-        if (k.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
-        if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
-        if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
-        if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
-        
         if (k.IsKeyPressed(Keys.Enter)) // unlock mouse
         {
             if (mouseLocked)

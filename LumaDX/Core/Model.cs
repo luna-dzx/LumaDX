@@ -207,10 +207,7 @@ public class Model : VertexArray
         AssimpContext importer = new AssimpContext();
 
         scene = importer.ImportFile(directory+fileName, postProcessFlags);//,PostProcessPreset.TargetRealTimeMaximumQuality);
-
         
-        int vertexCount = scene.Meshes.Sum(mesh => mesh.VertexCount);
-        int indexCount = scene.Meshes.Sum(mesh => mesh.Faces.Sum(face => face.IndexCount));
 
 
         Model[] models = new Model[scene.Meshes.Count];
@@ -219,6 +216,10 @@ public class Model : VertexArray
 
         foreach (Mesh mesh in scene.Meshes)
         {
+            int vertexCount = mesh.VertexCount;
+            int indexCount = mesh.Faces.Sum(face => face.IndexCount);
+            
+            
             textures[meshCount] = new Texture(directory+scene.Materials[mesh.MaterialIndex].TextureDiffuse.FilePath, 0);
             
             

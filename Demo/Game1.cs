@@ -59,7 +59,7 @@ public class Game1 : Game
             .SetDirection(new Vector3(0, 0, 1));
         //player.Camera.SetFov(MathHelper.DegreesToRadians(90f));
 
-        player.Camera.SetDepth(0.005f,100f);
+        player.Camera.SetDepth(0.1f,100f);
         player.UpdateProjection(shader);
 
         player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);

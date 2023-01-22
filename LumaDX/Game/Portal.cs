@@ -110,9 +110,6 @@ public class Portal : IDisposable
             // then we can't have teleported
             return false;
         }
-        
-        Console.WriteLine("SideSwap");
-        
 
         var pos = player.Position;
 
@@ -123,7 +120,6 @@ public class Portal : IDisposable
 
         if ((Maths.CheckPointInTriangle(_triangle0,pointPos) || Maths.CheckPointInTriangle(_triangle1,pointPos)))
         {
-            Console.WriteLine("Teleport");
             Vector3 primPos = (Transformation.Inverted() * new Vector4(player.Position - Position,1f)).Xyz;
             var relativeVec = (destination.Transformation * new Vector4(primPos,1f)).Xyz;
             position = destination.Position + relativeVec;

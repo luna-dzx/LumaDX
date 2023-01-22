@@ -12,9 +12,14 @@ uniform vec3 cameraPos;
 
 uniform sampler2D sceneSample;
 
+uniform vec4 clip_plane;
+// -1 or +1
+uniform int clip_side;
+
 [scene]
 void main()
 {
+    if (dot(clip_plane.xyz,fragPos) * clip_side < clip_plane.w * clip_side) {discard;}
     float shadow = lx_ShadowCalculation(depthMap,fragPosLightSpace,1.0,4,20.0);
     lx_FragColour = lx_Colour(lx_Phong(normal, fragPos, cameraPos, texCoords, material, light, shadow));
 }

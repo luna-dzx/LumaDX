@@ -154,6 +154,8 @@ public class Maths
             return (Vector3.Dot(Normal, position) - Value);
         }
 
+        public Vector4 AsVector() => new (Normal, Value);
+        
 
     }
     

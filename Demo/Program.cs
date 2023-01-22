@@ -6,7 +6,7 @@ namespace Demo;
 
 internal static class Program
 {
-    private const int FPS = 60;
+    private const int FPS = 144;
 
 
     public static void Main(string[] args)

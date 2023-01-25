@@ -61,3 +61,16 @@ mat3 lx_ConstructMatrix(vec3 a, vec3 b, vec3 c)
     matrix[2] = c;
     return matrix;
 }
+
+mat4 lx_CreateTransform(vec3 pos, vec3 rot, vec3 scale)
+{
+    vec3 sr = sin(rot);
+    vec3 cr = cos(rot);
+
+    return mat4(
+        scale.x * cr.y * cr.z, scale.x * cr.y * sr.z, scale.x * -sr.y, 0.0,
+        scale.y * (sr.x * sr.y * cr.z + cr.x * -sr.z), scale.y * (sr.x * sr.y * sr.z + cr.x * cr.z), scale.y * sr.x * cr.y, 0.0,
+        scale.z * (cr.x * sr.y * cr.z + -sr.x * -sr.z), scale.z * (cr.x * sr.y * sr.z + -sr.x * cr.z), scale.z * cr.x * cr.y, 0.0,
+        pos.x, pos.y, pos.z, 1.0
+    );
+}

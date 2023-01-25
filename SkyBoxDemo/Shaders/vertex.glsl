@@ -2,18 +2,32 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in vec3 aNormal;
-layout (location = 3) in mat4 instanceMatrix;
 
 out vec3 fragPos;
 out vec3 normal;
 out vec3 textureDir;
+out vec2 texCoords;
+flat out int instanceId;
+
+uniform float time;
+uniform int dingusCount;
 
 [scene]
 void main()
 {
+    instanceId = gl_InstanceID;
+    //             \/ tau
+    float theta = 6.28318530718  * float(gl_InstanceID) / float(dingusCount % 35);
+    vec3 pos = vec3(sin(theta + 0.1 * time) * 20.0, 0.1 * float(gl_InstanceID) - 0.05 * float(dingusCount), cos(theta + 0.1 * time) * 20.0);
+    vec3 rot = vec3(-1.57079632679, theta * 2.0 + time, 0.0);
+    vec3 scale = vec3(0.08);
+    mat4 instanceMatrix = lx_CreateTransform(pos,rot,scale);
+
     normal = lx_NormalFix(lx_Model * instanceMatrix,aNormal);
     fragPos = vec3(lx_Model * instanceMatrix * vec4(aPos, 1.0));
     gl_Position = lx_Transform * instanceMatrix * vec4(aPos , 1.0);
+    
+    texCoords = aTexCoords;
 }
 
 [skyBox]

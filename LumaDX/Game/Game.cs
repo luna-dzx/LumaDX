@@ -113,6 +113,9 @@ public abstract class Game : IDisposable
     /// <returns>mouse position</returns>
     public Vector2 GetRelativeMouse() => Window.MousePosition - startMousePos;
     
+    Vector2 playerMousePos = Vector2.Zero;
+    public Vector2 GetPlayerMousePos() => playerMousePos;
+    
     
     #region Functions To Override
     
@@ -133,6 +136,12 @@ public abstract class Game : IDisposable
         Initialize();
         Load();
         SetMouseOrigin();
+    }
+
+    private void ExtraMouseMoveFunctions(MouseMoveEventArgs moveInfo)
+    {
+        if (MouseLocked) { playerMousePos += moveInfo.Delta; }
+        MouseMove(moveInfo);
     }
     
     
@@ -329,7 +338,7 @@ public abstract class Game : IDisposable
         Window.MouseDown += MouseButton;
         Window.MouseEnter += MouseEnter;
         Window.MouseLeave += MouseLeave;
-        Window.MouseMove += MouseMove;
+        Window.MouseMove += ExtraMouseMoveFunctions;
         Window.MouseUp += MouseUp;
         Window.MouseWheel += MouseScroll;
         Window.TextInput += TextInput;

@@ -21,16 +21,18 @@ public class Game1 : Game
     
     const string AssetLocation = "Assets/";
     Texture skyBox;
+    Texture texture;
 
-    private const int backpackCount = 100;
-    Matrix4[] backpackTransforms;
-    Model backpack;
+    int dingusCount = 1806;
+
+    Model dingus;
     Model cube;
 
     FirstPersonPlayer player;
     
     float refractionRatio = 1f / 1.33f;
 
+    float fieldOfView = MathHelper.DegreesToRadians(80f);
 
     protected override void Initialize()
     {
@@ -42,8 +44,6 @@ public class Game1 : Game
         
         LockMouse();
 
-
-
         shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl",
             ShaderLocation + "fragment.glsl",
@@ -54,48 +54,43 @@ public class Game1 : Game
             .SetPosition(new Vector3(0f,0f,5f))
             .SetDirection(-Vector3.UnitZ);
         player.NoClip = true;
+        
+        player.Camera.SetFov(fieldOfView);
+        player.UpdateProjection(shader);
 
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
-        
-        backpack = Model.FromFile(AssetLocation + "backpack/", "backpack.obj", out _);
 
-
-        backpackTransforms = new Matrix4[backpackCount];
-        for (int i = 0; i < backpackCount; i++)
-        {
-            float angle = 5f * i * MathF.Tau / backpackCount;
-            backpackTransforms[i] = Maths.CreateTransformation(
-                new Vector3(MathF.Sin(angle*3f) * 20f, MathF.Sin(angle) * 3f,MathF.Cos(angle*3f) * 20f),
-                new Vector3(0f,angle,0f),
-                0.8f * Vector3.One);
-        }
+        texture = new Texture(AssetLocation + "/dingus-the-cat/textures/dingus_nowhiskers.jpg", 1, flipOnLoad: false);
+        dingus = Model.FromFile(AssetLocation + "dingus-the-cat/source/", "dingus.fbx", out _);
     }
 
     protected override void Load()
     {
         shader.UniformTexture("skyBox", skyBox);
+        shader.UniformTexture("dingus", texture);
         player.UpdateProjection(shader);
-
-        backpack.LoadMatrix(3, backpackTransforms, 4, 4, 1);
+        shader.Uniform1("dingusCount", dingusCount);
     }
     
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);
 
-    Vector2 playerMousePos = Vector2.Zero;
-    protected override void MouseMove(MouseMoveEventArgs moveInfo)
-    {
-        if (MouseLocked)
-        {
-            playerMousePos += moveInfo.Delta;
-        }
-    }
 
+    double time = 0.0;
+    
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(shader, args, Window.KeyboardState, playerMousePos);
+        player.UpdateCamera(shader, args, GetPlayerMousePos());
         shader.Uniform3("cameraPos", player.Camera.Position);
         shader.Uniform1("refractionRatio", refractionRatio);
+
+        time += args.Time;
+        shader.Uniform1("time", (float)time);
+        
+        shader.Uniform1("dingusCount", dingusCount);
+        
+        player.Camera.SetFov(fieldOfView);
+        player.UpdateProjection(shader);
     }
 
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
@@ -115,10 +110,11 @@ public class Game1 : Game
         glState.DepthFunc = DepthFunction.Lequal;
 
         skyBox.Use();
+        texture.Use();
 
         glState.DoCulling = true;
         shader.SetActive("scene");
-        backpack.Draw(backpackCount);
+        dingus.Draw(dingusCount);
         
         
         glState.DoCulling = false;
@@ -136,6 +132,8 @@ public class Game1 : Game
         if (!imGui.IsFocused()) LockMouse();;
         
         ImGui.SliderFloat("Refraction Ratio", ref refractionRatio, 0f, 1f);
+        ImGui.SliderInt("Num. Dingus", ref dingusCount, 1, 3000);
+        ImGui.SliderFloat("Field of View", ref fieldOfView, 0.01f * MathF.PI, 0.99f * MathF.PI);
         imGui.Render();
         
         #endregion
@@ -149,8 +147,11 @@ public class Game1 : Game
         GL.BindVertexArray(0);
         GL.UseProgram(0);
         
-        backpack.Dispose();
+        dingus.Dispose();
         cube.Dispose();
+        
+        skyBox.Dispose();
+        texture.Dispose();
         
         shader.Dispose();
     }

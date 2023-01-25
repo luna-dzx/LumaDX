@@ -149,12 +149,11 @@ public class FirstPersonPlayer : Player
     public bool NoClip;
     private Vector3 gravity = Vector3.UnitY*-0.1f;
     public Vector3 EllipsoidRadius = new (0.2f,0.5f,0.2f);
-    
-    public Player Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
+
+    private Vector3 directionFlat;
+
+    public Player UpdateCamera(FrameEventArgs args, Vector2 relativeMousePos)
     {
-        LastPosition = Position;
-        
-        var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
         yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
         pitch += (relativeMousePos.Y - lastMousePos.Y) * Sensitivity;
 
@@ -166,12 +165,25 @@ public class FirstPersonPlayer : Player
 
         Camera.Direction = Matrix3.CreateRotationY(MathHelper.DegreesToRadians(yaw)) * Matrix3.CreateRotationX(MathHelper.DegreesToRadians(pitch)) * -Vector3.UnitZ;
         
-        Vector3 up = ((keyboardState.IsKeyDown(Keys.Space) ?1:0) - (keyboardState.IsKeyDown(Keys.LeftControl) ?1:0)) * Speed * (float)args.Time* Vector3.UnitY;
         
-        Vector3 directionFlat = Camera.Direction;
+        directionFlat = Camera.Direction;
         directionFlat.Y = 0;
         directionFlat.Normalize();
+        
+        isCameraFlipped = (Math.Abs(pitch) + 90) % 360 >= 180;
+        
+        lastMousePos = relativeMousePos;
 
+        return this;
+    }
+    
+    
+    public Player Update(FrameEventArgs args, KeyboardState keyboardState)
+    {
+        LastPosition = Position;
+        
+        var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
+        Vector3 up = ((keyboardState.IsKeyDown(Keys.Space) ?1:0) - (keyboardState.IsKeyDown(Keys.LeftControl) ?1:0)) * Speed * (float)args.Time* Vector3.UnitY;
         
 
         if (NoClip)
@@ -205,10 +217,6 @@ public class FirstPersonPlayer : Player
         
         Camera.Position = Position + new Vector3(0f, 0.25f, 0f);
 
-        isCameraFlipped = (Math.Abs(pitch) + 90) % 360 >= 180;
-        
-        lastMousePos = relativeMousePos;
-
         return this;
     }
     
@@ -225,10 +233,27 @@ public class FirstPersonPlayer : Player
     /// <returns></returns>
     public FirstPersonPlayer Update(ShaderProgram shaderProgram, FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
-        Update(args, keyboardState, relativeMousePos);
+        UpdateCamera(args, relativeMousePos);
+        Update(args, keyboardState);
         UpdateView(shaderProgram);
         return this;
     }
+    
+    
+    public FirstPersonPlayer UpdateCamera(ShaderProgram shaderProgram, FrameEventArgs args, Vector2 relativeMousePos)
+    {
+        UpdateCamera(args, relativeMousePos);
+        UpdateView(shaderProgram);
+        return this;
+    }
+    
+    public void Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
+    {
+        UpdateCamera(args, relativeMousePos);
+        Update(args, keyboardState);
+    }
+    
+    
 
     /// <summary>
     /// Direction handled in the player's camera

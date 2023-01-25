@@ -394,8 +394,19 @@ public class ShaderProgram : IDisposable
 
         return this;
     }
-    
-    
+
+    /// <summary>
+    /// Set the active shader within both the Vertex and Fragment shader files at once
+    /// </summary>
+    /// <param name="sectionName">Shared name of the section in each the Vertex and Fragment shader files</param>
+    public ShaderProgram SetActive(string sectionName)
+    {
+        SetActive(ShaderType.VertexShader, sectionName);
+        SetActive(ShaderType.FragmentShader, sectionName);
+        return this;
+    }
+
+
     /// <summary>
     /// Remove shader program from video memory
     /// </summary>

@@ -321,7 +321,11 @@ namespace LumaDX
                 unchecked((int)command.VtxOffset)
             );
         }
-        
+
+        private bool focusQueued = false;
+
+        public bool IsFocused(ImGuiFocusedFlags flags = ImGuiFocusedFlags.AnyWindow) => ImGui.IsWindowFocused(flags);
+        public void FocusWindow() => focusQueued = true;
 
         /// <summary>
         /// Updates ImGui input and IO configuration state.
@@ -362,8 +366,15 @@ namespace LumaDX
             io.KeyShift = KeyboardState.IsKeyDown(Keys.LeftShift) || KeyboardState.IsKeyDown(Keys.RightShift);
             io.KeySuper = KeyboardState.IsKeyDown(Keys.LeftSuper) || KeyboardState.IsKeyDown(Keys.RightSuper);
             #endregion
+            
 
             ImGui.NewFrame();
+            
+            if (focusQueued) // if there is a focus queued, do this next frame
+            {
+                ImGui.SetWindowFocus();
+                focusQueued = false;
+            }
         }
 
 

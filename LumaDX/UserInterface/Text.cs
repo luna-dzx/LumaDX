@@ -26,6 +26,7 @@ public class TextRenderer : IDisposable
         
         
         Library ft = new Library();
+        // TODO: Change this :|
         Face face = new Face(ft, "Assets/fonts/IBMPlexSans-Regular.ttf", 0);
         face.SetPixelSizes(0,FontSize); // set height to FontSize and allow the width to automatically calculate
         

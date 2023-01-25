@@ -36,10 +36,20 @@ public abstract class Game : IDisposable
     
     private static DebugProc _debugProcCallback = DebugCallback;
     private static GCHandle _debugProcCallbackHandle;
+
+    public bool MouseLocked = false;
+
+    public void LockMouse()
+    {
+        MouseLocked = true;
+        Window.CursorState = CursorState.Grabbed;
+    }
     
-    
-    
-    
+    public void UnlockMouse()
+    {
+        MouseLocked = false;
+        Window.CursorState = CursorState.Normal;
+    }
     
 
     /// <summary>
@@ -67,7 +77,7 @@ public abstract class Game : IDisposable
 
         return Window;
     }
-    
+
     /// <summary>
     /// Start the window as well as the game functions (such as the main render loop)
     /// </summary>
@@ -280,6 +290,7 @@ public abstract class Game : IDisposable
     /// <param name="args">contains delta time</param>
     private void ExtraPerFrameFunctions(FrameEventArgs args)
     {
+        MouseLocked = Window.CursorState == CursorState.Grabbed;
         KeyboardHandling(args,Window.KeyboardState);
         MouseHandling(args,Window.MouseState);
     }

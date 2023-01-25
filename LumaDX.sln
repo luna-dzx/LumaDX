@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumaDX", "LumaDX\LumaDX.csproj", "{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyBoxDemo", "SkyBoxDemo\SkyBoxDemo.csproj", "{54629887-1394-44CE-8457-B28251BC1AFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54629887-1394-44CE-8457-B28251BC1AFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54629887-1394-44CE-8457-B28251BC1AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

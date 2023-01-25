@@ -61,7 +61,7 @@ public class Game1 : Game
         player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);
 
         portal1 = new Portal(Window.Size,new Vector3(-3.869124f, -0.679837f, -22.706884f), Vector3.Zero);
-        portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 1.8839195f, 0.7277828f), Vector3.Zero);
+        portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 1.8839195f, 0.7277828f), new Vector3(0f, MathF.PI/2f, 0f));
 
 
         AssimpContext importer = new AssimpContext();
@@ -145,18 +145,20 @@ public class Game1 : Game
         }
 
 
-        bool t1 = portal1.Teleport(portal2,player, out Vector3 pos1);
-        bool t2 = portal2.Teleport(portal1,player, out Vector3 pos2);
+        bool t1 = portal1.Teleport(portal2,player, out Vector3 pos1, out Vector3 dir1);
+        bool t2 = portal2.Teleport(portal1,player, out Vector3 pos2, out Vector3 dir2);
 
         if (t1)
         {
             player.Position = pos1;
+            player.SetDirection(dir1);
         }
         else if (t2)
         {
             player.Position = pos2;
+            player.SetDirection(dir2);
         }
-        
+
 
         player.Camera.Position = player.Position + new Vector3(0f, 0.25f, 0f);
         player.UpdateView(shader);
@@ -201,10 +203,11 @@ public class Game1 : Game
         }
     }
 
+    private bool clipSideThing = false;
+
     protected override void RenderFrame(FrameEventArgs args)
     {
         shader.Uniform4("clip_plane", Vector4.Zero);
-        // we shouldn't really be doing this... but it looks good!
         shader.EnableGammaCorrection();
         
         #region Shadow Map
@@ -223,15 +226,15 @@ public class Game1 : Game
         GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
         
         #endregion
-
-        //shader.DisableGammaCorrection();
+        
 
         #region Portal 2 Sample
 
         portal2.StartSample();
         
         shader.Uniform4("clip_plane", portal1.ClippingPlane.AsVector());
-        shader.Uniform1("clip_side", Vector3.Dot(portal2.Position - player.Camera.Position, portal1.ClippingPlane.Normal) > 0 ? 1:-1);   
+        shader.Uniform1("clip_side", Vector3.Dot(portal2.Position - player.Camera.Position, portal2.ClippingPlane.Normal) < 0 ? 1:-1);
+
 
         shader.UniformMat4("lx_View", ref portal2.ViewMatrix);
         shader.SetActive(ShaderType.FragmentShader, "scene");
@@ -256,7 +259,7 @@ public class Game1 : Game
         portal1.StartSample();
         
         shader.Uniform4("clip_plane", portal2.ClippingPlane.AsVector());
-        shader.Uniform1("clip_side", Vector3.Dot(portal1.Position - player.Camera.Position, portal2.ClippingPlane.Normal) > 0 ? 1:-1);
+        shader.Uniform1("clip_side", Vector3.Dot(portal1.Position - player.Camera.Position, portal1.ClippingPlane.Normal) < 0 ? 1:-1);
 
         shader.UniformMat4("lx_View", ref portal1.ViewMatrix);
         shader.SetActive(ShaderType.FragmentShader, "scene");
@@ -316,7 +319,18 @@ public class Game1 : Game
         glState.DepthTest = false;
         shader.SetActive(ShaderType.FragmentShader, "point");
         GL.PointSize(10f);
-        point.Draw(shader,portal2.Position, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        
+        portal2.Transformation.Transpose();
+        
+        var p0 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[0], PresetMesh.Square.Vertices[1], PresetMesh.Square.Vertices[2],1f);
+        var p1 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[3], PresetMesh.Square.Vertices[4], PresetMesh.Square.Vertices[5],1f);
+        var p2 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[6], PresetMesh.Square.Vertices[7], PresetMesh.Square.Vertices[8],1f);
+        
+        portal2.Transformation.Transpose();
+        
+        point.Draw(shader,p0.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,p1.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
+        point.Draw(shader,p2.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
         glState.DepthTest = true;
         */
 

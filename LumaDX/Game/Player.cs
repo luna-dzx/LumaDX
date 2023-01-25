@@ -89,6 +89,9 @@ public class FirstPersonPlayer : Player
     public FirstPersonPlayer SetDirection(Vector3 direction)
     {
         Direction = direction;
+        Camera.Direction = direction;
+        yaw = MathHelper.RadiansToDegrees(MathF.Atan2(Camera.Direction.X, -Camera.Direction.Z));
+        pitch = MathHelper.RadiansToDegrees(MathF.Acos(Camera.Direction.Y)) - 90f;
         return this;
     }
 

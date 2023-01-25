@@ -98,9 +98,10 @@ public class Portal : IDisposable
     
   
 
-    public bool Teleport(Portal destination, FirstPersonPlayer player, out Vector3 position)
+    public bool Teleport(Portal destination, FirstPersonPlayer player, out Vector3 position, out Vector3 lookDir)
     {
         position = Vector3.Zero;
+        lookDir = Vector3.Zero;
 
         // if we are on the same side of the portal before and after moving
         if (!((Vector3.Dot(Position - player.Position, ClippingPlane.Normal) < 0) ^ 
@@ -120,9 +121,16 @@ public class Portal : IDisposable
 
         if ((Maths.CheckPointInTriangle(_triangle0,pointPos) || Maths.CheckPointInTriangle(_triangle1,pointPos)))
         {
-            Vector3 primPos = (Transformation.Inverted() * new Vector4(player.Position - Position,1f)).Xyz;
-            var relativeVec = (destination.Transformation * new Vector4(primPos,1f)).Xyz;
-            position = destination.Position + relativeVec;
+            var invertedMatrix = Transformation.Inverted(); // expensive so cache
+            
+            Vector3 primPos = (invertedMatrix * new Vector4(player.Position - Position,1f)).Xyz;
+            Vector3 primLook = (invertedMatrix * new Vector4(player.Camera.Direction,1f)).Xyz;
+            Vector3 relativeMove = (destination.Transformation * new Vector4(primPos,1f)).Xyz;
+            Vector3 relativeLook = (destination.Transformation * new Vector4(primLook,1f)).Xyz;
+            
+            position = destination.Position + relativeMove;
+            lookDir = relativeLook;
+            
             return true;
         }
 

@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumaDX", "LumaDX\LumaDX.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyBoxDemo", "SkyBoxDemo\SkyBoxDemo.csproj", "{54629887-1394-44CE-8457-B28251BC1AFD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MappingDemo", "MappingDemo\MappingDemo.csproj", "{189BD5CE-3ED1-4628-B568-1F107053F124}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{54629887-1394-44CE-8457-B28251BC1AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{189BD5CE-3ED1-4628-B568-1F107053F124}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{189BD5CE-3ED1-4628-B568-1F107053F124}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{189BD5CE-3ED1-4628-B568-1F107053F124}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{189BD5CE-3ED1-4628-B568-1F107053F124}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

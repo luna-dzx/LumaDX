@@ -34,6 +34,8 @@ public class Game1 : Game
 
     float fieldOfView = MathHelper.DegreesToRadians(80f);
 
+    float speed = 1f;
+
     protected override void Initialize()
     {
         glState = new StateHandler();
@@ -76,7 +78,7 @@ public class Game1 : Game
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);
 
 
-    double time = 0.0;
+    float time = 0f;
     
     protected override void UpdateFrame(FrameEventArgs args)
     {
@@ -84,8 +86,8 @@ public class Game1 : Game
         shader.Uniform3("cameraPos", player.Camera.Position);
         shader.Uniform1("refractionRatio", refractionRatio);
 
-        time += args.Time;
-        shader.Uniform1("time", (float)time);
+        time += speed * (float)args.Time;
+        shader.Uniform1("time", time);
         
         shader.Uniform1("dingusCount", dingusCount);
         
@@ -132,8 +134,9 @@ public class Game1 : Game
         if (!imGui.IsFocused()) LockMouse();;
         
         ImGui.SliderFloat("Refraction Ratio", ref refractionRatio, 0f, 1f);
-        ImGui.SliderInt("Num. Dingus", ref dingusCount, 1, 3000);
+        ImGui.SliderInt("Num. Dingus", ref dingusCount, 1, 100000);
         ImGui.SliderFloat("Field of View", ref fieldOfView, 0.01f * MathF.PI, 0.99f * MathF.PI);
+        ImGui.SliderFloat("Rotation Speed", ref speed, -30f, 30f);
         imGui.Render();
         
         #endregion

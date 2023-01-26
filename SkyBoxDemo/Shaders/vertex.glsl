@@ -18,7 +18,7 @@ void main()
     instanceId = gl_InstanceID;
     //             \/ tau
     float theta = 6.28318530718  * float(gl_InstanceID) / float(dingusCount % 35);
-    vec3 pos = vec3(sin(theta + 0.1 * time) * 20.0, 0.1 * float(gl_InstanceID) - 0.05 * float(dingusCount), cos(theta + 0.1 * time) * 20.0);
+    vec3 pos = vec3(sin(theta + 0.1 * time) * 20.0, cos(theta * 2.0 + time*0.3) * 3.0 + 0.1 * float(gl_InstanceID) - 0.05 * float(dingusCount), cos(theta + 0.1 * time) * 20.0);
     vec3 rot = vec3(-1.57079632679, theta * 2.0 + time, 0.0);
     vec3 scale = vec3(0.08);
     mat4 instanceMatrix = lx_CreateTransform(pos,rot,scale);

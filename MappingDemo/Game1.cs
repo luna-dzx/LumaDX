@@ -1,12 +1,12 @@
 ﻿using LumaDX;
-using Assimp;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
-
+using Light = LumaDX.Objects.Light;
+using Material = LumaDX.Objects.Material;
 
 namespace MappingDemo;
 
@@ -16,8 +16,16 @@ public class Game1 : Game
 
     ShaderProgram shader;
     Model quad;
+
+    Light light;
+    Material material;
+
+    Texture diffuse;
+    Texture specular;
+    Texture normal;
     
     const string ShaderLocation = "Shaders/";
+    const string AssetsLocation = "Assets/";
 
     Matrix4 projMatrix;
     Matrix4 viewMatrix;
@@ -41,7 +49,6 @@ public class Game1 : Game
     {
         glState = new StateHandler();
         glState.ClearColor = Color4.Black;
-        glState.DoCulling = false;
 
         shader = new ShaderProgram(ShaderLocation + "vertex.glsl",
             ShaderLocation + "fragment.glsl",
@@ -49,12 +56,25 @@ public class Game1 : Game
         );
 
         quad = new Model(PresetMesh.Square);
+
+        light = new Light()
+            .SetPosition(-3f,1f,0f)
+            .SetAmbient(0.2f, 0.2f, 0.2f);
+        material = PresetMaterial.Default;
+
+        diffuse = new Texture(AssetsLocation+"diffuse.bmp", 0);
+        specular = new Texture(AssetsLocation+"specular.bmp", 1);
+        normal = new Texture(AssetsLocation+"normal.bmp", 2);
     }
 
     protected override void Load()
     {
         UpdateProjection(Window.Size);
         UpdateView(Vector3.UnitZ);
+        shader.UniformLight("light", light);
+        shader.UniformMaterial("material", material, diffuse, specular);
+        shader.UniformTexture("normalMap", normal);
+        shader.EnableGammaCorrection();;
     }
 
     protected override void Resize(ResizeEventArgs newWin) => UpdateProjection(newWin.Size);
@@ -75,9 +95,9 @@ public class Game1 : Game
     protected override void RenderFrame(FrameEventArgs args)
     {
         glState.Clear();
-
-        quad.Draw(shader, 4f * Vector3.UnitZ, rotation, 1f);
-
+        // draw both sides of square separately so each side can have a different normal for lighting calculations
+        quad.Draw(shader, 4f * Vector3.UnitZ, rotation, 3f);
+        quad.Draw(shader, 4f * Vector3.UnitZ, rotation + MathF.PI * Vector3.UnitX, 3f);
         Window.SwapBuffers();
     }
 

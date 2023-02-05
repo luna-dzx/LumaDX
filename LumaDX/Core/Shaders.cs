@@ -266,9 +266,6 @@ public class ShaderProgram : IDisposable
         if (useAutoProjection) EnableAutoProjection();
     }
 
-
-    private const string PostProcessVertexPath = "../../../Library/Shaders/PostProcessing/vertex.glsl";
-    
     /// <summary>
     /// Create a post processing shader program from a fragment shader
     /// </summary>
@@ -313,7 +310,7 @@ public class ShaderProgram : IDisposable
     /// Load post processing vertex shader from file then format custom syntax and load to the shader program
     /// </summary>
     /// <returns>current object for ease of use</returns>
-    public ShaderProgram LoadPostProcessVertex() => LoadShaderText(File.ReadAllText(PostProcessVertexPath),ShaderType.VertexShader);
+    public ShaderProgram LoadPostProcessVertex() => LoadShaderText(File.ReadAllText(Constants.LibraryShaderPath + "PostProcessing/vertex.glsl"),ShaderType.VertexShader);
         
     /// <summary>
     /// Format custom syntax in a shader (in plaintext) and load to the shader program

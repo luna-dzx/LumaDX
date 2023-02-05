@@ -1,7 +1,4 @@
-﻿using System;
-using System.Numerics;
-using LumaDX;
-using Assimp;
+﻿using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -9,6 +6,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Vector3 = OpenTK.Mathematics.Vector3;
+using PostProcessShader = LumaDX.PostProcessing.PostProcessShader;
 
 
 namespace PostProcessingDemo;
@@ -30,6 +28,9 @@ public class Game1 : Game
     Model cube;
 
     FirstPersonPlayer player;
+
+    PostProcessing postProcessor;
+
 
     protected override void Initialize()
     {
@@ -57,8 +58,10 @@ public class Game1 : Game
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
 
-        texture = new Texture(AssetLocation + "/dingus-the-cat/textures/dingus_nowhiskers.jpg", 1, flipOnLoad: false);
+        texture = new Texture(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1, flipOnLoad: false);
         dingus = Model.FromFile(AssetLocation + "dingus-the-cat/source/", "dingus.fbx", out _);
+
+        postProcessor = new PostProcessing(PostProcessShader.MatrixText, Window.Size, fontFile: AssetLocation + "fonts/migu.ttf");
     }
 
     protected override void Load()
@@ -87,8 +90,12 @@ public class Game1 : Game
         }
     }
 
+    int currentEffect = 0;
+
     protected override void RenderFrame(FrameEventArgs args)
     {
+        postProcessor.StartSceneRender();
+        
         glState.Clear();
         
         // skyBox is maximum depth, so we want to render if it's <= instead of just <
@@ -107,7 +114,17 @@ public class Game1 : Game
         cube.Draw();
         
         glState.DoCulling = true;
+
+        postProcessor.EndSceneRender();
+
+
+        switch (currentEffect)
+        {
+            case 0: break;
+            case 1: postProcessor.RenderEffect(PostProcessShader.MatrixText); break;
+        }
         
+        postProcessor.DrawFbo();
 
 
         #region Debug UI
@@ -115,8 +132,8 @@ public class Game1 : Game
         imGui.Update((float)args.Time);
         
         if (!imGui.IsFocused()) LockMouse();;
-        
-        ImGui.Image(new IntPtr(texture.GetHandle()), new System.Numerics.Vector2(100f,100f));
+
+        ImGui.ListBox("Effect", ref currentEffect, new [] { "None", "Matrix" }, 2);
         imGui.Render();
         
         #endregion
@@ -135,6 +152,8 @@ public class Game1 : Game
         
         skyBox.Dispose();
         texture.Dispose();
+        
+        postProcessor.Dispose();
         
         shader.Dispose();
     }

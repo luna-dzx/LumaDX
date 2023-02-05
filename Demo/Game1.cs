@@ -111,7 +111,7 @@ public class Game1 : Game
 
     protected override void Load()
     {
-        textRenderer = new TextRenderer(48,Window.Size);
+        textRenderer = new TextRenderer(48,Window.Size, "Assets/fonts/IBMPlexSans-Regular.ttf");
         player.UpdateProjection(shader);
         
         Window.CursorState = CursorState.Grabbed;

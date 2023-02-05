@@ -50,6 +50,8 @@ public abstract class Game : IDisposable
         MouseLocked = false;
         Window.CursorState = CursorState.Normal;
     }
+
+    public int FrameCount;
     
 
     /// <summary>
@@ -302,6 +304,7 @@ public abstract class Game : IDisposable
         MouseLocked = Window.CursorState == CursorState.Grabbed;
         KeyboardHandling(args,Window.KeyboardState);
         MouseHandling(args,Window.MouseState);
+        FrameCount++;
     }
 
     /// <summary>

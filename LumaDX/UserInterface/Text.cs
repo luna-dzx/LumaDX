@@ -11,8 +11,13 @@ public class TextRenderer : IDisposable
     public uint FontSize = 48;
     
     ShaderProgram textShader;
+    
+    private const int MaxCharacterRender = 100000;
 
-    public TextRenderer(uint fontSize, Vector2i screenSize)
+    public TextRenderer(uint fontSize, Vector2i screenSize, string fontFile) : this(
+        fontSize,screenSize,fontFile,Enumerable.Range(' ','~')) { }
+    
+    public TextRenderer(uint fontSize, Vector2i screenSize, string fontFile, IEnumerable<int> characters)
     {
         FontSize = fontSize;
         GlChars = new Dictionary<char, GlChar>();
@@ -26,16 +31,15 @@ public class TextRenderer : IDisposable
         
         
         Library ft = new Library();
-        // TODO: Change this :|
-        Face face = new Face(ft, "Assets/fonts/IBMPlexSans-Regular.ttf", 0);
+        Face face = new Face(ft, fontFile, 0);
         face.SetPixelSizes(0,FontSize); // set height to FontSize and allow the width to automatically calculate
         
         // disable 4-byte alignment (allow data to be stored in blocks of 1 byte instead of 4 (single byte pixels))
         GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
         Texture texture;
-        // this loop covers all standard characters apart from control characters, new line, etc.
-        for (char c = ' '; c < '~'; c++)
+        // loop over all the characters and render them to cached textures
+        foreach (char c in characters)
         {
             face.LoadChar(c, LoadFlags.Render, LoadTarget.Normal);
             
@@ -63,7 +67,7 @@ public class TextRenderer : IDisposable
         
         
         vao = new VertexArray(BufferUsageHint.DynamicDraw);
-        vao.EmptyBuffer(sizeof(float) * 24, BufferTarget.ArrayBuffer);
+        vao.EmptyBuffer(sizeof(float) * 24 * MaxCharacterRender, BufferTarget.ArrayBuffer);
         vao.SetupBuffer(0,typeof(float),4,4);
     }
     
@@ -92,8 +96,23 @@ public class TextRenderer : IDisposable
 
         if (centered) x -= text.Sum(t => (GlChars[t].Advance >> 6) * scale) / 2f;
 
+        float startX = x;
+        var testChar = GlChars.Values.First();
+        float height = (testChar.Size.Y + testChar.Advance >> 6) * scale;
+
+        List<float> vertices = new List<float>();
+        
+
+        // first loop to populate data to send to gpu
         foreach (char c in text)
         {
+            if (c == '\n')
+            {
+                x = startX;
+                y += height;
+                continue;
+            }
+            
             GlChar glChar = GlChars[c];
 
             float xpos = x + glChar.Bearing.X * scale; // current x pos + distance to left side of character
@@ -105,7 +124,7 @@ public class TextRenderer : IDisposable
             
             // construct a rectangle around the character
             
-            float[] vertices =
+            float[] currentVertices =
             {
                 // triangle 1
                 xpos,     ypos + h,   0.0f, 0.0f,   // top left
@@ -131,15 +150,23 @@ public class TextRenderer : IDisposable
                         */
             };
             
-            GL.BindTexture(TextureTarget.Texture2D, glChar.TextureId);
-            GL.BufferSubData(BufferTarget.ArrayBuffer,IntPtr.Zero,24 * sizeof(float),vertices);
-            GL.DrawArrays(PrimitiveType.Triangles,0,6);
-
+            vertices.AddRange(currentVertices);
             x += (glChar.Advance >> 6) * scale;
-
         }
         
-        GL.BindVertexArray(0);
+        GL.BufferSubData(BufferTarget.ArrayBuffer,IntPtr.Zero,vertices.Count * sizeof(float),vertices.ToArray());
+        
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '\n') continue;
+            GlChar glChar = GlChars[text[i]];
+            GL.BindTexture(TextureTarget.Texture2D, glChar.TextureId);
+            GL.DrawArrays(PrimitiveType.Triangles,6*i,6);
+        }
+
+        
+        //GL.BindVertexArray(0);
         GL.BindTexture(TextureTarget.Texture2D,0);
     }
 

@@ -1,3 +1,4 @@
+using System.Drawing;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -13,7 +14,9 @@ public class PostProcessing : IDisposable
     public enum PostProcessShader
     {
         GaussianBlur = 1,
-        // go up from here in powers of 2 so it's possible to use | on this
+        Brightness = 2,
+        NightVision = 4,
+        MatrixText = 8
     }
 
     public Dictionary<PostProcessShader,ShaderProgram> shaderPrograms;
@@ -56,13 +59,55 @@ public class PostProcessing : IDisposable
 
         return output;
     }
-    
-    
-    private static readonly DrawBuffersEnum[] DefaultAttachments = { DrawBuffersEnum.ColorAttachment0 };
 
-    public PostProcessing(PostProcessShader postProcessEffects, Vector2i frameBufferSize, PixelInternalFormat internalFormat = PixelInternalFormat.Rgba8, DrawBuffersEnum[]? colourAttachments = null)
+    struct MatrixCharacter
+    {
+        public char Character;
+        public int RandomizeSpeed;
+    }
+
+    private const int matrixColumns = 160;
+    private const int matrixRows = 90;
+    private const float matrixTextSize = 0.5f;
+
+    private TextRenderer textRenderer;
+    private MatrixCharacter[,] matrixTextArray;
+    private int[] matrixColumnSpeed;
+    
+    private Random rand;
+
+    private static readonly DrawBuffersEnum[] DefaultAttachments = {DrawBuffersEnum.ColorAttachment0};
+
+    public PostProcessing(PostProcessShader postProcessEffects, Vector2i frameBufferSize, PixelInternalFormat internalFormat = PixelInternalFormat.Rgba8, DrawBuffersEnum[]? colourAttachments = null, string fontFile = "")
     {
         colourAttachments ??= DefaultAttachments;
+
+        if (fontFile != "")
+        {
+            textRenderer = new TextRenderer(20, frameBufferSize, fontFile, Enumerable.Range('゠', 'ヺ').Concat(new[] {(int)' '}));
+            matrixTextArray = new MatrixCharacter[matrixColumns, matrixRows];
+            matrixColumnSpeed = new int[matrixColumns];
+
+            rand = new Random(1);
+            
+            for (int i = 0; i < matrixColumns; i++)
+            {
+                for (int j = 0; j < matrixRows; j++)
+                {
+                    MatrixCharacter mChar = new MatrixCharacter();
+                    
+                    if (rand.NextDouble() > 0.11) mChar.Character = (char)rand.Next('゠', 'ヺ');
+                    else mChar.Character = ' ';
+                    
+                    mChar.RandomizeSpeed = rand.Next(3,10);
+
+                    matrixTextArray[i, j] = mChar;
+                }
+                
+                matrixColumnSpeed[i] = rand.Next(2,5);
+            }
+            
+        }
         
         WriteFbo = new FrameBuffer(frameBufferSize,internalFormat: internalFormat,numColourAttachments:colourAttachments.Length);
         ReadFbo = new FrameBuffer(frameBufferSize,internalFormat: internalFormat,numColourAttachments:colourAttachments.Length);
@@ -73,22 +118,6 @@ public class PostProcessing : IDisposable
             .LoadPostProcessVertex()
             .LoadShaderText(GenerateBlitShader(colourAttachments.Length),ShaderType.FragmentShader)
             .Compile();
-        
-        shaderPrograms[PostProcessShader.GaussianBlur] = new ShaderProgram
-        (
-            Constants.LibraryShaderPath + "PostProcessing/gaussianFragment.glsl"
-        );
-        
-
-        for (int i = 0; i < colourAttachments.Length; i++)
-        {
-            WriteFbo.UniformTexture((int)BlitShader, "texture"+i, i);
-        }
-        
-        ReadFbo.SetDrawBuffers(colourAttachments);
-        WriteFbo.SetDrawBuffers(colourAttachments);
-
-        /*
 
         // loop through post processing effects
         foreach (var postProcessShader in Enum.GetValues(typeof(PostProcessShader)).Cast<PostProcessShader>())
@@ -99,13 +128,21 @@ public class PostProcessing : IDisposable
                 // add to dictionary of effects
                 shaderPrograms[postProcessShader] = new ShaderProgram
                 (
-                    LibraryShaderPath + "PostProcessing/gaussianFragment.glsl"
+                    Constants.LibraryShaderPath + "PostProcessing/fx"+postProcessShader+".glsl"
                 );
                 
                 WriteFbo.UniformTexture((int)shaderPrograms[postProcessShader], "texture0", 0);
             }
-        }*/
+        }
+        
 
+        for (int i = 0; i < colourAttachments.Length; i++)
+        {
+            WriteFbo.UniformTexture((int)BlitShader, "texture"+i, i);
+        }
+        
+        ReadFbo.SetDrawBuffers(colourAttachments);
+        WriteFbo.SetDrawBuffers(colourAttachments);
     }
     
     
@@ -130,12 +167,11 @@ public class PostProcessing : IDisposable
         Horizontal,
         Vertical
     }
-    
-    private void GaussianBlurStep(DrawBuffersEnum[] colourAttachments, BlurDirection direction)
+
+    private void BasicEffect(DrawBuffersEnum[] colourAttachments)
     {
         ReadFbo.ReadMode();
         
-        shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)direction);
         WriteFbo.WriteMode();
         WriteFbo.SetDrawBuffers(colourAttachments);
 
@@ -148,10 +184,57 @@ public class PostProcessing : IDisposable
 
 
         BlitFbo();
+    }
+    
+    private void MatrixTextEffect(DrawBuffersEnum[] colourAttachments)
+    {
+        ReadFbo.WriteMode();
+        
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
+        ReadFbo.ReadMode();
+        
+        WriteFbo.WriteMode();
+        WriteFbo.SetDrawBuffers(colourAttachments);
+        
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+
+        string thing = "";
+        for (int j = 0; j < matrixRows; j++)
+        {
+            for (int i = 0; i < matrixColumns; i++)
+            {
+                char c = matrixTextArray[i, j].Character;
+                if (c != ' ') thing += c;
+                else thing += "  "; // 1 space is half a character, so replace ' ' with "  "
+            }
+
+            thing += "\n";
+        }
+
+        textRenderer.Draw(thing, 0,0,matrixTextSize, Vector3.UnitY, false);
+        
+        
+        GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcAlpha);
+        shaderPrograms[PostProcessShader.MatrixText].Use();
+
+        ReadFbo.UseTexture();
+        Draw();
+
+
+
+        WriteFbo.ReadMode();
+        
+        GL.Disable(EnableCap.Blend);
+
+
+        BlitFbo();
     }
     
     
+
+
     public PostProcessing RenderEffect(PostProcessShader effect, DrawBuffersEnum[]? colourAttachments = null)
     {
         colourAttachments ??= DefaultAttachments; 
@@ -160,9 +243,58 @@ public class PostProcessing : IDisposable
         {
             shaderPrograms[PostProcessShader.GaussianBlur].Use();
 
-            GaussianBlurStep(colourAttachments, BlurDirection.Horizontal);
-            GaussianBlurStep(colourAttachments, BlurDirection.Vertical);
+            shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Horizontal);
+            BasicEffect(colourAttachments);
+            shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Vertical);
+            BasicEffect(colourAttachments);
+        }
+        if ((effect & PostProcessShader.Brightness) != 0)
+        {
+            shaderPrograms[PostProcessShader.Brightness].Use();
+            BasicEffect(colourAttachments);
+        }
+        if ((effect & PostProcessShader.MatrixText) != 0)
+        {
+            for (int i = 0; i < matrixColumns; i++)
+            {
+                for (int j = 0; j < matrixRows; j++)
+                {
+                    if (matrixTextArray[i, j].RandomizeSpeed <= 0)
+                    {
+                        if (rand.NextDouble() > 0.11) matrixTextArray[i,j].Character = (char)rand.Next('゠', 'ヺ');
+                        else matrixTextArray[i,j].Character = ' ';
+                        
+                        matrixTextArray[i, j].RandomizeSpeed = rand.Next(3,10);
+                    }
 
+                    matrixTextArray[i, j].RandomizeSpeed--;
+                }
+            }
+
+            var matrixTextCopy = matrixTextArray.Clone() as MatrixCharacter[,];
+            
+
+            for (int i = 0; i < matrixColumns; i++)
+            {
+                if (matrixColumnSpeed[i] <= 0)
+                {
+                    for (int j = 0; j < matrixRows; j++)
+                    {
+                        int k = j + 1;
+                        if (k >= matrixRows) k -= matrixRows;
+                        matrixTextArray[i, j] = matrixTextCopy[i, k];
+                    }
+                    
+                    matrixColumnSpeed[i] = rand.Next(2,5);
+                }
+
+                matrixColumnSpeed[i]--;
+            }
+
+
+            shaderPrograms[PostProcessShader.MatrixText].Use();
+            shaderPrograms[PostProcessShader.MatrixText].Uniform2("pixelateResolution",new Vector2(matrixColumns,matrixRows));
+            MatrixTextEffect(colourAttachments);
         }
 
 
@@ -218,6 +350,8 @@ public class PostProcessing : IDisposable
         {
             program.Dispose();
         }
+        
+        textRenderer.Dispose();
         
         BlitShader.Dispose();
         

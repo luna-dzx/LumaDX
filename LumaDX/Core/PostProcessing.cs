@@ -14,7 +14,7 @@ public class PostProcessing : IDisposable
     public enum PostProcessShader
     {
         GaussianBlur = 1,
-        Brightness = 2,
+        GreyScale = 2,
         NightVision = 4,
         MatrixText = 8
     }
@@ -231,9 +231,9 @@ public class PostProcessing : IDisposable
 
         BlitFbo();
     }
-    
-    
 
+
+    int frameCount = 0;
 
     public PostProcessing RenderEffect(PostProcessShader effect, DrawBuffersEnum[]? colourAttachments = null)
     {
@@ -248,9 +248,17 @@ public class PostProcessing : IDisposable
             shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Vertical);
             BasicEffect(colourAttachments);
         }
-        if ((effect & PostProcessShader.Brightness) != 0)
+        if ((effect & PostProcessShader.GreyScale) != 0)
         {
-            shaderPrograms[PostProcessShader.Brightness].Use();
+            shaderPrograms[PostProcessShader.GreyScale].Use();
+            BasicEffect(colourAttachments);
+        }
+        if ((effect & PostProcessShader.NightVision) != 0)
+        {
+            shaderPrograms[PostProcessShader.NightVision].Use();
+            
+            frameCount++;
+            shaderPrograms[PostProcessShader.NightVision].Uniform1("time", (float)frameCount);
             BasicEffect(colourAttachments);
         }
         if ((effect & PostProcessShader.MatrixText) != 0)

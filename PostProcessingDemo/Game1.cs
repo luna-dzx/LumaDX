@@ -31,6 +31,8 @@ public class Game1 : Game
 
     PostProcessing postProcessor;
 
+    string[] effectNames;
+
 
     protected override void Initialize()
     {
@@ -40,7 +42,7 @@ public class Game1 : Game
 
         imGui = new ImGuiController(Window);
         
-        LockMouse();
+        UnlockMouse();
 
         shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl",
@@ -61,7 +63,15 @@ public class Game1 : Game
         texture = new Texture(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1, flipOnLoad: false);
         dingus = Model.FromFile(AssetLocation + "dingus-the-cat/source/", "dingus.fbx", out _);
 
-        postProcessor = new PostProcessing(PostProcessShader.MatrixText, Window.Size, fontFile: AssetLocation + "fonts/migu.ttf");
+        postProcessor = new PostProcessing(
+            PostProcessShader.GaussianBlur
+            | PostProcessShader.MatrixText
+            | PostProcessShader.NightVision
+            | PostProcessShader.GreyScale
+            ,
+            Window.Size, fontFile: AssetLocation + "fonts/migu.ttf");
+
+        effectNames = new[] { "None", "Blur", "GreyScale", "NightVision", "Matrix" };
     }
 
     protected override void Load()
@@ -118,10 +128,13 @@ public class Game1 : Game
         postProcessor.EndSceneRender();
 
 
-        switch (currentEffect)
+        switch (effectNames[currentEffect])
         {
-            case 0: break;
-            case 1: postProcessor.RenderEffect(PostProcessShader.MatrixText); break;
+            case "None": break;
+            case "Blur": postProcessor.RenderEffect(PostProcessShader.GaussianBlur); break;
+            case "GreyScale": postProcessor.RenderEffect(PostProcessShader.GreyScale); break;
+            case "NightVision": postProcessor.RenderEffect(PostProcessShader.NightVision); break;
+            case "Matrix": postProcessor.RenderEffect(PostProcessShader.MatrixText); break;
         }
         
         postProcessor.DrawFbo();
@@ -133,7 +146,7 @@ public class Game1 : Game
         
         if (!imGui.IsFocused()) LockMouse();;
 
-        ImGui.ListBox("Effect", ref currentEffect, new [] { "None", "Matrix" }, 2);
+        ImGui.ListBox("Effect", ref currentEffect, effectNames, effectNames.Length);
         imGui.Render();
         
         #endregion

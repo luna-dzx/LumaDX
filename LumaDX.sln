@@ -10,6 +10,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MappingDemo", "MappingDemo\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostProcessingDemo", "PostProcessingDemo\PostProcessingDemo.csproj", "{B38090D3-4723-40AE-838B-5670E401A73D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicRenderingDemo", "BasicRenderingDemo\BasicRenderingDemo.csproj", "{45596FFA-FF81-459C-AF4C-032C699947B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LightingDemo", "LightingDemo\LightingDemo.csproj", "{7915A3B5-8815-47FD-B88D-FBBD79877556}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +40,13 @@ Global
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45596FFA-FF81-459C-AF4C-032C699947B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45596FFA-FF81-459C-AF4C-032C699947B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45596FFA-FF81-459C-AF4C-032C699947B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45596FFA-FF81-459C-AF4C-032C699947B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7915A3B5-8815-47FD-B88D-FBBD79877556}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7915A3B5-8815-47FD-B88D-FBBD79877556}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7915A3B5-8815-47FD-B88D-FBBD79877556}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7915A3B5-8815-47FD-B88D-FBBD79877556}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

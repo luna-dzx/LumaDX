@@ -198,7 +198,7 @@ public class FirstPersonPlayer : Player
             Velocity = input.Z * directionFlat + input.X * (rightTransform * directionFlat);
             
             bool grounded = false;
-            (Position,var newGrav) = Collision.CollideAndSlide(Position,Velocity,gravity, EllipsoidRadius, ref grounded);
+            (Position,var newGrav) = Collision.CollideAndSlide(Position,Velocity, gravity, EllipsoidRadius, ref grounded);
 
             gravity = newGrav;
             if (!grounded)

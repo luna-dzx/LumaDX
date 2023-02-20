@@ -157,6 +157,18 @@ public class VertexArray : IDisposable
 
         return buffer;
     }
+    
+    // TODO: Comments Here
+    public int LoadVector<T>(int layoutLocation, T[] data, int vectorSize, int countPerInstance = -1, int buffer = -1, int stride=0, int offset=0) where T : struct
+    {
+        if (buffer == -1) { buffer = GL.GenBuffer(); }
+        CreateBuffer(data, BufferTarget.ArrayBuffer, buffer);
+        
+        SetupBuffer(layoutLocation, typeof(float), vectorSize, vectorSize*stride, vectorSize*offset);
+        if (countPerInstance != -1) GL.VertexAttribDivisor(layoutLocation,countPerInstance);
+
+        return buffer;
+    }
 
 
     /// <summary>

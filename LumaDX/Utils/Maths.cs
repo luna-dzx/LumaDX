@@ -76,8 +76,78 @@ public class Maths
 
     public static float Lerp(float a, float b, float f) => a + f * (b - a);
 
-    
-    
+    public static Objects.Mesh GenerateIcoSphere(int iterations)
+    {
+        if (iterations <= 0) return PresetMesh.Icosahedron;
+        Objects.Mesh mesh = GenerateIcoSphere(iterations - 1);
+        
+        List<float> vertices = new List<float>(mesh.Vertices);
+        List<int> indices = new List<int>();
+
+        // dictionary that contains the index of a midpoint given the indices the 2 point it is between in either order
+        var midPoints = new Dictionary<(int, int), int>(new OrderlessIntPairs());
+
+        // loop through triangles (index t)
+        for (int t = 0; t < mesh.Indices.Length; t += 3)
+        {
+            
+            for (int v = 0; v < 3; v++)
+            {
+                int index0 = mesh.Indices[t + v];
+                int index1 = mesh.Indices[t + (v + 1) % 3];
+
+                // ignore existing points
+                if (midPoints.ContainsKey((index0, index1))) continue;
+
+                // add new point
+                midPoints.Add((index0, index1), vertices.Count / 3);
+
+                //add midpoint vertex
+                Vector3 point0 = vertices.GetVertex(index0);
+                Vector3 point1 = vertices.GetVertex(index1);
+                
+                vertices.AddVec3((point0 + point1).Normalized());
+            }
+
+
+            // original triangle
+            int a = mesh.Indices[t];
+            int b = mesh.Indices[t + 1];
+            int c = mesh.Indices[t + 2];
+            
+            // midpoints
+            int ab = midPoints[(a,b)];
+            int bc = midPoints[(b,c)];
+            int ca = midPoints[(c,a)];
+            
+            /*
+                            a
+                            /\
+                          /   \
+                        /      \
+                  ab  / _ _ _ _ \ ac
+                    /\          /\ 
+                  /   \       /   \
+                /      \    /      \
+            b / _ _ _ _ \ / _ _ _ _ \ c
+                        bc
+              
+            */
+
+            indices.AddItems(
+            a, ab, ca,
+                        b, bc, ab,
+                        c, ca, bc,
+                        ab, bc, ca
+            );
+
+        }
+        
+        mesh.Vertices = vertices.ToArray();
+        mesh.Indices = indices.ToArray();
+
+        return mesh;
+    }
 
     public struct Triangle
     {

@@ -2,6 +2,50 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
+public class PhysicsPlayer
+{
+    public Vector3 Position;
+    public Vector3 Radius;
+    public Vector3 Velocity;
+    public Vector3 Gravity;
+    public bool Grounded;
+
+    public PhysicsPlayer() { }
+
+    public PhysicsPlayer(Vector3 position = default, Vector3 radius = default)
+    {
+        Position = position;
+        Radius = radius;
+    }
+
+    public void Update(float deltaTime, float gravity = 0.3f, float terminalVelocity = 0.2f)
+    {
+        Grounded = false;
+        //physicsPlayer.Velocity = -Vector3.UnitZ * (float)args.Time;
+        
+        (Position,Gravity) = Collision.CollideAndSlide(Position, Velocity, Gravity, Radius, ref Grounded);
+
+        if (!Grounded)
+        {
+            Gravity -= Vector3.UnitY * gravity * deltaTime;
+            if (Vector3.Dot(Gravity, Gravity) > 0.04f) Gravity = -Vector3.UnitY * terminalVelocity;
+        }
+        else
+        {
+            Gravity = Vector3.Zero;
+        }
+    }
+
+    /// <summary>
+    /// Call after update, jumps if grounded
+    /// </summary>
+    public void Jump(float velocity = 0.08f)
+    {
+        if (Grounded) Gravity += velocity*Vector3.UnitY;
+    }
+}
+
+
 public static class Collision
 {
     public static Maths.Triangle[] World = Array.Empty<Maths.Triangle>();
@@ -119,7 +163,7 @@ public static class Collision
                 float lambda = (triangle.Plane.Value - Vector3.Dot(triangle.Plane.Normal, position)) / Vector3.Dot(triangle.Plane.Normal, GravityDirection);
                 Vector3 point = position + lambda * GravityDirection;
                 Vector3 pointToPos = position - point;
-                if (!(pointToPos.LengthSquared < 1.5) || !Maths.CheckPointInTriangle(triangle, point)) continue;
+                if (!(pointToPos.LengthSquared < Constants.GroundedDist) || !Maths.CheckPointInTriangle(triangle, point)) continue;
                 
                 // hitting your head on a roof
                 if (GravityDirection.Y > 0)

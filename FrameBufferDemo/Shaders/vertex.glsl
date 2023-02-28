@@ -12,11 +12,12 @@ out VS_OUT {
 
 uniform mat4 lightSpaceMatrix;
 uniform int visualiseDepthMap;
+uniform float texCoordsMult;
 
 void main()
 {
     vs_out.normal = lx_NormalFix(lx_Model,aNormal);
-    vs_out.texCoords = aTexCoords;
+    vs_out.texCoords = texCoordsMult*aTexCoords;
     vs_out.fragPos = (lx_Model*vec4(aPos,1.0)).xyz;
     
     vs_out.fragPosLightSpace = lightSpaceMatrix * vec4(vs_out.fragPos,1.0);

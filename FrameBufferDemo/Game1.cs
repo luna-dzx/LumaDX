@@ -12,10 +12,12 @@ public class Game1 : Game
     const string ShaderLocation = "Shaders/";
     const string DepthMapShaderLocation = Constants.LibraryShaderPath+"DepthMap/";
  
-    //StateHandler glState;
+    StateHandler glState;
     //ImGuiController imGui;
+    TextRenderer textRenderer;
 
     ShaderProgram shader;
+    ShaderProgram frameBufferShader;
 
     FirstPersonPlayer player;
     Model cube;
@@ -30,17 +32,20 @@ public class Game1 : Game
     
     bool visualiseDepthMap = false;
     
-    private Vector3 cubePosition = new (1f, -4f, -5f);
+    private Vector3 cubePosition;
     
 
     protected override void Initialize()
     {
-        GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glState = new StateHandler();
+        glState.ClearColor = Color4.Black;
 
         shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl", 
             ShaderLocation + "fragment.glsl",
             true);
+
+        frameBufferShader = new ShaderProgram(ShaderLocation + "frameBufferFrag.glsl");
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0,0,6))
@@ -52,15 +57,12 @@ public class Game1 : Game
             
         quad = new Model(PresetMesh.Square).Transform(new Vector3(0f,-5f,0f), new Vector3(MathHelper.DegreesToRadians(-90f),0f,0f),10f);
 
-        texture = new Texture("Assets/wood.png",0);
+        texture = new Texture("Assets/tiled.jpg",0);
         
         depthMap = new DepthMap(DepthMapShaderLocation,(4096,4096),(-3.5f,8.5f,20f),(1f,-4f,-5f));
         
         light = new Objects.Light().SunMode().SetDirection(depthMap.Direction).SetAmbient(0.1f);
         material = PresetMaterial.Silver.SetAmbient(0.1f);
-
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
 
         shader.EnableGammaCorrection();
 
@@ -73,6 +75,9 @@ public class Game1 : Game
             .UniformLight("light",light);
 
         depthMap.UniformTexture("depthMap",shader,1);
+        depthMap.UniformTexture("depthMap",frameBufferShader,1);
+
+        textRenderer = new TextRenderer(30, Window.Size, "Assets/fonts/migu.ttf");
     }
 
     protected override void Load()
@@ -82,49 +87,72 @@ public class Game1 : Game
     
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(shader,newWin.Size);
 
+    double time = 0.0;
+    
     protected override void UpdateFrame(FrameEventArgs args)
     {
         player.Update(shader, args, Window.KeyboardState, GetPlayerMousePos());
         shader.Uniform3("cameraPos", player.Position);
+
+        time += args.Time;
+        cubePosition = 4.8f * new Vector3((float)Math.Cos(time),0f,(float)Math.Sin(time)) + new Vector3(0f, -4f, 0f);
     }
 
-    protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
+    void DrawScene()
     {
-        Vector3 direction = Vector3.Zero;
-        if (k.IsKeyDown(Keys.Up)) direction -= Vector3.UnitZ;
-        if (k.IsKeyDown(Keys.Down)) direction += Vector3.UnitZ;
-        if (k.IsKeyDown(Keys.Left)) direction -= Vector3.UnitX;
-        if (k.IsKeyDown(Keys.Right)) direction += Vector3.UnitX;
-
-        cubePosition += direction * (float)args.Time * 5f;
-
-
-        if (k.IsKeyPressed(Keys.Enter))
-        {
-            visualiseDepthMap = !visualiseDepthMap;
-            shader.Uniform1("visualiseDepthMap", visualiseDepthMap ? 1 : 0);
-        }
-
+        shader.Uniform1("texCoordsMult", 4f);
+        quad.Draw(shader);
+        
+        shader.Uniform1("texCoordsMult", 0.4f);
+        cube.Draw(shader,cubePosition, new Vector3(0f,0.2f,0f), 1f);
+        cube.Draw(shader,new Vector3(-3f,-1f,3f), new Vector3(0.4f,0f,0f), 1f);
     }
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        glState.SaveState();
         depthMap.DrawMode();
-        
+
+        shader.Uniform1("texCoordsMult", 0.4f);
         cube.Draw(depthMap.Shader, cubePosition, new Vector3(0f,0.2f,0f), 1f);
-        cube.Draw(depthMap.Shader,new Vector3(-3f,-3f,3f), new Vector3(0.4f,0f,0f), 1f);
+        cube.Draw(depthMap.Shader,new Vector3(-3f,-1f,3f), new Vector3(0.4f,0f,0f), 1f);
         
         
         shader.Use();
         depthMap.ReadMode();
         
-        GL.CullFace(CullFaceMode.Back);
-        GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        glState.LoadState();
+        glState.Clear();
+
+        GL.Viewport(0,Window.Size.Y/2,Window.Size.X/2,Window.Size.Y/2);
+        shader.Uniform1("visualisation", 0);
+        DrawScene();
+
+        GL.Viewport(Window.Size.X/2,Window.Size.Y/2,Window.Size.X/2,Window.Size.Y/2);
+        frameBufferShader.Use();
+        PostProcessing.Draw();
         
-        quad.Draw(shader);
-        cube.Draw(shader,cubePosition, new Vector3(0f,0.2f,0f), 1f);
-        cube.Draw(shader,new Vector3(-3f,-3f,3f), new Vector3(0.4f,0f,0f), 1f);
+        GL.Viewport(0,0,Window.Size.X/2,Window.Size.Y/2);
+        shader.Uniform1("visualisation", 1);
+        DrawScene();
+        
+        GL.Viewport(Window.Size.X/2,0,Window.Size.X/2,Window.Size.Y/2);
+        shader.Uniform1("visualisation", 2);
+        DrawScene();
+
+        
+        GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
+        glState.Blending = true;
+        glState.ClearBuffers = ClearBufferMask.DepthBufferBit;
+        glState.Clear();
+        textRenderer.Draw("Projected Depth", 10f, 10f, 1f, Vector3.UnitX, false);
+        textRenderer.Draw("Final Scene", Window.Size.X/2f + 10f, 10f, 1f, Vector3.UnitX, false);
+        textRenderer.Draw("Standard Scene", 10f, Window.Size.Y/2f + 10f, 1f, Vector3.UnitX, false);
+        textRenderer.Draw("Depth Sample", Window.Size.X/2f + 10f, Window.Size.Y/2f + 10f, 1f, Vector3.UnitX, false);
+        
+        
+        glState.LoadState();
+        texture.Use();
 
         Window.SwapBuffers();
     }
@@ -140,5 +168,6 @@ public class Game1 : Game
         shader.Dispose();
 
         depthMap.Dispose();
+        textRenderer.Dispose();
     }
 }

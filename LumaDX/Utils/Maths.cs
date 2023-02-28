@@ -12,7 +12,7 @@ public class Maths
     /// <param name="rotate">the rotation of the transform (in radians)</param>
     /// <param name="scale">the scale of the transform</param>
     /// <returns></returns>
-    public static Matrix4 CreateTransformation(Vector3 translate, Vector3 rotate, Vector3 scale)
+    public static Matrix4 CreateTransformation(Vector3 translate, Vector3 rotate, Vector3 scale, bool transpose = false)
     {
         Vector3 sin = new Vector3(MathF.Sin(rotate.X), MathF.Sin(rotate.Y), MathF.Sin(rotate.Z));
         Vector3 cos = new Vector3(MathF.Cos(rotate.X), MathF.Cos(rotate.Y), MathF.Cos(rotate.Z));
@@ -36,6 +36,7 @@ public class Maths
         result.Row3.Z = translate.Z;
         result.Row3.W = 1;
 
+        if (transpose) result.Transpose();
         return result;
     }
 
@@ -229,60 +230,6 @@ public class Maths
 
     }
     
-    public static Triangle[] GetTriangles(Scene model, Vector3 position, Vector3 rotation, Vector3 eRadius)
-    {
-        Matrix4 transform = CreateTransformation(position, rotation, Vector3.One);
-        transform.Transpose();
-        
-        List<int> indexList = new List<int>();
-        List<float> vertexList = new List<float>();
-
-        int offset = 0;
-        foreach (var mesh in model.Meshes)
-        {
-                
-            foreach (var vert in mesh.Vertices)
-            {
-                    
-                vertexList.Add(vert.X/100f);
-                vertexList.Add(vert.Y/100f);
-                vertexList.Add(vert.Z/100f);
-            }
-
-            foreach (var index in mesh.GetIndices())
-            {
-                indexList.Add(index + offset);
-            }
-
-            offset += mesh.VertexCount;
-        }
-
-        List<Triangle> triangles = new List<Triangle>();
-        for (int i = 0; i < indexList.Count; i += 3)
-        {
-
-            int v0 = (indexList[i]) * 3;
-            int v1 = (indexList[i + 1]) * 3;
-            int v2 = (indexList[i + 2]) * 3;
-
-
-            var triangle = new Triangle
-            (
-                (transform * new Vector4(vertexList[v0], vertexList[v0 + 1], vertexList[v0 + 2], 1f)).Xyz,
-                (transform * new Vector4(vertexList[v1], vertexList[v1 + 1], vertexList[v1 + 2], 1f)).Xyz,
-                (transform * new Vector4(vertexList[v2], vertexList[v2 + 1], vertexList[v2 + 2], 1f)).Xyz,
-                eRadius
-            );
-            if (triangle.Plane.Normal == Vector3.Zero) continue;
-
-            triangles.Add(triangle);
-        }
-
-        return triangles.ToArray();
-
-    }
-
-    // https://blackpawn.com/texts/pointinpoly/
     public static bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b)
     {
         Vector3 cp1 = Vector3.Cross(b - a, p1 - a);

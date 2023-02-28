@@ -1,4 +1,5 @@
-﻿using LumaDX;
+﻿using Assimp;
+using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -60,8 +61,11 @@ public class Game1 : Game
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
 
-        texture = new Texture(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1, flipOnLoad: false);
-        dingus = Model.FromFile(AssetLocation + "dingus-the-cat/source/", "dingus.fbx", out _);
+        texture = new Texture(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1);
+
+        FileManager fm = new FileManager(AssetLocation + "dingus-the-cat/source/dingus.fbx");
+        dingus = fm.LoadModel(0);
+        
 
         postProcessor = new PostProcessing(
             PostProcessShader.GaussianBlur

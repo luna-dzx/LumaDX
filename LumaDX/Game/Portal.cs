@@ -146,7 +146,7 @@ public class Portal : IDisposable
     
     public void Draw(ShaderProgram shader)
     {
-        Rectangle.SetMatrix(shader,Transformation);
+        Rectangle.Transform(shader,Transformation);
         Rectangle.Draw(shader);
     }
 

@@ -5,6 +5,10 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace LumaDX;
 
+/*
+ 
+ TODO: make all this not suck
+
 /// <summary>
 /// Simplification of movement and camera handling - dependent on Camera class
 /// </summary>
@@ -43,14 +47,16 @@ public abstract class Player
     }
 
 }
+*/
 
 
-
-public class FirstPersonPlayer : Player
+public class FirstPersonPlayer : PhysicsPlayer
 {
-    public Vector3 Velocity;
+
+    //public Vector3 Velocity;
     public float Sensitivity;
     public float Speed;
+    public Camera Camera;
 
     private Vector3 unitGravity = -Vector3.UnitY;
     public void SetGravity(Vector3 direction) => unitGravity = direction;
@@ -62,11 +68,14 @@ public class FirstPersonPlayer : Player
     /// <param name="fov">the camera's field of view in radians</param>
     /// <param name="sensitivity">the mouse sensitivity</param>
     /// <param name="speed">player's speed</param>
-    public FirstPersonPlayer(Vector2i windowSize, float fov = MathHelper.PiOver3, float sensitivity = 1/20f, float speed = 5f)
-        : base(windowSize,fov)
+    public FirstPersonPlayer(Vector2i windowSize, float fov = MathHelper.PiOver3, float sensitivity = 1/20f, float speed = 5f, Vector3 ellipsoidRadius = default)
     {
+        if (ellipsoidRadius == default) ellipsoidRadius = new(0.2f, 0.5f, 0.2f);
+        
         Sensitivity = sensitivity;
         Speed = speed;
+        Camera = new Camera(windowSize, fov);
+        Radius = ellipsoidRadius;
     }
 
     /// <summary>
@@ -147,12 +156,10 @@ public class FirstPersonPlayer : Player
     
     
     public bool NoClip;
-    private Vector3 gravity = Vector3.UnitY*-0.1f;
-    public Vector3 EllipsoidRadius = new (0.2f,0.5f,0.2f);
 
     private Vector3 directionFlat;
 
-    public Player UpdateCamera(FrameEventArgs args, Vector2 relativeMousePos)
+    public PhysicsPlayer UpdateCamera(FrameEventArgs args, Vector2 relativeMousePos)
     {
         yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
         pitch += (relativeMousePos.Y - lastMousePos.Y) * Sensitivity;
@@ -176,9 +183,8 @@ public class FirstPersonPlayer : Player
 
         return this;
     }
-    
-    
-    public Player Update(FrameEventArgs args, KeyboardState keyboardState)
+
+    public PhysicsPlayer Update(FrameEventArgs args, KeyboardState keyboardState)
     {
         LastPosition = Position;
         
@@ -191,28 +197,14 @@ public class FirstPersonPlayer : Player
             Velocity = (input.Z * Camera.Direction.Normalized() + input.X * (rightTransform * directionFlat))*2f + up;
             
             Position += Velocity;
-            gravity = Vector3.Zero;
+            Gravity = Vector3.Zero;
         }
         else
         {
             Velocity = input.Z * directionFlat + input.X * (rightTransform * directionFlat);
-            
-            bool grounded = false;
-            (Position,var newGrav) = Collision.CollideAndSlide(Position,Velocity, gravity, EllipsoidRadius, ref grounded);
-
-            gravity = newGrav;
-            if (!grounded)
-            {
-                gravity -= Vector3.UnitY * 0.3f * (float)args.Time;
-                if (Vector3.Dot(gravity, gravity) > 0.04f) gravity = Vector3.UnitY * -0.2f;
-            }
-            else
-            {
-                gravity = Vector3.Zero;
-                if (keyboardState.IsKeyDown(Keys.Space)) gravity += 0.08f*Vector3.UnitY;
-            }
+            PhysicsUpdate((float)args.Time);
+            if (keyboardState.IsKeyDown(Keys.Space)) Jump();
         }
-        
         
         
         Camera.Position = Position + new Vector3(0f, 0.25f, 0f);

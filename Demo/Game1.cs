@@ -1,11 +1,10 @@
-﻿using LumaDX;
-using Assimp;
+﻿using Assimp;
 using ImGuiNET;
+using LumaDX;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 namespace Demo;
 
@@ -58,7 +57,7 @@ public class Game1 : Game
         player.Camera.SetFov(MathHelper.DegreesToRadians(80f));
         player.UpdateProjection(shader);
 
-        player.EllipsoidRadius = new Vector3(0.2f,0.5f,0.2f);
+        player.Radius = new Vector3(0.2f,0.5f,0.2f);
 
         portal1 = new Portal(Window.Size,new Vector3(-3.869124f, -0.679837f, -22.706884f), Vector3.Zero);
         portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 1.8839195f, 0.7277828f), new Vector3(0f, MathF.PI/2f, 0f));
@@ -69,10 +68,24 @@ public class Game1 : Game
         var model = importer.ImportFile("Assets/dust2/source/de_dust2.obj",
             PostProcessPreset.TargetRealTimeMaximumQuality);
 
-        Collision.World = Maths.GetTriangles(model,scenePosition,sceneRotation,player.EllipsoidRadius);
+        Collision.World = Maths.GetTriangles(model,scenePosition,sceneRotation,player.Radius);
 
 
         (scene,textures) = Model.FromFile("Assets/dust2/source/","de_dust2.obj", PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals);
+
+        /*
+        Triangle[] array = Load3dModel("Assets/dust2/source/","de_dust2.obj",
+            PostProcessSteps.Triangulate| PostProcessSteps.GenerateNormals,
+            out Dictionary<TextureType, Texutre[]> thisDictionary,
+            TextureType.Reflection | TextureType.Ambient | TextureType.Diffuse,
+            true, out float[] bob, out int[] bobette);
+
+        Texture diffuse = thisDictionary[TextureType.Diffuse][0];
+
+
+        Triangle[] bob = model.LoadTriangles();
+        Texture[] bleep = model.LoadTextures(TextureType.Diffuse);*/
+        
 
         point = new Model(new float[3]);
         

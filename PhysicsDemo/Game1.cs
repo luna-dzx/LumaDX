@@ -31,8 +31,11 @@ public class Game1 : Game
 
     Matrix4 worldTransform = Matrix4.Identity;
     
+    float angle;
+    bool updateTransform;
+    
 
-    void ResetEllipsoid()
+    void ResetPhysicsPlayer()
     {
         physicsPlayer.Position = new (0f, 3f, 2f);
         physicsPlayer.Gravity = -Vector3.UnitY;
@@ -96,8 +99,6 @@ public class Game1 : Game
             new(0f, 1f, 1.5f), 
             new(0.4f, 1f, 0.4f)
         );
-        
-        worldTransform = Matrix4.CreateRotationX(MathF.PI / 8f) * worldTransform;
 
         cubeTransforms = new Matrix4[10];
 
@@ -129,7 +130,7 @@ public class Game1 : Game
             hsv.X += 0.1f;
         }
 
-        ResetEllipsoid();
+        ResetPhysicsPlayer();
         ConstructWorld();
     }
 
@@ -150,9 +151,17 @@ public class Game1 : Game
         player.UpdateProjection(shader);
 
         physicsPlayer.Velocity = -Vector3.UnitZ * (float)args.Time;
-        physicsPlayer.Update((float)args.Time);
+        physicsPlayer.PhysicsUpdate((float)args.Time);
         
-        if (physicsPlayer.Position.Y < -4f) ResetEllipsoid();
+        if (physicsPlayer.Position.Y < -4f) ResetPhysicsPlayer();
+        
+        if (updateTransform)
+        {
+            worldTransform = Matrix4.CreateRotationX(angle);
+            ResetPhysicsPlayer();
+            ConstructWorld();
+            updateTransform = false;
+        }
         
     }
 
@@ -164,22 +173,8 @@ public class Game1 : Game
             imGui.FocusWindow();
         }
 
-        if (k.IsKeyPressed(Keys.Backspace)) ResetEllipsoid();
+        if (k.IsKeyPressed(Keys.Backspace)) ResetPhysicsPlayer();
         if (k.IsKeyPressed(Keys.J)) physicsPlayer.Jump();
-
-        if (k.IsKeyPressed(Keys.Up))
-        {
-            worldTransform = Matrix4.CreateRotationX(MathF.PI / 16f) * worldTransform;
-            ResetEllipsoid();
-            ConstructWorld();
-        }
-        
-        if (k.IsKeyPressed(Keys.Down))
-        {
-            worldTransform = Matrix4.CreateRotationX(- MathF.PI / 16f) * worldTransform;
-            ResetEllipsoid();
-            ConstructWorld();
-        }
 
     }
 
@@ -212,6 +207,9 @@ public class Game1 : Game
         if (!imGui.IsFocused()) LockMouse();;
 
         //ImGui.ListBox("Effect", ref currentEffect, effectNames, effectNames.Length);
+        float lastAngle = angle;
+        ImGui.SliderAngle("Angle", ref angle, -180f, 180f);
+        if (lastAngle != angle) updateTransform = true;
         imGui.Render();
         
         

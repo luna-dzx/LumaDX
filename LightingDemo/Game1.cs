@@ -64,8 +64,10 @@ public class Game1 : LumaDX.Game
         player.NoClip = true;
     
         const string BackpackDir = "Assets/backpack/";
-        backpack = Model.FromFile(BackpackDir,"backpack.obj",out _ , postProcessFlags: PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
 
+        FileManager fm = new FileManager(BackpackDir + "backpack.obj").AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
+        backpack = fm.LoadModel();
+        
         texture = new Texture(BackpackDir+"diffuse.bmp",4);
         specular = new Texture(BackpackDir+"specular.bmp",5);
 

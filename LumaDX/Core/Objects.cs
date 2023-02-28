@@ -9,20 +9,25 @@ public static class Objects
     /// </summary>
     public class Mesh
     {
-        public float[] Vertices;
-        public float[] TexCoords;
-        public float[] Normals;
-        public float[] Tangents;
+        public float[]? Vertices;
+        public float[]? TexCoords;
+        public float[]? Normals;
+        public float[]? Tangents;
 
-        public int[] Indices;
+        public int[]? Indices;
 
         public int VertexBinding = 0;
         public int TexCoordBinding = 1;
         public int NormalBinding = 2;
         public int TangentBinding = 3;
 
-        public Mesh(float[] vertices = null, int[] indices = null, float[] texCoords = null, float[] normals = null, float[] tangents = null)
+        public Mesh(float[]? vertices = null, int[]? indices = null, float[]? texCoords = null, float[]? normals = null, float[]? tangents = null)
         {
+            if (vertices?.Length == 0) vertices = null;
+            if (texCoords?.Length == 0) texCoords = null;
+            if (normals?.Length == 0) normals = null;
+            if (tangents?.Length == 0) tangents = null;
+            
             Vertices = vertices;
             Indices = indices;
             TexCoords = texCoords;
@@ -32,7 +37,7 @@ public static class Objects
         
         public Mesh FlipNormals()
         {
-            for (int i = 0; i < Normals.Length; i++)
+            for (int i = 0; i < Normals?.Length; i++)
             {
                 Normals[i] *= -1;
             }

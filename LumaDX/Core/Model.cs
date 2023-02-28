@@ -30,6 +30,7 @@ public class Model : VertexArray
 
     public Matrix4 GetTransform() => transform;
 
+    private bool transposeMatrix = false;
 
     /// <summary>
     /// Create a new model, which contains an empty mesh object and a transformation matrix
@@ -71,6 +72,18 @@ public class Model : VertexArray
         :this()
     {
         LoadMesh(meshData);
+    }
+    
+    public Model EnableTranspose()
+    {
+        transposeMatrix = true;
+        return this;
+    }
+    
+    public Model DisableTranspose()
+    {
+        transposeMatrix = false;
+        return this;
     }
 
 
@@ -373,19 +386,19 @@ public class Model : VertexArray
     public Model UpdateTransform(int programId, int binding)
     {
         GL.UseProgram(programId);
-        GL.UniformMatrix4(binding,false,ref transform);
+        GL.UniformMatrix4(binding,transposeMatrix, ref transform);
         return this;
     }
     public Model UpdateTransform(int programId, string name)
     {
         GL.UseProgram(programId);
-        GL.UniformMatrix4(GL.GetUniformLocation(programId,name),false,ref transform);
+        GL.UniformMatrix4(GL.GetUniformLocation(programId,name),transposeMatrix, ref transform);
         return this;
     }
     public Model UpdateTransform(ShaderProgram program)
     {
         program.Use();
-        GL.UniformMatrix4(program.DefaultModel,false,ref transform);
+        GL.UniformMatrix4(program.DefaultModel,transposeMatrix, ref transform);
         return this;
     }
 
@@ -459,10 +472,16 @@ public class Model : VertexArray
         return this;
     }
 
-    public Model SetMatrix(ShaderProgram shader, Matrix4 matrix)
+    public Model Transform(ShaderProgram shader, Matrix4 matrix)
     {
         transform = matrix;
         UpdateTransform(shader);
+        return this;
+    }
+    
+    public Model Transform(Matrix4 matrix)
+    {
+        transform = matrix;
         return this;
     }
 

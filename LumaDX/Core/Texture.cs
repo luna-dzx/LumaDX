@@ -111,7 +111,8 @@ public class Texture : IDisposable
 
         return this;
     }
-    
+
+    public Vector2i Size = Vector2i.Zero;
     
 
     public Texture LoadFile(string path, bool flipOnLoad = true)
@@ -122,6 +123,8 @@ public class Texture : IDisposable
         var image = ImageResult.FromStream(stream,ColorComponents.RedGreenBlueAlpha);
         GL.TexImage2D(target,0,PixelInternalFormat.Rgba,image.Width,image.Height,0,PixelFormat.Rgba,PixelType.UnsignedByte,image.Data); 
         GL.GenerateMipmap((GenerateMipmapTarget)target);
+
+        Size = new Vector2i(image.Width, image.Height);
         return this;
     }
 
@@ -132,6 +135,8 @@ public class Texture : IDisposable
         
         GL.TexImage2D(target,0,PixelInternalFormat.Rgb,image.Width,image.Height,0,PixelFormat.Bgr,PixelType.UnsignedByte,image.PixelData); 
         GL.GenerateMipmap((GenerateMipmapTarget)target);
+        
+        Size = new Vector2i(image.Width, image.Height);
         return this;
     }
     
@@ -142,6 +147,8 @@ public class Texture : IDisposable
         using var stream = File.OpenRead(path);
         var image = ImageResult.FromStream(stream,ColorComponents.RedGreenBlueAlpha);
         GL.TexImage2D(textureTarget,0,PixelInternalFormat.Rgba,image.Width,image.Height,0,PixelFormat.Rgba,PixelType.UnsignedByte,image.Data);
+        
+        Size = new Vector2i(image.Width, image.Height);
         return this;
     }
 

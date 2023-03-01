@@ -836,6 +836,14 @@ public class ShaderProgram : IDisposable
         texture.Uniform(this, name);
         return this;
     }
+    
+    public ShaderProgram UniformFrameBuffer(string name, int unit)
+    {
+        GL.Uniform1(GL.GetUniformLocation((int)this,name),unit);
+        return this;
+    }
+    
+    
 
     #endregion
         

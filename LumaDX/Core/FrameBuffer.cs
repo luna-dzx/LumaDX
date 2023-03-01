@@ -84,6 +84,36 @@ public class FrameBuffer : IDisposable
         ReadMode();
 
     }
+    
+    /// <summary>
+    /// Special Case of Loading an Image Directly to a FrameBuffer
+    /// </summary>
+    public FrameBuffer(string fileName) : this()
+    {
+        var image = BmpSharp.BitmapFileHelper.ReadFileAsBitmap(fileName,true);
+        Size = new Vector2i(image.Width, image.Height);
+        
+        usingPreset = true;
+
+        Size = (image.Width,image.Height);
+
+        NumColourAttachments = 1;
+        colourAttachments = new TextureBuffer[NumColourAttachments];
+        colourAttachments[0] = new TextureBuffer(PixelInternalFormat.Rgb8, PixelFormat.Rgb, Size);
+        colourAttachments[0].Wrapping(TextureWrapMode.ClampToEdge);
+        GL.TexImage2D(TextureTarget.Texture2D,0,PixelInternalFormat.Rgb,image.Width,image.Height,0,PixelFormat.Bgr,PixelType.UnsignedByte,image.PixelData);
+        
+        AttachTexture(colourAttachments[0], FramebufferAttachment.ColorAttachment0);
+
+        depthStencilRenderBuffer = new RenderBuffer(RenderbufferStorage.Depth24Stencil8, Size);
+        AttachRenderBuffer(depthStencilRenderBuffer, FramebufferAttachment.DepthStencilAttachment);
+
+        CheckCompletion();
+
+        ReadMode();
+
+    }
+    
 
 
     public FrameBuffer(Vector2i size, PixelInternalFormat[]? internalFormats = null,

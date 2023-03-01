@@ -56,13 +56,12 @@ void main()
 uniform vec2 mousePos;
 uniform vec2 textureSize;
 uniform vec2 screenSize;
+uniform float brushSize;
+uniform vec3 brushColour;
 
 [frameBuffer]
 void main()
 {
-    if (length(gl_FragCoord.xy/textureSize - mousePos) > 0.1) discard;
-    lx_FragColour = vec4(1.0,0.0,0.0,1.0);
-    
-    //lx_FragColour = vec4(gl_FragCoord.xy/textureSize,0.5,1.0);
-    //lx_FragColour = lx_Colour(lx_GammaCorrect(texture(normalMap,fs_in.texCoords).rgb,2.2));
+    if (length(gl_FragCoord.xy/textureSize - mousePos) > brushSize) discard;
+    lx_FragColour = vec4(brushColour,1.0);
 }

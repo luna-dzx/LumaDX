@@ -38,6 +38,8 @@ public class Game1 : Game
 
     Vector3 rotation = new (-0.383f,  -0.483f, MathF.PI);
     
+    float brushSize = 20.0f;
+    
     float heightScale = 0.0f;
     bool normalMap = false;
 
@@ -118,6 +120,8 @@ public class Game1 : Game
 
     protected override void RenderFrame(FrameEventArgs args)
     {
+        glState.SaveState();
+        
         // squares on right hand side
         Vector2 screenSize = (Window.Size.X,Window.Size.Y); // (convert to floats/Vector2)
         Vector2 squareSize = (Window.Size.Y / 4f - 6f, Window.Size.Y / 4f - 6f);
@@ -126,27 +130,37 @@ public class Game1 : Game
         shader.Uniform1("doNormalMapping", normalMap?1:0);
         float x = screenSize.X - squareSize.X - 10f;
         
-        /*#region FrameBuffers
-        
-        shader.SetActive("frameBuffer");
-        for (int i = 0; i < 3; i++)
+        #region FrameBuffers
+
+        if (Window.MouseState.IsButtonDown(MouseClick.Button1))
         {
-            Vector2 textureSize = (frameBuffers[i].Size.X, frameBuffers[i].Size.Y);
-            GL.Viewport(0,0,(int)textureSize.X,(int)textureSize.Y);
-            frameBuffers[i].WriteMode();
-            float y = screenSize.Y - squareSize.Y - 10f - (squareSize.Y*2f + 10f) * i;
-            shader.Uniform2("squarePos", x, y);
-            shader.Uniform2("mousePos", new Vector2(Window.MousePosition.X - x, screenSize.Y - Window.MousePosition.Y - y/2f) / squareSize);
-            shader.Uniform2("textureSize", textureSize);
-            quad.Draw();
-            frameBuffers[i].ReadMode();
+            glState.DepthTest = false;
+            shader.SetActive("frameBuffer");
+            shader.Uniform1("brushSize", brushSize / screenSize.Y);
+            shader.Uniform3("brushColour", brushColour.X,brushColour.Y,brushColour.Z);  
+            for (int i = 0; i < 4; i++)
+            {
+                Vector2 textureSize = (frameBuffers[i].Size.X, frameBuffers[i].Size.Y);
+                GL.Viewport(0,0,(int)textureSize.X,(int)textureSize.Y);
+                frameBuffers[i].WriteMode();
+                float y = screenSize.Y - squareSize.Y - 10f - (squareSize.Y*2f + 10f) * i;
+                float y2 = screenSize.Y - squareSize.Y - 10f - (squareSize.Y*2f + 10f) * (i/2f);
+                shader.Uniform2("squarePos", x, y);
+                shader.Uniform2("mousePos", new Vector2(Window.MousePosition.X - x, screenSize.Y - Window.MousePosition.Y - y2) / squareSize);
+                shader.Uniform2("textureSize", textureSize);
+            
+                quad.Draw();
+                frameBuffers[i].ReadMode();
+            }
+            
+            GL.Viewport(0,0,(int)screenSize.X,(int)screenSize.Y);
+            
         }
-        GL.Viewport(0,0,(int)screenSize.X,(int)screenSize.Y);
-        #endregion*/
+        #endregion
         
         
         
-        glState.SaveState();
+        glState.LoadState();
         glState.Clear();
 
         shader.SetActive("mapping");
@@ -179,8 +193,9 @@ public class Game1 : Game
         if (ImGui.IsItemActive()) brushColour = SysVec3.Normalize(brushColour);
         
         ImGui.ColorPicker3("Brush Colour", ref brushColour);
+        ImGui.SliderFloat("Brush Size", ref brushSize, 1f, 100f);
+        
         ImGui.SliderFloat("Height Displacement", ref heightScale, 0f, 0.2f);
-
         ImGui.Checkbox("Normal Map", ref normalMap);
         imGui.Render();
         #endregion

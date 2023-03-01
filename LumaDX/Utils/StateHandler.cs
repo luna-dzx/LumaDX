@@ -71,6 +71,12 @@ public class StateHandler
         BlendDst = ActiveState.BlendDst;
     }
 
+    public void Unbind()
+    {
+        GL.BindVertexArray(0);
+        GL.UseProgram(0);
+    }
+
     public void LoadState() => LoadState(StoredState);
     public void SaveState() => StoredState = ActiveState;
 

@@ -222,8 +222,7 @@ public class Game1 : Game
 
     protected override void Unload()
     {
-        GL.BindVertexArray(0);
-        GL.UseProgram(0);
+        glState.Unbind();
         
         cube.Dispose();
         ellipsoid.Dispose();

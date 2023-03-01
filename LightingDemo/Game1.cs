@@ -251,8 +251,7 @@ public class Game1 : LumaDX.Game
 
     protected override void Unload()
     {
-        GL.BindVertexArray(0);
-        GL.UseProgram(0);
+        glState.Unbind();
         
         backpack.Dispose();
         cube.Dispose();

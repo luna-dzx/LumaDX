@@ -252,6 +252,7 @@ public class PostProcessing : IDisposable
 
 
     int frameCount = 0;
+    public int BlurTexture = 0;
 
     public PostProcessing RenderEffect(PostProcessShader effect, DrawBuffersEnum[]? colourAttachments = null)
     {
@@ -261,9 +262,8 @@ public class PostProcessing : IDisposable
         {
             shaderPrograms[PostProcessShader.GaussianBlur].Use();
 
-            shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("texture0", 1);
+            shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("texture0", BlurTexture);
 
-            
             shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Horizontal);
             BasicEffect(colourAttachments);
             shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Vertical);

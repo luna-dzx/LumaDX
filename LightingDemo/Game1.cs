@@ -96,6 +96,7 @@ public class Game1 : LumaDX.Game
         hdrShader = new ShaderProgram(ShaderLocation+"postProcess.glsl");
         postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f, colourAttachments)
             .UniformTextures(hdrShader, new []{"sampler", "brightSample"});;
+        postProcessor.BlurTexture = 1;
     }
 
     protected override void Load()

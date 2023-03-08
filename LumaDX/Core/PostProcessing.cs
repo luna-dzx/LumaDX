@@ -143,6 +143,9 @@ public class PostProcessing : IDisposable
         
         ReadFbo.SetDrawBuffers(colourAttachments);
         WriteFbo.SetDrawBuffers(colourAttachments);
+        
+        
+        EndSceneRender();
     }
     
     
@@ -182,6 +185,21 @@ public class PostProcessing : IDisposable
         
         WriteFbo.ReadMode();
 
+
+        BlitFbo();
+    }
+    
+        private void GaussianBlurStep(DrawBuffersEnum[] colourAttachments, BlurDirection direction)
+    {
+        shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)direction);
+        WriteFbo.WriteMode();
+        WriteFbo.SetDrawBuffers(colourAttachments);
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+        
+        ReadFbo.UseTexture();
+        Draw();
+        
+        WriteFbo.ReadMode();
 
         BlitFbo();
     }
@@ -243,6 +261,9 @@ public class PostProcessing : IDisposable
         {
             shaderPrograms[PostProcessShader.GaussianBlur].Use();
 
+            shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("texture0", 1);
+
+            
             shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Horizontal);
             BasicEffect(colourAttachments);
             shaderPrograms[PostProcessShader.GaussianBlur].Uniform1("blurDirection", (int)BlurDirection.Vertical);
@@ -359,7 +380,7 @@ public class PostProcessing : IDisposable
             program.Dispose();
         }
         
-        textRenderer.Dispose();
+        if (textRenderer!=null) textRenderer.Dispose();
         
         BlitShader.Dispose();
         

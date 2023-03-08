@@ -1,249 +1,192 @@
 ﻿using Assimp;
 using LumaDX;
+using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
+using Vector3 = OpenTK.Mathematics.Vector3;
+using PostProcessShader = LumaDX.PostProcessing.PostProcessShader;
 
 namespace LightingDemo;
 
 public class Game1 : LumaDX.Game
 {
+    StateHandler glState;
+
     const string ShaderLocation = "Shaders/";
-
     ShaderProgram shader;
-    ShaderProgram sceneShader;
-    ShaderProgram ssaoShader;
-    ShaderProgram lightingShader;
+    ShaderProgram hdrShader;
+    
+    const string AssetLocation = "Assets/";
+    Texture skyBox;
+    
+    Texture texture;
+    Texture specular;
+    Texture normal;
 
-    FirstPersonPlayer player;
     Model backpack;
     Model cube;
 
+    FirstPersonPlayer player;
+
+    PostProcessing postProcessor;
+    
+    float exposure = 1f;
+    Vector3 rotation = Vector3.Zero;
+    
+    bool bloomEnabled;
+
     Objects.Light light;
     Objects.Material material;
-
-    Texture texture;
-    Texture specular;
-
-    GeometryBuffer gBuffer;
-    Vector3 rotation = Vector3.Zero;
-
-    const int SampleCount = 64;
-    const int NoiseWidth = 4;
-    Vector3[] ssaoKernel;
-
-    int noiseTexture;
     
-    PostProcessing postProcessor;
-
-    bool ambientOcclusion = true;
     
-    StateHandler glState;
+    DrawBuffersEnum[] colourAttachments;
+    DrawBuffersEnum[] brightColourAttachment;
+
 
     protected override void Initialize()
     {
         glState = new StateHandler();
-        GL.ClearColor(Color4.Black);
+        glState.ClearColor = Color4.Transparent;
 
-        shader = new ShaderProgram
-        (
+        colourAttachments = new [] { DrawBuffersEnum.ColorAttachment0, DrawBuffersEnum.ColorAttachment1 };
+        brightColourAttachment = new [] { DrawBuffersEnum.ColorAttachment1 };
+        
+        UnlockMouse();
+
+        shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl",
             ShaderLocation + "fragment.glsl",
             true
         );
-    
-        sceneShader = new ShaderProgram()
-            .LoadShader(ShaderLocation + "geometryVertex.glsl", ShaderType.VertexShader)
-            .LoadShader(ShaderLocation + "geometryFragment.glsl", ShaderType.FragmentShader)
-            .Compile()
-            .EnableAutoProjection();
-    
-        player = new FirstPersonPlayer(Window.Size)
-            .SetPosition(new Vector3(0,0,6));
-        player.NoClip = true;
-    
-        const string BackpackDir = "Assets/backpack/";
 
-        FileManager fm = new FileManager(BackpackDir + "backpack.obj").AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
+        player = new FirstPersonPlayer(Window.Size)
+            .SetPosition(new Vector3(0f,0f,10f))
+            .SetDirection(-Vector3.UnitZ);
+        player.NoClip = true;
+        
+        player.UpdateProjection(shader);
+
+        skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
+        cube = new Model(PresetMesh.Cube);
+
+        texture = new Texture(AssetLocation + "backpack/diffuse.bmp", 1);
+        specular = new Texture(AssetLocation + "backpack/specular.bmp", 2);
+        normal = new Texture(AssetLocation + "backpack/normal.bmp", 3);
+
+        FileManager fm = new FileManager(AssetLocation + "backpack/backpack.obj")
+            .AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
         backpack = fm.LoadModel();
         
-        texture = new Texture(BackpackDir+"diffuse.bmp",4);
-        specular = new Texture(BackpackDir+"specular.bmp",5);
-
+        light = new Objects.Light().PointMode().SetPosition(new Vector3(-2f,2f,5f))
+            .SetAmbient(0.01f).SetSpecular(Vector3.One*12f).SetDiffuse(Vector3.One*12f);
         material = PresetMaterial.Silver.SetAmbient(0.01f);
-        
-        cube = new Model(PresetMesh.Cube.FlipNormals());
-        
-    
-        // TODO: make resizing this better, requires re-doing all the framebuffer objects though
-        gBuffer = new GeometryBuffer(Window.Size)
-            .AddTexture(PixelInternalFormat.Rgb16f)  // position
-            .AddTexture(PixelInternalFormat.Rgb16f)  // normal
-            .AddTexture(PixelInternalFormat.Rg16f)  // texCoords
-            .Construct();
-    
-    
-        ssaoShader = new ShaderProgram(ShaderLocation+"ssaoFragment.glsl");
-        lightingShader = new ShaderProgram(ShaderLocation+"lightingFragment.glsl");
-        
-        light = new Objects.Light().PointMode().SetPosition(3f,5f,6f);
 
-        ssaoKernel = RandUtils.SsaoKernel(SampleCount);
-        noiseTexture = TexUtils.GenSsaoNoiseTex(NoiseWidth);
+        texture.Use();
+        
+        shader.EnableGammaCorrection();
+        
+        shader.UniformMaterial("material",material,texture,specular)
+            .UniformLight("light",light)
+            .UniformTexture("normalMap",normal);
 
-        postProcessor = new PostProcessing(PostProcessing.PostProcessShader.GaussianBlur, Window.Size);
+        // custom shader for handling blitting
+        hdrShader = new ShaderProgram(ShaderLocation+"postProcess.glsl");
+        postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f, colourAttachments)
+            .UniformTextures(hdrShader, new []{"sampler", "brightSample"});;
     }
 
     protected override void Load()
     {
-        player.UpdateProjection(sceneShader);
-
-        shader.Use();
-        GL.UniformMatrix4(shader.DefaultProjection,false,ref player.Camera.ProjMatrix);
-
-        cube.UpdateTransform(shader,new Vector3(10f,10f,10f),Vector3.Zero,0.2f);
-
-        sceneShader.EnableGammaCorrection();
-
-        texture.Use();
-
-        sceneShader.Use();
-        ssaoShader.UniformVec3Array("samples", ssaoKernel);
-        ssaoShader.Uniform2("noiseScale", new Vector2(Window.Size.X / 4f, Window.Size.Y / 4f));
-
-        gBuffer.UniformTextures((int)ssaoShader, new[] { "gPosition", "gNormal", "noiseTex"});
-        gBuffer.UniformTextures((int)lightingShader, new[] { "gPosition", "gNormal", "gTexCoords", "ssaoTex"});
-
-        lightingShader.UniformMaterial("material", material, texture, specular);
-        lightingShader.UniformLight("light", light);
-        
-        lightingShader.Uniform1("ambientOcclusion", ambientOcclusion ? 1 : 0);
+        shader.UniformTexture("skyBox", skyBox);
+        player.UpdateProjection(shader);
     }
-
-    protected override void Resize(ResizeEventArgs newWin)
-    {
-        startMousePos = Window.Size / 2;
-        
-        player.Camera.Resize(sceneShader, newWin.Size);
-            
-        shader.Use();
-        GL.UniformMatrix4(shader.DefaultProjection,false,ref player.Camera.ProjMatrix);
-        
-        gBuffer.Dispose();
-        gBuffer = new GeometryBuffer(Window.Size)
-            .AddTexture(PixelInternalFormat.Rgb16f)  // position
-            .AddTexture(PixelInternalFormat.Rgb16f)  // normal
-            .AddTexture(PixelInternalFormat.Rg16f)  // texCoords
-            .Construct();
-
-        postProcessor = new PostProcessing(PostProcessing.PostProcessShader.GaussianBlur, newWin.Size);
-        
-        ssaoShader.Uniform2("noiseScale", new Vector2(newWin.Size.X / 4f, newWin.Size.Y / 4f));
-    }
-
+    
+    protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);
+    
+    
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(sceneShader, args, Window.KeyboardState, GetRelativeMouse()*2f);
-        shader.Use();
-        GL.UniformMatrix4(shader.DefaultView,false,ref player.Camera.ViewMatrix);
+        player.Update(shader, args, Window.KeyboardState, GetPlayerMousePos());
+        shader.Uniform3("cameraPos", player.Camera.Position);
+        player.UpdateProjection(shader);
     }
 
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
     {
+        if (k.IsKeyPressed(Keys.Enter)) { bloomEnabled = !bloomEnabled; }
+
         if (k.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
         if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
-
-        if (k.IsKeyPressed(Keys.Enter))
-        {
-            ambientOcclusion = !ambientOcclusion;
-            lightingShader.Uniform1("ambientOcclusion", ambientOcclusion ? 1 : 0);
-        }
-
-        backpack.UpdateTransform(sceneShader, Vector3.Zero, rotation, new Vector3(0.8f));
+    }
+    
+    protected override void MouseHandling(FrameEventArgs args, MouseState mouseState)
+    {
+        exposure += mouseState.ScrollDelta.Y * (float)args.Time;
+        hdrShader.Uniform1("exposure", exposure);
     }
 
+    int currentEffect = 0;
 
     protected override void RenderFrame(FrameEventArgs args)
     {
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        glState.ClearColor = Color4.Transparent;
+        glState.Clear();
         
-        #region Geometry Render
+        postProcessor.StartSceneRender(colourAttachments);
         
-        gBuffer.WriteMode();
+        glState.Clear();
         
-        sceneShader.Use();
-        gBuffer.SetDrawBuffers();
-
-
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-        sceneShader.SetActive(ShaderType.FragmentShader, "backpack");
-        backpack.Draw(sceneShader);
-   
-        sceneShader.SetActive(ShaderType.FragmentShader, "cube");
+        // skyBox is maximum depth, so we want to render if it's <= instead of just <
+        glState.DepthFunc = DepthFunction.Lequal;
         
-        GL.CullFace(CullFaceMode.Front);
-        cube.UpdateTransform(sceneShader,Vector3.Zero,Vector3.Zero,3f);
-        cube.Draw();
+        texture.Use();
 
-        GL.CullFace(CullFaceMode.Back);
+        glState.DoCulling = true;
 
-
-        gBuffer.ReadMode();
+        normal.Use();
         
-        #endregion
-
+        shader.SetActive("scene");
+        backpack.Draw(shader, Vector3.Zero,  rotation, 2f);
         
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        
-        #region Colour Render
-        
-        postProcessor.StartSceneRender();
-        #region Initial Render
-        
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        shader.SetActive(ShaderType.FragmentShader,"light");
+        cube.Draw(shader, light.Position,  Vector3.Zero, 0.2f);
 
-            ssaoShader.Use();
-            ssaoShader.UniformMat4("proj", ref player.Camera.ProjMatrix);
-            gBuffer.UseTexture();
 
-            OpenGL.BindTexture(2,TextureTarget.Texture2D,noiseTexture);
-
-            PostProcessing.Draw();
-
-        #endregion
-        
-        GL.Disable(EnableCap.DepthTest);
         postProcessor.EndSceneRender();
-
-        // blur the SSAO texture to remove noise (noise is there to prevent banding)
-        postProcessor.RenderEffect(PostProcessing.PostProcessShader.GaussianBlur);
-
-        GL.Enable(EnableCap.DepthTest);
-
-        #region Final Render
         
-            lightingShader.UniformMat4("view", ref player.Camera.ViewMatrix);
-            lightingShader.Use();
-            gBuffer.UseTexture();
-            
-            // read blurred SSAO texture into slot 3
-            GL.ActiveTexture(TextureUnit.Texture3);
-            postProcessor.ReadTexture(0);
-            
-            texture.Use();
-            specular.Use();
+        if (bloomEnabled) postProcessor.RenderEffect(PostProcessShader.GaussianBlur, brightColourAttachment);
+        
+        #region render to screen with HDR
+        
+        // combine scene with blurred bright component using HDR
 
-            PostProcessing.Draw();
-            
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+
+
+        shader.DisableGammaCorrection();
+        skyBox.Use();
+        glState.DoCulling = false;
+        shader.SetActive("skyBox");
+        cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 1f);
+    
+        glState.DoCulling = true;
+        shader.EnableGammaCorrection();
+
+        glState.Blending = true;
+        
+        hdrShader.Use();
+        postProcessor.DrawFbo();
+        
+        glState.Blending = false;
+        
         #endregion
-        
-        #endregion
-        
-        GL.CullFace(CullFaceMode.Back);
+
+
 
 
         Window.SwapBuffers();
@@ -256,12 +199,12 @@ public class Game1 : LumaDX.Game
         backpack.Dispose();
         cube.Dispose();
         
+        skyBox.Dispose();
         texture.Dispose();
-        specular.Dispose();
-        gBuffer.Dispose();
         
+        postProcessor.Dispose();
+        
+        hdrShader.Dispose();
         shader.Dispose();
-        sceneShader.Dispose();
-        ssaoShader.Dispose();
     }
 }

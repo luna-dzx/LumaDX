@@ -13,25 +13,25 @@ void main()
 {
     
     vec2 tex_offset = 1.0 / textureSize(texture0, 0); // gets size of single texel
-    vec3 colour = texture(texture0, texCoords).rgb * weight[0]; // current fragment's contribution
+    vec4 colour = texture(texture0, texCoords) * weight[0]; // current fragment's contribution
     
     if(blurDirection==0) // horizontal
     {
         for(int i = 1; i < 5; ++i)
         {
-            colour += texture(texture0, texCoords + vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
-            colour += texture(texture0, texCoords - vec2(tex_offset.x * i, 0.0)).rgb * weight[i];
+            colour += texture(texture0, texCoords + vec2(tex_offset.x * i, 0.0)) * weight[i];
+            colour += texture(texture0, texCoords - vec2(tex_offset.x * i, 0.0)) * weight[i];
         }
     }
     else // vertical
     {
         for(int i = 1; i < 5; ++i)
         {
-            colour += texture(texture0, texCoords + vec2(0.0, tex_offset.y * i)).rgb * weight[i];
-            colour += texture(texture0, texCoords - vec2(0.0, tex_offset.y * i)).rgb * weight[i];
+            colour += texture(texture0, texCoords + vec2(0.0, tex_offset.y * i)) * weight[i];
+            colour += texture(texture0, texCoords - vec2(0.0, tex_offset.y * i)) * weight[i];
         }
     }
     
-    brightColour = vec4(colour,1.0);
+    brightColour = colour;
 
 }

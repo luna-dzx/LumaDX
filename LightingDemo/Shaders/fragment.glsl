@@ -1,6 +1,6 @@
 #version luma-dx
 
-uniform samplerCube skyBox;
+uniform samplerCube cubeMap;
 
 uniform lx_Material material;
 uniform lx_Light light;
@@ -30,11 +30,19 @@ vec3 CalculateBrightColour(vec3 colour)
     return vec3(0.0);
 }
 
+uniform int flipNormals = 0;
+uniform float farPlane;
+
+uniform float shadowThreshold;
+
+
 [scene]
 void main()
 {
+    float shadow = lx_ShadowCalculation(cubeMap, fs_in.fragPos, light.position, cameraPos, farPlane);
     vec3 normal = lx_NormalMap(normalMap,fs_in.texCoords);
-    vec3 phong = lx_Phong(normal, fs_in.TBNfragPos, fs_in.TBNcameraPos, fs_in.texCoords, fs_in.texCoords, material, lx_MoveLight(light,fs_in.TBNlightPos), 1.0);
+    if (flipNormals == 1) normal *= -1.0;
+    vec3 phong = lx_Phong(normal, fs_in.TBNfragPos, fs_in.TBNcameraPos, fs_in.texCoords, fs_in.texCoords, material, lx_MoveLight(light,fs_in.TBNlightPos),shadow * shadowThreshold + (1.0 - shadowThreshold));
     fragColour = lx_Colour(phong);
     brightColour = lx_Colour(CalculateBrightColour(fragColour.rgb));
 }
@@ -42,7 +50,7 @@ void main()
 [skyBox]
 void main()
 {
-    fragColour = texture(skyBox,fs_in.textureDir);
+    fragColour = texture(cubeMap,fs_in.textureDir);
     brightColour = vec4(0.0);
 }
 

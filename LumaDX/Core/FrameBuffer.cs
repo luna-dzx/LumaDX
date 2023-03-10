@@ -563,7 +563,7 @@ public class CubeDepthMap : IDisposable
     public float ClipFar;
 
 
-    public CubeDepthMap(string shaderPath, Vector2i size, Vector3 position, float clipNear = 0.05f, float clipFar = 100f)
+    public CubeDepthMap(Vector2i size, Vector3 position, float clipNear = 0.05f, float clipFar = 100f)
     {
         Handle = GL.GenFramebuffer();
         TextureHandle = GL.GenTexture();
@@ -596,9 +596,9 @@ public class CubeDepthMap : IDisposable
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
 
         Shader = new ShaderProgram()
-            .LoadShader(shaderPath + "vertexCubeMap.glsl", ShaderType.VertexShader)
-            .LoadShader(shaderPath + "geometryCubeMap.glsl", ShaderType.GeometryShader)
-            .LoadShader(shaderPath + "fragmentCubeMap.glsl", ShaderType.FragmentShader)
+            .LoadShader(Constants.LibraryShaderPath + "DepthMap/vertexCubeMap.glsl", ShaderType.VertexShader)
+            .LoadShader(Constants.LibraryShaderPath + "DepthMap/geometryCubeMap.glsl", ShaderType.GeometryShader)
+            .LoadShader(Constants.LibraryShaderPath + "DepthMap/fragmentCubeMap.glsl", ShaderType.FragmentShader)
             .Compile()
             .SetModelLocation("model");
     }
@@ -614,6 +614,7 @@ public class CubeDepthMap : IDisposable
         GL.Clear(ClearBufferMask.DepthBufferBit);
         
         Shader.Use();
+        Shader.Uniform3("offsetPos",Position);
 
         return this;
     }

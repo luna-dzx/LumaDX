@@ -285,8 +285,45 @@ vec3 lx_DeferredPhong(in vec3 normal, in vec3 fragPos, in vec3 cameraPos, in vec
     return universalAmbient + outColour; 
 }
 
+vec3 lx_SampleOffsetDirections[20] = vec3[]
+(
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);   
 
+float lx_ShadowCalculation(samplerCube depthMap, vec3 fragPos, vec3 lightPos, vec3 cameraPos, float farPlane)
+{
+    vec3 fragToLight = fragPos - lightPos;
+    float closestDepth = texture(depthMap, fragToLight).r;
+    closestDepth *= farPlane;
+    float currentDepth = length(fragToLight);
+    
+    float bias = 0.15;
+    float shadow = currentDepth - bias > closestDepth ? 0.0 : 1.0;
+    
+    
+    if (shadow == 0.0)
+    {
+        int samples = 20;
+        float viewDistance = length(cameraPos - fragPos);
+        float diskRadius = (1.0 + (viewDistance / farPlane)) / 30.0; 
+        for(int i = 0; i < samples; ++i)
+        {
+            closestDepth = texture(depthMap, fragToLight + lx_SampleOffsetDirections[i] * diskRadius).r;
+            closestDepth *= farPlane;
+            if(currentDepth - bias < closestDepth)
+                shadow += 1.0;
+        }
+        shadow /= float(samples);
+    
+    }
 
+    
+    return shadow;
+}
 
 
 float lx_ShadowCalculation(sampler2D shadowTexture, vec4 fragPosLightSpace)

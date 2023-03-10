@@ -22,9 +22,13 @@ public class Game1 : LumaDX.Game
     const string AssetLocation = "Assets/";
     Texture skyBox;
     
-    Texture texture;
-    Texture specular;
-    Texture normal;
+    Texture backpackTexture;
+    Texture backpackSpecular;
+    Texture backpackNormal;
+    
+    Texture woodTexture;
+    Texture woodSpecular;
+    Texture woodNormal;
 
     Model backpack;
     Model cube;
@@ -40,10 +44,11 @@ public class Game1 : LumaDX.Game
 
     Objects.Light light;
     Objects.Material material;
-    
-    
+
     DrawBuffersEnum[] colourAttachments;
     DrawBuffersEnum[] brightColourAttachment;
+
+    CubeDepthMap depthMap;
 
 
     protected override void Initialize()
@@ -72,9 +77,13 @@ public class Game1 : LumaDX.Game
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
 
-        texture = new Texture(AssetLocation + "backpack/diffuse.bmp", 1);
-        specular = new Texture(AssetLocation + "backpack/specular.bmp", 2);
-        normal = new Texture(AssetLocation + "backpack/normal.bmp", 3);
+        backpackTexture = new Texture(AssetLocation + "backpack/diffuse.bmp", 1);
+        backpackSpecular = new Texture(AssetLocation + "backpack/specular.bmp", 2);
+        backpackNormal = new Texture(AssetLocation + "backpack/normal.bmp", 3);
+
+        woodTexture = new Texture(AssetLocation + "wood-diffuse.jpg", 1);
+        woodSpecular = new Texture(AssetLocation + "wood-specular.jpg", 2);
+        woodNormal = new Texture(AssetLocation + "wood-normal.jpg", 3);
 
         FileManager fm = new FileManager(AssetLocation + "backpack/backpack.obj")
             .AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
@@ -84,24 +93,31 @@ public class Game1 : LumaDX.Game
             .SetAmbient(0.01f).SetSpecular(Vector3.One*12f).SetDiffuse(Vector3.One*12f);
         material = PresetMaterial.Silver.SetAmbient(0.01f);
 
-        texture.Use();
+        backpackTexture.Use();
         
         shader.EnableGammaCorrection();
         
-        shader.UniformMaterial("material",material,texture,specular)
+        shader.UniformMaterial("material",material,backpackTexture,backpackSpecular)
             .UniformLight("light",light)
-            .UniformTexture("normalMap",normal);
+            .UniformTexture("normalMap",backpackNormal);
 
         // custom shader for handling blitting
         hdrShader = new ShaderProgram(ShaderLocation+"postProcess.glsl");
         postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f, colourAttachments)
             .UniformTextures(hdrShader, new []{"sampler", "brightSample"});;
         postProcessor.BlurTexture = 1;
+
+        depthMap = new CubeDepthMap((2048, 2048), Vector3.Zero);
+        depthMap.Position = light.Position;
+        depthMap.UpdateMatrices();
+        
+        depthMap.UniformTexture(shader,"cubeMap", 0);
+        shader.Uniform1("shadowThreshold", 0.9f);
     }
 
     protected override void Load()
     {
-        shader.UniformTexture("skyBox", skyBox);
+        shader.UniformTexture("cubeMap", skyBox);
         player.UpdateProjection(shader);
     }
     
@@ -137,7 +153,19 @@ public class Game1 : LumaDX.Game
     {
         glState.ClearColor = Color4.Transparent;
         glState.Clear();
+
+        depthMap.DrawMode();
         
+        backpack.Draw(depthMap.Shader, Vector3.Zero,  rotation, 2f);
+        cube.Draw(depthMap.Shader, Vector3.Zero,  Vector3.Zero, 10f);
+
+        depthMap.ReadMode();
+        
+        GL.Enable(EnableCap.CullFace);
+        shader.Use();
+        GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
+
+
         postProcessor.StartSceneRender(colourAttachments);
         
         glState.Clear();
@@ -145,15 +173,32 @@ public class Game1 : LumaDX.Game
         // skyBox is maximum depth, so we want to render if it's <= instead of just <
         glState.DepthFunc = DepthFunction.Lequal;
         
-        texture.Use();
+        backpackTexture.Use();
 
         glState.DoCulling = true;
-
-        normal.Use();
         
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.TextureCubeMap,depthMap.TextureHandle);
+        depthMap.UniformClipFar(shader, "farPlane");
+
+        backpackTexture.Use();
+        backpackSpecular.Use();
+        backpackNormal.Use();
+
         shader.SetActive("scene");
         backpack.Draw(shader, Vector3.Zero,  rotation, 2f);
         
+        woodTexture.Use();
+        woodSpecular.Use();
+        woodNormal.Use();
+        
+        glState.CullFace = CullFaceMode.Front;
+        shader.Uniform1("flipNormals", 1);
+        cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 10f);
+        glState.CullFace = CullFaceMode.Back;
+        shader.Uniform1("flipNormals", 0);
+        
+
         shader.SetActive(ShaderType.FragmentShader,"light");
         cube.Draw(shader, light.Position,  Vector3.Zero, 0.2f);
 
@@ -201,7 +246,7 @@ public class Game1 : LumaDX.Game
         cube.Dispose();
         
         skyBox.Dispose();
-        texture.Dispose();
+        backpackTexture.Dispose();
         
         postProcessor.Dispose();
         

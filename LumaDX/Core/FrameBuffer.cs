@@ -553,6 +553,7 @@ public class CubeDepthMap : IDisposable
     
     public readonly int Handle;
     public readonly int TextureHandle;
+    private int textureUnit;
 
     public readonly Vector2i Size;
     
@@ -669,8 +670,9 @@ public class CubeDepthMap : IDisposable
     }
 
 
-    public CubeDepthMap UniformTexture(ShaderProgram shaderProgram, string name, int textureUnit = 0)
+    public CubeDepthMap UniformTexture(ShaderProgram shaderProgram, string name, int unit = 0)
     {
+        textureUnit = unit;
         shaderProgram.Use();
         GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
         GL.BindTexture(TextureTarget.TextureCubeMap,TextureHandle);
@@ -682,6 +684,13 @@ public class CubeDepthMap : IDisposable
     {
         shaderProgram.Use();
         shaderProgram.Uniform1(name, ClipFar);
+        return this;
+    }
+
+    public CubeDepthMap UseTexture()
+    {
+        GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
+        GL.BindTexture(TextureTarget.TextureCubeMap,TextureHandle);
         return this;
     }
 

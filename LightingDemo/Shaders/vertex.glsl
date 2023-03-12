@@ -13,11 +13,13 @@ out VS_OUT {
     vec3 TBNcameraPos;
     vec3 tangent;
     vec3 textureDir;
+    vec3 viewPos;
+    vec3 viewNormal;
 } vs_out;
 
 uniform lx_Light light;
 uniform vec3 cameraPos;
-
+uniform int flipNormals = 0;
 
 [scene]
 void main()
@@ -27,6 +29,12 @@ void main()
     vs_out.normal = lx_NormalFix(lx_Model,aNormal);
     vs_out.texCoords = aTexCoords;
     vs_out.fragPos = (lx_Model*vec4(aPos,1.0)).xyz;
+    vs_out.viewPos = (lx_View * lx_Model * vec4(aPos, 1.0)).xyz;
+    
+    mat3 normalMatrix = transpose(inverse(mat3(lx_View * lx_Model)));
+    vec3 rNormal = aNormal;
+    if (flipNormals == 1) rNormal*=-1.0;
+    vs_out.viewNormal = normalMatrix * rNormal;
     
     vs_out.TBNfragPos = TBN * vs_out.fragPos;
     vs_out.TBNcameraPos = TBN * cameraPos;

@@ -18,6 +18,7 @@ public class Game1 : LumaDX.Game
     const string ShaderLocation = "Shaders/";
     ShaderProgram shader;
     ShaderProgram hdrShader;
+    ShaderProgram aoShader;
     
     const string AssetLocation = "Assets/";
     Texture skyBox;
@@ -47,8 +48,18 @@ public class Game1 : LumaDX.Game
 
     DrawBuffersEnum[] colourAttachments;
     DrawBuffersEnum[] brightColourAttachment;
+    DrawBuffersEnum[] aoColourAttachment;
 
     CubeDepthMap depthMap;
+    
+    
+    const int SampleCount = 64;
+    const int NoiseWidth = 4;
+    Vector3[] ssaoKernel;
+    int noiseTexture;
+
+    bool ambientOcclusion = false;
+    bool visualizeAO = false;
 
 
     protected override void Initialize()
@@ -56,8 +67,9 @@ public class Game1 : LumaDX.Game
         glState = new StateHandler();
         glState.ClearColor = Color4.Transparent;
 
-        colourAttachments = new [] { DrawBuffersEnum.ColorAttachment0, DrawBuffersEnum.ColorAttachment1 };
-        brightColourAttachment = new [] { DrawBuffersEnum.ColorAttachment1 };
+        colourAttachments = OpenGL.GetDrawBuffers(4);
+        brightColourAttachment = OpenGL.GetDrawBuffers(1,1);
+        aoColourAttachment = OpenGL.GetDrawBuffers(1,2);
         
         UnlockMouse();
 
@@ -101,11 +113,26 @@ public class Game1 : LumaDX.Game
             .UniformLight("light",light)
             .UniformTexture("normalMap",backpackNormal);
 
+        aoShader = new ShaderProgram(ShaderLocation + "ambientOcclusion.glsl");
+        aoShader.Uniform1("samplePosition", 2);
+        aoShader.Uniform1("sampleNormal", 3);
+        aoShader.Uniform1("noiseTex", 4);
+        
+        ssaoKernel = RandUtils.SsaoKernel(SampleCount);
+        noiseTexture = TexUtils.GenSsaoNoiseTex(NoiseWidth);
+        
+        aoShader.UniformVec3Array("samples", ssaoKernel);
+        aoShader.Uniform2("noiseScale", new Vector2(Window.Size.X / 4f, Window.Size.Y / 4f));
+
+        
+
         // custom shader for handling blitting
         hdrShader = new ShaderProgram(ShaderLocation+"postProcess.glsl");
-        postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f, colourAttachments)
-            .UniformTextures(hdrShader, new []{"sampler", "brightSample"});;
-        postProcessor.BlurTexture = 1;
+
+
+        postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f,
+                colourAttachments)
+            .UniformTextures(hdrShader, new[] { "sampler", "brightSample", "occlusionSample" });
 
         depthMap = new CubeDepthMap((2048, 2048), Vector3.Zero);
         depthMap.Position = light.Position;
@@ -135,10 +162,23 @@ public class Game1 : LumaDX.Game
     {
         if (k.IsKeyPressed(Keys.Enter)) { bloomEnabled = !bloomEnabled; }
 
+        if (k.IsKeyPressed(Keys.Backspace)) ambientOcclusion = !ambientOcclusion;
+        if (k.IsKeyPressed(Keys.RightBracket)) visualizeAO = !visualizeAO;
+            
+
         if (k.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
         if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
+        
+        
+        if (k.IsKeyDown(Keys.L)) light.Position+=Vector3.UnitY*(float)args.Time;
+        if (k.IsKeyDown(Keys.J))  light.Position-=Vector3.UnitY*(float)args.Time;
+        if (k.IsKeyDown(Keys.I))    light.Position+=Vector3.UnitX*(float)args.Time;
+        if (k.IsKeyDown(Keys.K))  light.Position-=Vector3.UnitX*(float)args.Time;
+
+        shader.UniformLight("light", light);
+        depthMap.Position = light.Position;
     }
     
     protected override void MouseHandling(FrameEventArgs args, MouseState mouseState)
@@ -161,7 +201,7 @@ public class Game1 : LumaDX.Game
 
         depthMap.ReadMode();
         
-        GL.Enable(EnableCap.CullFace);
+        glState.DoCulling = true;
         shader.Use();
         GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
 
@@ -175,10 +215,7 @@ public class Game1 : LumaDX.Game
         
         backpackTexture.Use();
 
-        glState.DoCulling = true;
-        
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.TextureCubeMap,depthMap.TextureHandle);
+        depthMap.UseTexture();
         depthMap.UniformClipFar(shader, "farPlane");
 
         backpackTexture.Use();
@@ -205,15 +242,36 @@ public class Game1 : LumaDX.Game
 
         postProcessor.EndSceneRender();
         
+        postProcessor.BlurTexture = 1;
         if (bloomEnabled) postProcessor.RenderEffect(PostProcessShader.GaussianBlur, brightColourAttachment);
+
+        
+        if (ambientOcclusion || visualizeAO)
+        {
+
+            postProcessor.ReadFbo.ReadMode();
+            aoShader.Use();
+            OpenGL.BindTexture(4,TextureTarget.Texture2D,noiseTexture);
+            aoShader.UniformMat4("proj", ref player.Camera.ProjMatrix);
+
+            postProcessor.WriteFbo.SetDrawBuffers(aoColourAttachment);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer,(int)postProcessor.WriteFbo);
+            postProcessor.ReadFbo.UseTexture();
+
+            PostProcessing.Draw();
+            
+            postProcessor.EndSceneRender();
+            
+            postProcessor.BlurTexture = 2;
+            postProcessor.RenderEffect(PostProcessShader.GaussianBlur, aoColourAttachment);
+        }
         
         #region render to screen with HDR
         
         // combine scene with blurred bright component using HDR
 
         GL.Clear(ClearBufferMask.ColorBufferBit);
-
-
+        
         shader.DisableGammaCorrection();
         skyBox.Use();
         glState.DoCulling = false;
@@ -226,6 +284,9 @@ public class Game1 : LumaDX.Game
         glState.Blending = true;
         
         hdrShader.Use();
+        hdrShader.Uniform1("aoEnabled",ambientOcclusion?1:0);
+        hdrShader.Uniform1("visualizeAO",visualizeAO?1:0);
+
         postProcessor.DrawFbo();
         
         glState.Blending = false;

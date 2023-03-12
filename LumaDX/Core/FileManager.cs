@@ -8,6 +8,119 @@ using Vector4 = OpenTK.Mathematics.Vector4;
 
 namespace LumaDX;
 
+public struct ModelInfo
+{
+    public string FileName;
+    public int MeshCount;
+    
+    public string[] MeshNames;
+    public int[] VertexCounts;
+    public int[] FaceCounts;
+    public Bounds[] MeshBounds;
+
+    public bool[] HasNormals;
+    public bool[] HasTangents;
+    public bool[] HasTexCoords;
+    public bool[] HasColours;
+
+
+    public override string ToString()
+    {
+        var modelInfo = this; // copy to make this visible to local functions
+        
+        int maxPadding = 0;
+        for (int i = 0; i < modelInfo.MeshCount; i++)
+        {
+            int padding = (i + " " +modelInfo.MeshNames[i]).Length;
+            padding = Math.Max(padding, (""+modelInfo.VertexCounts[i]).Length);
+            padding = Math.Max(padding, (""+modelInfo.FaceCounts[i]).Length);
+            padding = Math.Max(padding, (""+(int)modelInfo.MeshBounds[i].Diameter).Length + 3);
+
+            maxPadding = Math.Max(maxPadding, 2 + padding);
+        }
+
+        string separator = new string('-', maxPadding) + "|";
+        string separators = "";
+        for (int i = 0; i < modelInfo.MeshCount; i++) separators += separator;
+        
+
+        string PrintCell(string output)
+        {
+            int padding = maxPadding - output.Length;
+            int left = padding / 2;
+            int right = padding - left;
+
+            return new string(' ', left) + output + new string(' ', right) + "|";
+        }
+
+        string PrintNames()
+        {
+            string s = ""; for (int i = 0; i < modelInfo.MeshCount; i++) s+=PrintCell(modelInfo.MeshNames[i] + " " + i);
+            return s;
+        }
+
+        string PrintIntArray(int[] array)
+        {
+            string s = ""; for (int i = 0; i < modelInfo.MeshCount; i++) s+=PrintCell(""+array[i]);
+            return s;
+        }
+
+        string PrintFloatArray(float[] array)
+        {
+            string s = ""; for (int i = 0; i < modelInfo.MeshCount; i++) s += PrintCell(array[i].ToString("0.000"));
+            return s;
+        }
+
+        string PrintBoolArray(bool[] array)
+        {
+            string s = ""; for (int i = 0; i < modelInfo.MeshCount; i++) s+=PrintCell(array[i]?"✓":"☓");
+            return s;
+        }
+
+
+        string output = "";
+        output += " ------------ |" + separators + "\n";
+        output += " Mesh Name    |" + PrintNames() + "\n";
+        output += " ------------ |" + separators + "\n";
+        output += " Num. Verts   |" + PrintIntArray(modelInfo.VertexCounts) + "\n";
+        output += " Num. Faces   |" + PrintIntArray(modelInfo.FaceCounts) + "\n";
+        output += " Mesh Size    |" + PrintFloatArray(modelInfo.MeshBounds.Select(a => a.Diameter).ToArray()) + "\n";
+        output += " ------------ |" + separators + "\n";
+        output += " Normals?     |" + PrintBoolArray(modelInfo.HasNormals) + "\n";
+        output += " Tangents?    |" + PrintBoolArray(modelInfo.HasTangents) + "\n";
+        output += " Tex. Coords? |" + PrintBoolArray(modelInfo.HasTexCoords) + "\n";
+        output += " Colours?     |" + PrintBoolArray(modelInfo.HasColours) + "\n";
+        output += " ------------ |" + separators + "\n";
+
+
+        return output;
+    }
+}
+
+/// <summary>
+/// BoundingBox with OpenTK Vector3s instead of Assimp Vector3Ds and Cached Diameter
+/// </summary>
+public struct Bounds
+{
+    public Vector3 Max;
+    public Vector3 Min;
+    public float Diameter;
+
+    public Bounds(Vector3 min, Vector3 max)
+    {
+        Max = max;
+        Min = min;
+        Diameter = (Min - Max).Length;
+    }
+
+    public Bounds(BoundingBox box)
+    {
+        Max = new Vector3(box.Max.X,box.Max.Y,box.Max.Z);
+        Min = new Vector3(box.Min.X,box.Min.Y,box.Min.Z);
+        Diameter = (Min - Max).Length;
+    }
+}
+
 public class FileManager
 {
     private FileInfo fileInfo;
@@ -46,7 +159,46 @@ public class FileManager
         postProcessFlags = postProcessFlags | postProcessSteps;
         return this;
     }
-    
+
+
+    public ModelInfo GetInfo()
+    {
+        // Assimp BoundingBox often not populated
+        Bounds[] meshBounds = new Bounds[Scene.MeshCount];
+        for (int i = 0; i < Scene.MeshCount; i++)
+        {
+            Vector3 max = Vector3.NegativeInfinity;
+            Vector3 min = Vector3.PositiveInfinity;
+            foreach (var vertex in Scene.Meshes[i].Vertices)
+            {
+                max.X = MathF.Max(max.X, vertex.X);
+                max.Y = MathF.Max(max.Y, vertex.Y);
+                max.Z = MathF.Max(max.Z, vertex.Z);
+                
+                min.X = MathF.Min(min.X, vertex.X);
+                min.Y = MathF.Min(min.Y, vertex.Y);
+                min.Z = MathF.Min(min.Z, vertex.Z);
+            }
+
+            meshBounds[i] = new Bounds(min, max);
+        }
+        
+        return new ModelInfo()
+        {
+            FileName = fileInfo.Name,
+            MeshCount = Scene.MeshCount,
+            
+            MeshNames = Scene.Meshes.Select(a => a.Name).ToArray(),
+            VertexCounts = Scene.Meshes.Select(a => a.VertexCount).ToArray(),
+            FaceCounts = Scene.Meshes.Select(a => a.FaceCount).ToArray(),
+            MeshBounds = meshBounds,
+            
+            HasNormals = Scene.Meshes.Select(a => a.HasNormals).ToArray(),
+            HasTangents = Scene.Meshes.Select(a => a.HasTangentBasis).ToArray(),
+            HasTexCoords = Scene.Meshes.Select(a => a.HasTextureCoords(0)).ToArray(),
+            HasColours = Scene.Meshes.Select(a => a.HasVertexColors(0)).ToArray(),
+        };
+    }
     
     
     /// <summary>

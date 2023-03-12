@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortalDemo", "PortalDemo\Po
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrameBufferDemo", "FrameBufferDemo\FrameBufferDemo.csproj", "{0CB2CE17-0870-491F-AB72-A026B25BF45A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileLoading", "FileLoading\FileLoading.csproj", "{34FE6A1E-A91A-4BD0-BC43-D3A6CE583766}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +62,9 @@ Global
 		{0CB2CE17-0870-491F-AB72-A026B25BF45A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CB2CE17-0870-491F-AB72-A026B25BF45A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CB2CE17-0870-491F-AB72-A026B25BF45A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34FE6A1E-A91A-4BD0-BC43-D3A6CE583766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34FE6A1E-A91A-4BD0-BC43-D3A6CE583766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34FE6A1E-A91A-4BD0-BC43-D3A6CE583766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34FE6A1E-A91A-4BD0-BC43-D3A6CE583766}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

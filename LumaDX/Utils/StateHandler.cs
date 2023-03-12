@@ -30,7 +30,7 @@ public struct GlState
         DoCulling = true;
         CullFace = CullFaceMode.Back;
 
-        ClearColor = Color4.Transparent;
+        ClearColor = Color4.Black;
         ClearBuffers = ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit;
 
         Blending = false;

@@ -54,7 +54,7 @@ internal static class Program
     
     /// <summary>
     /// Demo 1.a.
-    /// Demonstrate 3D Model Loading in the Console
+    /// Output Information from Loaded 3D Model
     /// </summary>
     public static void ModelToConsole()
     {
@@ -62,8 +62,6 @@ internal static class Program
         var modelInfo = fm.GetInfo();
         
         Console.WriteLine($"File Name: {modelInfo.FileName}\n{modelInfo}");
-
-
     }
     
     /// <summary>
@@ -74,7 +72,7 @@ internal static class Program
     {
         uiSettings.Title = "File Loading - Demo 1.b.";
         
-        using var game = new FlattenedRender();
+        using var game = new FlattenedRenderDemo();
         game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }
@@ -94,7 +92,12 @@ internal static class Program
     /// </summary>
     public static void RenderTexture()
     {
+        uiSettings.Title = "File Loading - Demo 1.d.";
+        uiSettings.Size = new Vector2i(900,900);
         
+        using var game = new RenderTextureDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
     }
     
     /// <summary>

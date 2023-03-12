@@ -101,23 +101,39 @@ public class Texture : IDisposable
         }
     }
 
+    // public so this can be overwritten
+    public static Dictionary<string, TextureTarget> CubeMapTextureNames = GenerateCubeMapTextureNames();
+    
+    // generator for above property
+    private static Dictionary<string, TextureTarget> GenerateCubeMapTextureNames()
+    {
+        var dict = new Dictionary<string, TextureTarget>();
+        dict.Add("right",TextureTarget.TextureCubeMapPositiveX);
+        dict.Add("left",TextureTarget.TextureCubeMapNegativeX);
+        dict.Add("top",TextureTarget.TextureCubeMapPositiveY);
+        dict.Add("bottom",TextureTarget.TextureCubeMapNegativeY);
+        dict.Add("back",TextureTarget.TextureCubeMapNegativeZ);
+        dict.Add("front",TextureTarget.TextureCubeMapPositiveZ);
+        return dict;
+    }
+
+
+
 
     public static Texture LoadCubeMap(string filePath, string fileExtension, int textureUnit, bool flipOnLoad = false)
     {
-        return new Texture(textureUnit,TextureTarget.TextureCubeMap)
-                .LoadFile(filePath+"right"+fileExtension,TextureTarget.TextureCubeMapPositiveX,flipOnLoad,false)
-                .LoadFile(filePath+"left"+fileExtension,TextureTarget.TextureCubeMapNegativeX,flipOnLoad,false)
-                .LoadFile(filePath+"top"+fileExtension,TextureTarget.TextureCubeMapPositiveY,flipOnLoad,false)
-                .LoadFile(filePath+"bottom"+fileExtension,TextureTarget.TextureCubeMapNegativeY,flipOnLoad,false)
-                .LoadFile(filePath+"back"+fileExtension,TextureTarget.TextureCubeMapNegativeZ,flipOnLoad,false)
-                .LoadFile(filePath+"front"+fileExtension,TextureTarget.TextureCubeMapPositiveZ,flipOnLoad,false)
-                
-                .MagFilter(TextureMagFilter.Linear)
-                .MinFilter(TextureMinFilter.Linear)
-                .Wrapping(TextureParameterName.TextureWrapS,TextureWrapMode.ClampToEdge)
-                .Wrapping(TextureParameterName.TextureWrapT,TextureWrapMode.ClampToEdge)
-                .Wrapping(TextureParameterName.TextureWrapR,TextureWrapMode.ClampToEdge)
-            ;
+        var texture = new Texture(textureUnit, TextureTarget.TextureCubeMap);
+
+        foreach (var (side,texTarget) in CubeMapTextureNames) texture.LoadFile(filePath + side + fileExtension, texTarget, flipOnLoad, false);
+        
+        texture
+            .MagFilter(TextureMagFilter.Linear)
+            .MinFilter(TextureMinFilter.Linear)
+            .Wrapping(TextureParameterName.TextureWrapS,TextureWrapMode.ClampToEdge)
+            .Wrapping(TextureParameterName.TextureWrapT,TextureWrapMode.ClampToEdge)
+            .Wrapping(TextureParameterName.TextureWrapR,TextureWrapMode.ClampToEdge);
+
+        return texture;
     }
 
 

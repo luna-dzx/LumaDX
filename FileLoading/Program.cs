@@ -2,6 +2,7 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Graphics.OpenGL4;
 
 namespace FileLoading;
 
@@ -105,9 +106,16 @@ internal static class Program
     /// </summary>
     public static void SkyBoxToConsole()
     {
-        
+        string path = AssetLocation + "skybox/";
+        string fileExtension = ".jpg";
+
+        foreach (var (side,target) in Texture.CubeMapTextureNames)
+        {
+            Console.WriteLine(target+ "\n" + Texture.LoadImageData(path + side + fileExtension, false)+"\n");
+        }
     }
-    
+
+
     /// <summary>
     /// Demo 1.f.
     /// Render SkyBox as 6 Individual Textures

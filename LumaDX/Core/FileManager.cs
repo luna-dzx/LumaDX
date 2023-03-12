@@ -79,6 +79,7 @@ public struct ModelInfo
 
 
         string output = "";
+        output += "File Name: " + FileName + "\n";
         output += " ------------ |" + separators + "\n";
         output += " Mesh Name    |" + PrintNames() + "\n";
         output += " ------------ |" + separators + "\n";

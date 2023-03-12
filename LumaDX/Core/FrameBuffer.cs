@@ -88,20 +88,18 @@ public class FrameBuffer : IDisposable
     /// <summary>
     /// Special Case of Loading an Image Directly to a FrameBuffer
     /// </summary>
-    public FrameBuffer(string fileName) : this()
+    public FrameBuffer(string fileName, bool flipOnLoad = true) : this()
     {
-        var image = BmpSharp.BitmapFileHelper.ReadFileAsBitmap(fileName,true);
-        Size = new Vector2i(image.Width, image.Height);
+        var image = Texture.LoadImageData(fileName, flipOnLoad);
+        Size = image.Size;
         
         usingPreset = true;
-
-        Size = (image.Width,image.Height);
 
         NumColourAttachments = 1;
         colourAttachments = new TextureBuffer[NumColourAttachments];
         colourAttachments[0] = new TextureBuffer(PixelInternalFormat.Rgb8, PixelFormat.Rgb, Size);
         colourAttachments[0].Wrapping(TextureWrapMode.ClampToEdge);
-        GL.TexImage2D(TextureTarget.Texture2D,0,PixelInternalFormat.Rgb,image.Width,image.Height,0,PixelFormat.Bgr,PixelType.UnsignedByte,image.PixelData);
+        GL.TexImage2D(TextureTarget.Texture2D,0,PixelInternalFormat.Rgb,Size.X,Size.Y,0,PixelFormat.Bgr,PixelType.UnsignedByte,image.PixelData);
         
         AttachTexture(colourAttachments[0], FramebufferAttachment.ColorAttachment0);
 

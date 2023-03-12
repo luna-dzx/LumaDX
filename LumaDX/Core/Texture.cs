@@ -4,6 +4,41 @@ using StbImageSharp;
 
 namespace LumaDX;
 
+public struct ImageData
+{
+    public string FileName;
+    public Vector2i Size;
+    public PixelFormat Format;
+    public PixelInternalFormat InternalFormat;
+    public byte[] PixelData;
+
+    public ImageData(string fileName, Vector2i size, PixelFormat format, PixelInternalFormat internalFormat, byte[] data)
+    {
+        FileName = fileName;
+        Size = size;
+        Format = format;
+        InternalFormat = internalFormat;
+        PixelData = data;
+    }
+
+    public override string ToString()
+    {
+        string output = "";
+
+        int bytesPerPixel = 1;
+        if (Format is PixelFormat.Bgr or PixelFormat.Rgb or PixelFormat.BgrInteger or PixelFormat.RgbInteger) bytesPerPixel = 3;
+        if (Format is PixelFormat.Bgra or PixelFormat.Rgba or PixelFormat.BgraInteger or PixelFormat.RgbaInteger) bytesPerPixel = 4;
+        
+        output += "File Name       | " + FileName + "\n";
+        output += "Resolution      | " + Size + "\n";
+        output += "Bytes per Pixel | " + bytesPerPixel + "\n";
+        output += "Pixel Format    | " + Format + "\n";
+        output += "Num. Pixels     | " + PixelData.Length/bytesPerPixel + "\n";
+        
+        return output;
+    }
+}
+
 /// <summary>
 /// Class for handling OpenGL texture objects
 /// </summary>
@@ -12,6 +47,8 @@ public class Texture : IDisposable
     private int handle;
     private int unit;
     private readonly TextureTarget target;
+    
+    public Vector2i Size = Vector2i.Zero;
     
     /// <summary>
     /// Setup an OpenGL texture for manual texture handling
@@ -33,27 +70,47 @@ public class Texture : IDisposable
     /// <param name="textureTarget">the type of texture to store</param>
     public Texture(string path, int textureUnit, TextureTarget textureTarget = TextureTarget.Texture2D, bool flipOnLoad = true) : this(textureUnit,textureTarget)
     {
+        LoadFile(path, textureTarget, flipOnLoad);
+    }
+
+    public Texture LoadFile(string path, TextureTarget textureTarget, bool flipOnLoad = true, bool generateMipMap = true)
+    {
+        var image = LoadImageData(path, flipOnLoad);
+        
+        this.Use();
+        GL.TexImage2D(textureTarget,0,image.InternalFormat,image.Size.X,image.Size.Y,0,image.Format,PixelType.UnsignedByte,image.PixelData);
+        if (generateMipMap) GL.GenerateMipmap((GenerateMipmapTarget)target);
+        
+        Size = image.Size;
+        return this;
+    }
+
+    public static ImageData LoadImageData(string path, bool flipOnLoad)
+    {
         if (path.Substring(path.Length - 3) == "bmp") // significantly faster loads
         {
-            LoadBmp(path);
+            var image = BmpSharp.BitmapFileHelper.ReadFileAsBitmap(path,flipOnLoad);
+            return new ImageData(new FileInfo(path).Name, new Vector2i(image.Width, image.Height), PixelFormat.Bgr, PixelInternalFormat.Rgb, image.PixelData);
         }
         else
         {
-            LoadFile(path,flipOnLoad);
+            StbImage.stbi_set_flip_vertically_on_load((flipOnLoad)?1:0);
+            using var stream = File.OpenRead(path);
+            var image = ImageResult.FromStream(stream,ColorComponents.RedGreenBlueAlpha);
+            return new ImageData(new FileInfo(path).Name, new Vector2i(image.Width, image.Height), PixelFormat.Rgba, PixelInternalFormat.Rgba, image.Data);
         }
-        
     }
 
 
     public static Texture LoadCubeMap(string filePath, string fileExtension, int textureUnit, bool flipOnLoad = false)
     {
         return new Texture(textureUnit,TextureTarget.TextureCubeMap)
-                .LoadFile(filePath+"right"+fileExtension,TextureTarget.TextureCubeMapPositiveX,flipOnLoad)
-                .LoadFile(filePath+"left"+fileExtension,TextureTarget.TextureCubeMapNegativeX,flipOnLoad)
-                .LoadFile(filePath+"top"+fileExtension,TextureTarget.TextureCubeMapPositiveY,flipOnLoad)
-                .LoadFile(filePath+"bottom"+fileExtension,TextureTarget.TextureCubeMapNegativeY,flipOnLoad)
-                .LoadFile(filePath+"back"+fileExtension,TextureTarget.TextureCubeMapNegativeZ,flipOnLoad)
-                .LoadFile(filePath+"front"+fileExtension,TextureTarget.TextureCubeMapPositiveZ,flipOnLoad)
+                .LoadFile(filePath+"right"+fileExtension,TextureTarget.TextureCubeMapPositiveX,flipOnLoad,false)
+                .LoadFile(filePath+"left"+fileExtension,TextureTarget.TextureCubeMapNegativeX,flipOnLoad,false)
+                .LoadFile(filePath+"top"+fileExtension,TextureTarget.TextureCubeMapPositiveY,flipOnLoad,false)
+                .LoadFile(filePath+"bottom"+fileExtension,TextureTarget.TextureCubeMapNegativeY,flipOnLoad,false)
+                .LoadFile(filePath+"back"+fileExtension,TextureTarget.TextureCubeMapNegativeZ,flipOnLoad,false)
+                .LoadFile(filePath+"front"+fileExtension,TextureTarget.TextureCubeMapPositiveZ,flipOnLoad,false)
                 
                 .MagFilter(TextureMagFilter.Linear)
                 .MinFilter(TextureMinFilter.Linear)
@@ -109,47 +166,6 @@ public class Texture : IDisposable
 
         GL.GenerateMipmap((GenerateMipmapTarget)target);
 
-        return this;
-    }
-
-    public Vector2i Size = Vector2i.Zero;
-
-    // TODO: static image file loaders so this can be used in fbo too
-
-    public Texture LoadFile(string path, bool flipOnLoad = true)
-    {
-        StbImage.stbi_set_flip_vertically_on_load((flipOnLoad)?1:0);
-        this.Use();
-        using var stream = File.OpenRead(path);
-        var image = ImageResult.FromStream(stream,ColorComponents.RedGreenBlueAlpha);
-        GL.TexImage2D(target,0,PixelInternalFormat.Rgba,image.Width,image.Height,0,PixelFormat.Rgba,PixelType.UnsignedByte,image.Data); 
-        GL.GenerateMipmap((GenerateMipmapTarget)target);
-
-        Size = new Vector2i(image.Width, image.Height);
-        return this;
-    }
-
-    public Texture LoadBmp(string path)
-    {
-        this.Use();
-        var image = BmpSharp.BitmapFileHelper.ReadFileAsBitmap(path,true);
-        
-        GL.TexImage2D(target,0,PixelInternalFormat.Rgb,image.Width,image.Height,0,PixelFormat.Bgr,PixelType.UnsignedByte,image.PixelData); 
-        GL.GenerateMipmap((GenerateMipmapTarget)target);
-        
-        Size = new Vector2i(image.Width, image.Height);
-        return this;
-    }
-    
-    public Texture LoadFile(string path, TextureTarget textureTarget, bool flipOnLoad = true)
-    {
-        StbImage.stbi_set_flip_vertically_on_load((flipOnLoad)?1:0);
-        this.Use();
-        using var stream = File.OpenRead(path);
-        var image = ImageResult.FromStream(stream,ColorComponents.RedGreenBlueAlpha);
-        GL.TexImage2D(textureTarget,0,PixelInternalFormat.Rgba,image.Width,image.Height,0,PixelFormat.Rgba,PixelType.UnsignedByte,image.Data);
-        
-        Size = new Vector2i(image.Width, image.Height);
         return this;
     }
 

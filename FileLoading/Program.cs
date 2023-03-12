@@ -59,9 +59,7 @@ internal static class Program
     public static void ModelToConsole()
     {
         FileManager fm = new FileManager(AssetLocation + "dingus-the-cat/source/dingus.fbx");
-        var modelInfo = fm.GetInfo();
-        
-        Console.WriteLine($"File Name: {modelInfo.FileName}\n{modelInfo}");
+        Console.WriteLine(fm.GetInfo()); // formatted into table in ModelInfo struct
     }
     
     /// <summary>
@@ -83,7 +81,8 @@ internal static class Program
     /// </summary>
     public static void TextureToConsole()
     {
-        
+        // formatted in ImageData struct
+        Console.WriteLine(Texture.LoadImageData(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", true));
     }
     
     /// <summary>

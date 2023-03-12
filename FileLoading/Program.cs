@@ -2,7 +2,6 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using OpenTK.Graphics.OpenGL4;
 
 namespace FileLoading;
 
@@ -25,7 +24,6 @@ internal static class Program
     static NativeWindowSettings uiSettings = new()
     {
         APIVersion = Version.Parse("4.1.0"),
-        Size = new Vector2i(1600,900),
         NumberOfSamples = 4,
 
         WindowState = WindowState.Normal,
@@ -40,6 +38,19 @@ internal static class Program
     /// <param name="args">'a'-'g' for which demo to run</param>
     public static void Main(string[] args)
     {
+        if (args.Length < 1)
+        {
+            ModelToConsole();
+            FlattenedRender();
+            TextureToConsole();
+            RenderTexture();
+            SkyBoxToConsole();
+            SkyBoxFlatRender();
+            SkyBoxFullRender();
+
+            return;
+        }
+        
         switch (args[0])
         {
             case "a": ModelToConsole(); return;
@@ -70,6 +81,7 @@ internal static class Program
     public static void FlattenedRender()
     {
         uiSettings.Title = "File Loading - Demo 1.b.";
+        uiSettings.Size = new Vector2i(1600, 900);
         
         using var game = new FlattenedRenderDemo();
         game.InitWindow(gameSettings, uiSettings);
@@ -122,7 +134,12 @@ internal static class Program
     /// </summary>
     public static void SkyBoxFlatRender()
     {
-        
+        uiSettings.Title = "File Loading - Demo 1.f.";
+        uiSettings.Size = new Vector2i(1200,900);
+
+        using var game = new SkyBoxFlatRenderDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
     }
     
     /// <summary>
@@ -131,7 +148,12 @@ internal static class Program
     /// </summary>
     public static void SkyBoxFullRender()
     {
-        
+        uiSettings.Title = "File Loading - Demo 1.g.";
+        uiSettings.Size = new Vector2i(1200,720);
+
+        using var game = new SkyBoxFullRenderDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
     }
     
     

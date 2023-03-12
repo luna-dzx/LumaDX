@@ -113,7 +113,8 @@ public class Texture : IDisposable
     }
 
     public Vector2i Size = Vector2i.Zero;
-    
+
+    // TODO: static image file loaders so this can be used in fbo too
 
     public Texture LoadFile(string path, bool flipOnLoad = true)
     {

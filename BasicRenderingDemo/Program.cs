@@ -6,33 +6,101 @@ namespace BasicRenderingDemo;
 
 internal static class Program
 {
+    public const string ShaderLocation = "Shaders/";
+    public const string AssetLocation = "Assets/";
+
+
+    #region Window Settings
+    
     private const int FPS = 60;
 
+    static GameWindowSettings gameSettings = new()
+    {
+        RenderFrequency = FPS,
+        UpdateFrequency = FPS
+    };
+    
+    static NativeWindowSettings uiSettings = new()
+    {
+        APIVersion = Version.Parse("4.1.0"),
+        Size = new Vector2i(1600,900),
+        NumberOfSamples = 4,
 
+        WindowState = WindowState.Normal,
+        WindowBorder = WindowBorder.Resizable,
+        IsEventDriven = false,
+        StartFocused = true
+    };
+    
+    #endregion
+
+
+    /// <param name="args">'a'-'f' for which demo to run</param>
     public static void Main(string[] args)
     {
-        #region settings
+        if (args.Length < 1)
+        {
+            ProjectedTriangle();
+            PrimitivesRender();
+            FullModelRender();
+
+            return;
+        }
+        
+        switch (args[0])
+        {
+            case "a": ProjectedTriangle(); return;
+            case "b": PrimitivesRender(); return;
+            case "c": PrimitivesRender(); return;
+            default: FullModelRender(); return;
+        }
+    }
+
     
-        var gameSettings = GameWindowSettings.Default;
-        gameSettings.RenderFrequency = FPS;
-        gameSettings.UpdateFrequency = FPS;
-
-        var uiSettings = NativeWindowSettings.Default;
-        uiSettings.APIVersion = Version.Parse("4.1.0");
-        uiSettings.Size = new Vector2i(1600,900);
-        uiSettings.Title = "LearnOpenGL";
-        uiSettings.NumberOfSamples = 4;
-
-        uiSettings.WindowState = WindowState.Normal;
-        uiSettings.WindowBorder = WindowBorder.Resizable;
-        uiSettings.IsEventDriven = false;
-        uiSettings.StartFocused = true;
-
-        #endregion
-
-        using var game = new Game1();
+    /// <summary>
+    /// Demo 2.a
+    /// Render Single Triangle Projected into 3D
+    /// </summary>
+    public static void ProjectedTriangle()
+    {
+        throw new NotImplementedException(":P");
+        uiSettings.Title = "Basic Rendering - Demo 2.a";
+        
+        using var game = new FullModelRenderDemo();
         game.InitWindow(gameSettings, uiSettings)
             .CursorState = CursorState.Normal;
         game.Run();
     }
+    
+    
+    /// <summary>
+    /// Demos 2.b to 2.c
+    /// Render Cube and Quad, Coloured, in 3D
+    /// Move Camera Around Scene
+    /// </summary>
+    public static void PrimitivesRender()
+    {
+        uiSettings.Title = "Basic Rendering - Demos 2.b to 2.c";
+        
+        using var game = new PrimitivesRenderDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
+
+
+    /// <summary>
+    /// Demos 2.d to 2.f
+    /// Render Loaded 3D Model One Triangle at a Time
+    /// Colouring 3D Model based on Normal Data
+    /// Texturing 3D Model using Texture Coordinates
+    /// </summary>
+    public static void FullModelRender()
+    {
+        uiSettings.Title = "Basic Rendering - Demos 2.d to 2.f";
+        
+        using var game = new FullModelRenderDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
+    
 }

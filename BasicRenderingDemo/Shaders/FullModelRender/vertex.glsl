@@ -14,6 +14,7 @@ flat out int reject;
 
 void main()
 {
+    // calculate whether this triangle should be rejected based on its VertexID (the iterator that counts for each vertex)
     if (numTriangles*3 + triangleOffset <= gl_VertexID){reject = 1;}
     else{reject = 0;}
     

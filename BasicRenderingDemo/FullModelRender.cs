@@ -1,28 +1,21 @@
-﻿using Assimp;
-using LumaDX;
+﻿using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 
 namespace BasicRenderingDemo;
 
-public class Game1 : Game
+public class FullModelRenderDemo: Game
 {
     StateHandler glState;
-
     ImGuiController imGui;
-
-    const string ShaderLocation = "Shaders/";
     ShaderProgram shader;
     
-    const string AssetLocation = "Assets/";
     Texture texture;
-
     Model dingus;
     
     FirstPersonPlayer player;
@@ -45,8 +38,8 @@ public class Game1 : Game
         imGui = new ImGuiController(Window);
 
         shader = new ShaderProgram(
-            ShaderLocation + "vertex.glsl",
-            ShaderLocation + "fragment.glsl",
+            Program.ShaderLocation + "FullModelRender/vertex.glsl",
+            Program.ShaderLocation + "FullModelRender/fragment.glsl",
             true
         );
 
@@ -57,9 +50,9 @@ public class Game1 : Game
         
         player.UpdateProjection(shader);
 
-        texture = new Texture(AssetLocation + "/dingus-the-cat/textures/dingus_nowhiskers.jpg", 1);
+        texture = new Texture(Program.AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1);
 
-        FileManager fm = new FileManager(AssetLocation + "dingus-the-cat/source/dingus.fbx");
+        FileManager fm = new FileManager(Program.AssetLocation + "dingus-the-cat/source/dingus.fbx");
         dingus = fm.LoadModel(0);
 
         maxTriangles = dingus.GetIndices.Length / 3;

@@ -65,7 +65,7 @@ internal static class Program
     
     
     /// <summary>
-    /// Demo 1.a.
+    /// Demo 1.a
     /// Output Information from Loaded 3D Model
     /// </summary>
     public static void ModelToConsole()
@@ -75,7 +75,7 @@ internal static class Program
     }
     
     /// <summary>
-    /// Demo 1.b.
+    /// Demo 1.b
     /// Render 2D Flattened Version of 3D Model
     /// </summary>
     public static void FlattenedRender()
@@ -89,7 +89,7 @@ internal static class Program
     }
     
     /// <summary>
-    /// Demo 1.c.
+    /// Demo 1.c
     /// Load a Texture, Output Info to Console
     /// </summary>
     public static void TextureToConsole()
@@ -99,7 +99,7 @@ internal static class Program
     }
     
     /// <summary>
-    /// Demo 1.d.
+    /// Demo 1.d
     /// Render 2D Texture onto the Screen
     /// </summary>
     public static void RenderTexture()
@@ -113,7 +113,7 @@ internal static class Program
     }
     
     /// <summary>
-    /// Demo 1.e.
+    /// Demo 1.e
     /// Load a SkyBox, Output Info to Console
     /// </summary>
     public static void SkyBoxToConsole()
@@ -129,7 +129,7 @@ internal static class Program
 
 
     /// <summary>
-    /// Demo 1.f.
+    /// Demo 1.f
     /// Render SkyBox as 6 Individual Textures
     /// </summary>
     public static void SkyBoxFlatRender()
@@ -143,7 +143,7 @@ internal static class Program
     }
     
     /// <summary>
-    /// Demo 1.g.
+    /// Demo 1.g
     /// Render SkyBox with Simplified 3D (just directions)
     /// </summary>
     public static void SkyBoxFullRender()

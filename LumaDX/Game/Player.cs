@@ -157,6 +157,19 @@ public class FirstPersonPlayer : PhysicsPlayer
     
     public bool NoClip;
 
+    public FirstPersonPlayer EnableNoClip()
+    {
+        NoClip = true;
+        return this;
+    }
+    
+    public FirstPersonPlayer DisableNoClip()
+    {
+        NoClip = false;
+        return this;
+    }
+    
+
     private Vector3 directionFlat;
 
     public PhysicsPlayer UpdateCamera(FrameEventArgs args, Vector2 relativeMousePos)

@@ -87,10 +87,8 @@ public class Game1 : Game
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,5f))
-            .SetDirection(-Vector3.UnitZ);
-        player.NoClip = true;
-        
-        player.UpdateProjection(shader);
+            .SetDirection(-Vector3.UnitZ)
+            .UpdateProjection(shader);
         
         cube = new Model(PresetMesh.Cube);
         ellipsoid = new Model(Maths.GenerateIcoSphere(3));
@@ -136,7 +134,6 @@ public class Game1 : Game
 
     protected override void Load()
     {
-        player.UpdateProjection(shader);
         cube.LoadMatrix(3, cubeTransforms, 4, 4, 1); // load instance transforms
         cube.LoadVector(7, cubeColours, 3, 1); // load cube colours
     }

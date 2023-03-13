@@ -49,9 +49,11 @@ public class Game1 : Game
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0,0,6))
-            .SetDirection(new Vector3(0, 0, -1));
-        player.UpdateProjection(shader);
-        player.NoClip = true;
+            .SetDirection(new Vector3(0, 0, -1))
+            .UpdateProjection(shader)
+            .EnableNoClip();
+
+
 
         cube = new Model(PresetMesh.Cube);
             

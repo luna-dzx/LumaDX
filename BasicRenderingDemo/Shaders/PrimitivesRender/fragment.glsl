@@ -1,6 +1,16 @@
 #version luma-dx
 
+in vec3 fragPos;
+
+[cube]
 void main()
 {
-    lx_FragColour = vec4(1.0,0.0,0.0,1.0);
+    // colour based on position
+    lx_FragColour = lx_Colour( (fragPos + 1.4) * 0.4);
+}
+
+[quad]
+void main()
+{
+    lx_FragColour = vec4(0.9);
 }

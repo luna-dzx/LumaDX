@@ -54,11 +54,9 @@ public class Game1 : Game
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,5f))
-            .SetDirection(-Vector3.UnitZ);
-        player.NoClip = true;
-        
-        player.Camera.SetFov(fieldOfView);
-        player.UpdateProjection(shader);
+            .SetDirection(-Vector3.UnitZ)
+            .EnableNoClip()
+            .SetFov(fieldOfView);
 
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
@@ -73,7 +71,6 @@ public class Game1 : Game
     {
         shader.UniformTexture("skyBox", skyBox);
         shader.UniformTexture("dingus", texture);
-        player.UpdateProjection(shader);
         shader.Uniform1("dingusCount", dingusCount);
     }
     

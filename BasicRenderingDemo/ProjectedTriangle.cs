@@ -3,24 +3,26 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
+
 namespace BasicRenderingDemo;
 
-public class PrimitivesRenderDemo: Game
+public class ProjectedTriangleDemo: Game
 {
     StateHandler glState;
     ShaderProgram shader;
     
-    Model cube;
-    Model quad;
+    Model triangle;
     
     FirstPersonPlayer player;
 
+    Vector3 position;
     Vector3 rotation;
-    float angle = 0f;
+    float time = 0f;
 
     protected override void Initialize()
     {
         glState = new StateHandler();
+        glState.DoCulling = false;
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "PrimitivesRender/vertex.glsl",
@@ -31,40 +33,28 @@ public class PrimitivesRenderDemo: Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(Vector3.UnitZ * 5f)
             .SetDirection(-Vector3.UnitZ)
+            .UpdateProjection(shader)
             .EnableNoClip();
 
-        cube = new Model(PresetMesh.Cube);
-        quad = new Model(PresetMesh.Square);
+        triangle = new Model(PresetMesh.Triangle);
     }
 
-    protected override void Load()
-    {
-        LockMouse();
-    }
-    
-    protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);
+    protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(shader, newWin.Size);
 
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(shader, args, Window.KeyboardState, GetPlayerMousePos());
-        player.UpdateProjection(shader);
-
-        angle += (float)args.Time;
-        rotation = new Vector3(angle*0.2f, angle, angle*0.7f);
+        time += (float)args.Time;
+        position = Vector3.UnitZ * (-3f + MathF.Cos(time));
+        rotation = Vector3.UnitY * 5f * time;
     }
-
     
 
     protected override void RenderFrame(FrameEventArgs args)
     {
         glState.Clear();
 
-        shader.SetActive(ShaderType.FragmentShader, "quad");
-        quad.Draw(shader, Vector3.UnitY * -2f, Vector3.UnitX * MathF.PI / -2f, 3f);
+        triangle.Draw(shader, position, rotation, 1f);
         
-        shader.SetActive(ShaderType.FragmentShader, "cube");
-        cube.Draw(shader, Vector3.Zero, rotation, 1f);
-
         Window.SwapBuffers();
     }
 
@@ -72,8 +62,7 @@ public class PrimitivesRenderDemo: Game
     {
         glState.Unbind();
         
-        quad.Dispose();
-        cube.Dispose();
+        triangle.Dispose();
         shader.Dispose();
     }
 }

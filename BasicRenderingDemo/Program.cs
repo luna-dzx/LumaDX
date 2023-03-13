@@ -35,7 +35,7 @@ internal static class Program
     #endregion
 
 
-    /// <param name="args">'a'-'f' for which demo to run</param>
+    /// <param name="args">'a'-'g' for which demo to run</param>
     public static void Main(string[] args)
     {
         if (args.Length < 1)
@@ -63,12 +63,10 @@ internal static class Program
     /// </summary>
     public static void ProjectedTriangle()
     {
-        throw new NotImplementedException(":P");
         uiSettings.Title = "Basic Rendering - Demo 2.a";
         
-        using var game = new FullModelRenderDemo();
-        game.InitWindow(gameSettings, uiSettings)
-            .CursorState = CursorState.Normal;
+        using var game = new ProjectedTriangleDemo();
+        game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }
     
@@ -89,9 +87,10 @@ internal static class Program
 
 
     /// <summary>
-    /// Demos 2.d to 2.f
-    /// Render Loaded 3D Model One Triangle at a Time
-    /// Colouring 3D Model based on Normal Data
+    /// Demos 2.d to 2.g
+    /// Render Lines of Each triangle of Loaded 3D Model
+    /// Colour 3D Model with Outlined Triangles
+    /// Colour 3D Model based on Normal Data
     /// Texturing 3D Model using Texture Coordinates
     /// </summary>
     public static void FullModelRender()

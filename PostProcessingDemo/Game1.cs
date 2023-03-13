@@ -53,10 +53,9 @@ public class Game1 : Game
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,5f))
-            .SetDirection(-Vector3.UnitZ);
-        player.NoClip = true;
+            .SetDirection(-Vector3.UnitZ)
+            .EnableNoClip();
         
-        player.UpdateProjection(shader);
 
         skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
@@ -82,7 +81,6 @@ public class Game1 : Game
     {
         shader.UniformTexture("skyBox", skyBox);
         shader.UniformTexture("dingus", texture);
-        player.UpdateProjection(shader);
     }
     
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);

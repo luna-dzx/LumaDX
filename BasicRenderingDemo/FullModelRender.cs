@@ -45,10 +45,8 @@ public class FullModelRenderDemo: Game
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(4.26f, 6.65f, 10.33f))
-            .SetDirection(new Vector3(-0.30f, -0.26f, -0.92f));
-        player.NoClip = true;
-        
-        player.UpdateProjection(shader);
+            .SetDirection(new Vector3(-0.30f, -0.26f, -0.92f))
+            .EnableNoClip();
 
         texture = new Texture(Program.AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 1);
 
@@ -64,8 +62,6 @@ public class FullModelRenderDemo: Game
     protected override void Load()
     {
         shader.UniformTexture("dingus", texture);
-        player.UpdateProjection(shader);
-
         LockMouse();
     }
     

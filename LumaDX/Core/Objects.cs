@@ -53,6 +53,7 @@ public static class Objects
         public Vector3 Diffuse;
         public Vector3 Specular;
         public float Shininess;
+        public string Name = "Material";
 
 
         public Material(){}
@@ -61,13 +62,14 @@ public static class Objects
             float ambientR, float ambientG, float ambientB,
             float diffuseR, float diffuseG, float diffuseB,
             float specularR, float specularG, float specularB,
-            float shininess
+            float shininess, string name = "Material"
         )
         {
             SetAmbient(ambientR, ambientG, ambientB);
             SetDiffuse(diffuseR, diffuseG, diffuseB);
             SetSpecular(specularR, specularG, specularB);
             SetShininess(shininess);
+            Name = name;
         }
 
         public Material SetAmbient(Vector3 ambient) { Ambient = ambient; return this; }

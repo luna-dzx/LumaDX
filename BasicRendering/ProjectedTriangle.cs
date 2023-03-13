@@ -25,8 +25,8 @@ public class ProjectedTriangleDemo: Game
         glState.DoCulling = false;
 
         shader = new ShaderProgram(
-            Program.ShaderLocation + "PrimitivesRender/vertex.glsl",
-            Program.ShaderLocation + "PrimitivesRender/fragment.glsl",
+            Program.ShaderLocation + "ProjectedTriangle/vertex.glsl",
+            Program.ShaderLocation + "ProjectedTriangle/fragment.glsl",
             true
         );
 

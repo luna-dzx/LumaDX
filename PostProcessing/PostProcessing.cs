@@ -10,9 +10,9 @@ using Vector3 = OpenTK.Mathematics.Vector3;
 using PostProcessShader = LumaDX.PostProcessing.PostProcessShader;
 
 
-namespace PostProcessingDemo;
+namespace PostProcessing;
 
-public class Game1 : Game
+public class PostProcessingDemo: Game
 {
     StateHandler glState;
 
@@ -30,7 +30,7 @@ public class Game1 : Game
 
     FirstPersonPlayer player;
 
-    PostProcessing postProcessor;
+    LumaDX.PostProcessing postProcessor;
 
     string[] effectNames;
 
@@ -66,7 +66,7 @@ public class Game1 : Game
         dingus = fm.LoadModel(0);
         
 
-        postProcessor = new PostProcessing(
+        postProcessor = new LumaDX.PostProcessing(
             PostProcessShader.GaussianBlur
             | PostProcessShader.MatrixText
             | PostProcessShader.NightVision

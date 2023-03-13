@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumaDX", "LumaDX\LumaDX.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyBoxDemo", "SkyBoxDemo\SkyBoxDemo.csproj", "{54629887-1394-44CE-8457-B28251BC1AFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostProcessingDemo", "PostProcessingDemo\PostProcessingDemo.csproj", "{B38090D3-4723-40AE-838B-5670E401A73D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostProcessing", "PostProcessing\PostProcessing.csproj", "{B38090D3-4723-40AE-838B-5670E401A73D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicRendering", "BasicRendering\BasicRendering.csproj", "{45596FFA-FF81-459C-AF4C-032C699947B8}"
 EndProject

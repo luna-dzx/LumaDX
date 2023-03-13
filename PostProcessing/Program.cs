@@ -1,15 +1,21 @@
-﻿using System;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
-namespace PostProcessingDemo;
+namespace PostProcessing;
 
 internal static class Program
 {
     private const int FPS = 60;
-
-
+    
+    /// <summary>
+    /// Demos 7.a to 7.e
+    /// Render Scene with Gaussian Blur Effect
+    /// Render Scene with Matrix Text Effect
+    /// Render Scene with Night Vision Effect
+    /// Render Scene with GreyScale Effect
+    /// Combine 2 Effects
+    /// </summary>
     public static void Main(string[] args)
     {
         #region settings
@@ -31,7 +37,7 @@ internal static class Program
 
         #endregion
 
-        using var game = new Game1();
+        using var game = new PostProcessingDemo();
         game.InitWindow(gameSettings, uiSettings)
             .CursorState = CursorState.Normal;
         game.Run();

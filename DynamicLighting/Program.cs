@@ -43,6 +43,7 @@ internal static class Program
             PhongLighting();
             LightCasters();
             TextureMapping();
+            BasicShadows();
 
             return;
         }
@@ -57,6 +58,8 @@ internal static class Program
                 LightCasters(); return;
             case >= 'g' and <= 'j':
                 TextureMapping(); return;
+            case >= 'k' and <= 'm':
+                BasicShadows(); return;
         }
         
     }
@@ -104,6 +107,21 @@ internal static class Program
         uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demos 4.g to 4.j";
         
         using var game = new TextureMappingDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
+
+    /// <summary>
+    /// Demos 4.k to 4.m
+    /// Render 2D Depth Sample of Scene from Light’s Perspective
+    /// Render Directional Shadows Calculated from Scene Depth
+    /// Slightly Blur Edges of Shadows
+    /// </summary>
+    public static void BasicShadows()
+    {
+        uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demos 4.k to 4.m";
+        
+        using var game = new BasicShadowDemo();
         game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }

@@ -1,19 +1,13 @@
-﻿using LumaDX;
+using LumaDX;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
-using OpenTK.Windowing.GraphicsLibraryFramework;
 
+namespace DynamicLighting;
 
-namespace FrameBufferDemo;
-
-public class Game1 : Game
+public class BasicShadowDemo: Game
 {
-    const string ShaderLocation = "Shaders/";
-    const string DepthMapShaderLocation = Constants.LibraryShaderPath+"DepthMap/";
- 
     StateHandler glState;
-    //ImGuiController imGui;
     TextRenderer textRenderer;
 
     ShaderProgram shader;
@@ -41,11 +35,11 @@ public class Game1 : Game
         glState.ClearColor = Color4.Black;
 
         shader = new ShaderProgram(
-            ShaderLocation + "vertex.glsl", 
-            ShaderLocation + "fragment.glsl",
+            Program.ShaderLocation + "BasicShadows/vertex.glsl", 
+            Program.ShaderLocation + "BasicShadows/fragment.glsl",
             true);
 
-        frameBufferShader = new ShaderProgram(ShaderLocation + "frameBufferFrag.glsl");
+        frameBufferShader = new ShaderProgram(Program.ShaderLocation + "BasicShadows/frameBufferFrag.glsl");
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0,0,6))
@@ -59,9 +53,9 @@ public class Game1 : Game
             
         quad = new Model(PresetMesh.Square).Transform(new Vector3(0f,-5f,0f), new Vector3(MathHelper.DegreesToRadians(-90f),0f,0f),10f);
 
-        texture = new Texture("Assets/tiled.jpg",0);
+        texture = new Texture(Program.AssetLocation+"tiled.jpg",0);
         
-        depthMap = new DepthMap(DepthMapShaderLocation,(4096,4096),(-3.5f,8.5f,20f),(1f,-4f,-5f));
+        depthMap = new DepthMap((4096,4096),(-3.5f,8.5f,20f),(1f,-4f,-5f));
         
         light = new Objects.Light().SunMode().SetDirection(depthMap.Direction).SetAmbient(0.1f);
         material = PresetMaterial.Silver.SetAmbient(0.1f);
@@ -79,7 +73,7 @@ public class Game1 : Game
         depthMap.UniformTexture("depthMap",shader,1);
         depthMap.UniformTexture("depthMap",frameBufferShader,1);
 
-        textRenderer = new TextRenderer(30, Window.Size, "Assets/fonts/migu.ttf");
+        textRenderer = new TextRenderer(30, Window.Size, Program.AssetLocation+"fonts/migu.ttf");
     }
 
     protected override void Load()

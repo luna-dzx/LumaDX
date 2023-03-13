@@ -2,7 +2,7 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
-namespace BasicRenderingDemo;
+namespace BasicRendering;
 
 internal static class Program
 {

@@ -7,7 +7,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 
 
-namespace BasicRenderingDemo;
+namespace BasicRendering;
 
 public class FullModelRenderDemo: Game
 {

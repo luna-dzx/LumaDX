@@ -4,7 +4,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
 
-namespace BasicRenderingDemo;
+namespace BasicRendering;
 
 public class ProjectedTriangleDemo: Game
 {

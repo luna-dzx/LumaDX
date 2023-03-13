@@ -3,7 +3,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 
-namespace BasicRenderingDemo;
+namespace BasicRendering;
 
 public class PrimitivesRenderDemo: Game
 {

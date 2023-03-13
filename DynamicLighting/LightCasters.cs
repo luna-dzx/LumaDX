@@ -10,7 +10,7 @@ using static LumaDX.PresetMaterial;
 
 namespace DynamicLighting;
 
-public class PhongLightingDemo: Game
+public class LightCasterDemo: Game
 {
     ImGuiController imGui;
     
@@ -18,24 +18,23 @@ public class PhongLightingDemo: Game
     ShaderProgram shader;
     
     Model cube;
-    Model quad;
-    
+
     FirstPersonPlayer player;
 
     Light light;
 
-    Vector3 rotation;
+    Vector3 direction = Vector3.UnitZ;
+    Vector3 rotation = Vector3.Zero;
+    
+    float innerAngle = 0.09f;
+    float outerAngle = 0.48f;
 
     Material[] materials;
-    string[] materialNames;
-    int currentMaterial = 3;
+    int randomSeed = 0;
 
-    bool ambientLighting = true;
-    bool diffuseLighting = false;
-    bool specularLighting = false;
+    string[] lightCasters;
+    int currentLightCaster = 0;
     
-    System.Numerics.Vector3 imGuiLightColour = System.Numerics.Vector3.One;
-    Vector3 lightColour = Vector3.One;
 
     protected override void Initialize()
     {
@@ -44,8 +43,8 @@ public class PhongLightingDemo: Game
         imGui = new ImGuiController(Window);
 
         shader = new ShaderProgram(
-            Program.ShaderLocation + "PhongLighting/vertex.glsl",
-            Program.ShaderLocation + "PhongLighting/fragment.glsl",
+            Program.ShaderLocation + "LightCasters/vertex.glsl",
+            Program.ShaderLocation + "LightCasters/fragment.glsl",
             true
         );
 
@@ -55,8 +54,7 @@ public class PhongLightingDemo: Game
             .EnableNoClip();
 
         cube = new Model(PresetMesh.Cube);
-        quad = new Model(PresetMesh.Square);
-        
+
         light = new Light()
             .SetPosition(-2f,0.5f,2f)
             .SetAmbient(0.2f, 0.2f, 0.2f);
@@ -70,7 +68,8 @@ public class PhongLightingDemo: Game
             BlackPlastic, CyanPlastic, GreenPlastic, RedPlastic, WhitePlastic, YellowPlastic,
             BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, YellowRubber,
         };
-        materialNames = materials.Select(a => a.Name).ToArray();
+
+        lightCasters = new[] { "Point", "SpotLight", "Sun" };
 
     }
 
@@ -87,6 +86,8 @@ public class PhongLightingDemo: Game
         if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
         if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
+
+        direction = Matrix3.CreateRotationX(rotation.X) * Matrix3.CreateRotationY(rotation.Y) * Matrix3.CreateRotationZ(rotation.Z) * Vector3.UnitZ;
         
         if (k.IsKeyPressed(Keys.Enter) && MouseLocked) // unlock mouse
         {
@@ -102,14 +103,16 @@ public class PhongLightingDemo: Game
         player.UpdateProjection(shader);
         shader.Uniform3("cameraPos", player.Camera.Position);
 
-        light.Diffuse = lightColour;
-        light.Specular = lightColour;
-        shader.UniformLight("light", light);
-        shader.UniformMaterial("material", materials[currentMaterial]);
+        switch (currentLightCaster)
+        {
+            case 0: light.PointMode(); break;
+            case 1: light.SpotlightMode(innerAngle,outerAngle); break;
+            case 2: light.SunMode(); break;
+        }
 
-        shader.Uniform1("ambientLighting", ambientLighting ? 1 : 0);
-        shader.Uniform1("diffuseLighting", diffuseLighting ? 1 : 0);
-        shader.Uniform1("specularLighting", specularLighting ? 1 : 0);
+        light.Direction = direction.Normalized();
+        
+        shader.UniformLight("light", light);
     }
 
     
@@ -117,26 +120,44 @@ public class PhongLightingDemo: Game
     protected override void RenderFrame(FrameEventArgs args)
     {
         glState.Clear();
-
-        shader.SetActive(ShaderType.FragmentShader, "quad");
-        quad.Draw(shader, Vector3.Zero, rotation, 1f);
         
-        shader.SetActive(ShaderType.FragmentShader, "cube");
-        cube.Draw(shader, light.Position, Vector3.Zero, 0.2f);
+        
+        shader.SetActive(ShaderType.FragmentShader, "scene");
+        
+        Random rand = new Random(randomSeed);
+        
+        for (int i = 0; i < 100; i++)
+        {
+            shader.UniformMaterial("material", materials[rand.Next(0,materials.Length-1)]);
+            var pos = new Vector3(rand.NextSingle() - 0.5f, rand.NextSingle() - 0.5f, rand.NextSingle()) * 40f;
+            var rot = new Vector3(rand.NextSingle() - 0.5f, rand.NextSingle() - 0.5f, rand.NextSingle()) * MathF.Tau;
+            cube.Draw(shader, pos, rot, 1f);
+        }
+
+        switch (currentLightCaster)
+        {
+            case 0:
+                shader.SetActive(ShaderType.FragmentShader, "light");
+                cube.Draw(shader, light.Position, Vector3.Zero, 0.2f);
+                break;
+            case 1:
+                shader.SetActive(ShaderType.FragmentShader, "light");
+                cube.Draw(shader, light.Position, Vector3.Zero, 0.1f);
+                cube.Draw(shader, light.Position + light.Direction * 0.2f, Vector3.Zero, 0.1f);
+                break;
+        }
+
 
         #region Debug UI
         
         imGui.Update((float)args.Time);
         
         if (!imGui.IsFocused()) LockMouse();;
+        
+        ImGui.ListBox("Light Caster", ref currentLightCaster, lightCasters, lightCasters.Length);
+        ImGui.SliderFloat("Spotlight Inner Angle", ref innerAngle, 0f, MathF.PI / 2f - 0.1f);
+        ImGui.SliderFloat("Spotlight Outer Angle", ref outerAngle, innerAngle, MathF.PI / 2f);
 
-        ImGui.Checkbox("Ambient Lighting", ref ambientLighting);
-        ImGui.Checkbox("Diffuse Lighting", ref diffuseLighting);
-        ImGui.Checkbox("Specular Lighting", ref specularLighting);
-        ImGui.ListBox("Material", ref currentMaterial, materialNames, materialNames.Length);
-        ImGui.ColorPicker3("Light Colour", ref imGuiLightColour);
-        lightColour = new Vector3(imGuiLightColour.X, imGuiLightColour.Y, imGuiLightColour.Z);
-            
         imGui.Render();
         
         #endregion
@@ -148,7 +169,6 @@ public class PhongLightingDemo: Game
     {
         glState.Unbind();
         
-        quad.Dispose();
         cube.Dispose();
         shader.Dispose();
     }

@@ -8,6 +8,11 @@ in vec3 normal;
 
 uniform vec3 cameraPos;
 
+uniform int ambientLighting;
+uniform int diffuseLighting;
+uniform int specularLighting;
+
+
 [quad]
 void main()
 {
@@ -33,7 +38,7 @@ void main()
     // fix buggy lighting
     if (abs(diffuse.x)+abs(diffuse.y)+abs(diffuse.z) == 0){specular*=0;}
 
-    lx_FragColour = lx_Colour( ambient + diffuse + specular );
+    lx_FragColour = lx_Colour( ambient * float(ambientLighting) + diffuse * float(diffuseLighting) + specular * float(specularLighting) );
 }
 
 [cube]

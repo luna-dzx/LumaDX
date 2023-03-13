@@ -38,12 +38,29 @@ internal static class Program
     /// <param name="args">'a'-'t' for which demo to run</param>
     public static void Main(string[] args)
     {
-        PhongLighting();
+        if (args.Length < 1)
+        {
+            PhongLighting();
+            LightCasters();
+
+            return;
+        }
+        
+        char demo = args[0][0];
+
+        switch (demo)
+        {
+            case <= 'e':
+                PhongLighting(); return;
+            case 'f':
+                LightCasters(); return;
+        }
+        
     }
 
     
     /// <summary>
-    /// Demo 4.a to 4.e
+    /// Demos 4.a to 4.e
     /// Render Quad with Ambient Lighting
     /// Render Quad with Diffuse Lighting
     /// Render Quad with Specular Highlights
@@ -58,7 +75,19 @@ internal static class Program
         game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }
- 
+    
+    /// <summary>
+    /// Demo 4.f
+    /// Render Scene of Cubes with Different Light Casting Modes
+    /// </summary>
+    public static void LightCasters()
+    {
+        uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demo 4.f";
+        
+        using var game = new LightCasterDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
     
     
 }

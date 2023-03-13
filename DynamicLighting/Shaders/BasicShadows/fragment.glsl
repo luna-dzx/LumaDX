@@ -6,6 +6,7 @@ uniform vec3 cameraPos;
 
 uniform sampler2D depthMap;
 uniform int visualisation;
+uniform int blurEdges;
 
 in VS_OUT {
     vec3 fragPos;
@@ -27,7 +28,9 @@ void main()
     }
     if (visualisation == 2)
     {
-        float shadow = lx_ShadowCalculation(depthMap,fs_in.fragPosLightSpace,3.0,2,10.0);
+        float shadow;
+        if (blurEdges == 1) shadow = lx_ShadowCalculation(depthMap,fs_in.fragPosLightSpace,3.0,2,10.0);
+        else shadow = lx_ShadowCalculation(depthMap,fs_in.fragPosLightSpace);
         lx_FragColour = vec4(lx_Phong(fs_in.normal, fs_in.fragPos, cameraPos, fs_in.texCoords, material, light, shadow),1.0);
     }
 

@@ -1,12 +1,16 @@
+using ImGuiNET;
 using LumaDX;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace DynamicLighting;
 
 public class BasicShadowDemo: Game
 {
+    ImGuiController imGui;
+    
     StateHandler glState;
     TextRenderer textRenderer;
 
@@ -25,6 +29,7 @@ public class BasicShadowDemo: Game
     Texture texture;
     
     bool visualiseDepthMap = false;
+    bool blurEdges = false;
     
     private Vector3 cubePosition;
     
@@ -33,6 +38,8 @@ public class BasicShadowDemo: Game
     {
         glState = new StateHandler();
         glState.ClearColor = Color4.Black;
+        
+        imGui = new ImGuiController(Window);
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "BasicShadows/vertex.glsl", 
@@ -92,6 +99,17 @@ public class BasicShadowDemo: Game
 
         time += args.Time;
         cubePosition = 4.8f * new Vector3((float)Math.Cos(time),0f,(float)Math.Sin(time)) + new Vector3(0f, -4f, 0f);
+
+        shader.Uniform1("blurEdges", blurEdges ? 1 : 0);
+    }
+
+    protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
+    {
+        if (k.IsKeyPressed(Keys.Enter) && MouseLocked) // unlock mouse
+        {
+            UnlockMouse();
+            imGui.FocusWindow();
+        }
     }
 
     void DrawScene()
@@ -149,6 +167,19 @@ public class BasicShadowDemo: Game
         
         glState.LoadState();
         texture.Use();
+        
+        
+        #region Debug UI
+        
+        imGui.Update((float)args.Time);
+        
+        if (!imGui.IsFocused()) LockMouse();;
+
+        ImGui.Checkbox("Blur Edges", ref blurEdges);
+
+        imGui.Render();
+        
+        #endregion
 
         Window.SwapBuffers();
     }

@@ -103,6 +103,7 @@ public class Game1 : Game
     }
 
     int currentEffect = 0;
+    int secondPass = 0;
 
     protected override void RenderFrame(FrameEventArgs args)
     {
@@ -139,6 +140,15 @@ public class Game1 : Game
             case "Matrix": postProcessor.RenderEffect(PostProcessShader.MatrixText); break;
         }
         
+        switch (effectNames[secondPass])
+        {
+            case "None": break;
+            case "Blur": postProcessor.RenderEffect(PostProcessShader.GaussianBlur); break;
+            case "GreyScale": postProcessor.RenderEffect(PostProcessShader.GreyScale); break;
+            case "NightVision": postProcessor.RenderEffect(PostProcessShader.NightVision); break;
+            case "Matrix": postProcessor.RenderEffect(PostProcessShader.MatrixText); break;
+        }
+        
         postProcessor.DrawFbo();
 
 
@@ -149,6 +159,9 @@ public class Game1 : Game
         if (!imGui.IsFocused()) LockMouse();;
 
         ImGui.ListBox("Effect", ref currentEffect, effectNames, effectNames.Length);
+        ImGui.ListBox("Second Pass", ref secondPass, effectNames, effectNames.Length);
+
+        
         imGui.Render();
         
         #endregion

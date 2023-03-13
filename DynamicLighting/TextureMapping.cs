@@ -1,4 +1,3 @@
-﻿using System.Drawing;
 using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
@@ -10,9 +9,9 @@ using Light = LumaDX.Objects.Light;
 using Material = LumaDX.Objects.Material;
 using SysVec3 = System.Numerics.Vector3;
 
-namespace MappingDemo;
+namespace DynamicLighting;
 
-public class Game1 : Game
+public class TextureMappingDemo: Game
 {
     StateHandler glState;
 
@@ -29,9 +28,6 @@ public class Game1 : Game
     ImGuiController imGui;
     
     SysVec3 brushColour = SysVec3.UnitX;
-    
-    const string ShaderLocation = "Shaders/";
-    const string AssetsLocation = "Assets/";
 
     Matrix4 projMatrix;
     Matrix4 viewMatrix;
@@ -63,8 +59,8 @@ public class Game1 : Game
         
         imGui = new ImGuiController(Window);
 
-        shader = new ShaderProgram(ShaderLocation + "vertex.glsl",
-            ShaderLocation + "fragment.glsl",
+        shader = new ShaderProgram(Program.ShaderLocation + "TextureMapping/vertex.glsl",
+            Program.ShaderLocation + "TextureMapping/fragment.glsl",
             true
         );
 
@@ -78,13 +74,13 @@ public class Game1 : Game
         frameBuffers = new FrameBuffer[4];
 
         GL.ActiveTexture(TextureUnit.Texture0);
-        frameBuffers[0] = new FrameBuffer(AssetsLocation+"diffuse.bmp").UseTexture(0);
+        frameBuffers[0] = new FrameBuffer(Program.AssetLocation+"diffuse.bmp").UseTexture(0);
         GL.ActiveTexture(TextureUnit.Texture1);
-        frameBuffers[1] = new FrameBuffer(AssetsLocation+"specular.bmp").UseTexture(0);
+        frameBuffers[1] = new FrameBuffer(Program.AssetLocation+"specular.bmp").UseTexture(0);
         GL.ActiveTexture(TextureUnit.Texture2);
-        frameBuffers[2] = new FrameBuffer(AssetsLocation+"normal.bmp").UseTexture(0);
+        frameBuffers[2] = new FrameBuffer(Program.AssetLocation+"normal.bmp").UseTexture(0);
         GL.ActiveTexture(TextureUnit.Texture3);
-        frameBuffers[3] = new FrameBuffer(AssetsLocation+"bricks.bmp").UseTexture(0);
+        frameBuffers[3] = new FrameBuffer(Program.AssetLocation+"bricks.bmp").UseTexture(0);
 
         UnlockMouse();
     }

@@ -42,6 +42,7 @@ internal static class Program
         {
             PhongLighting();
             LightCasters();
+            TextureMapping();
 
             return;
         }
@@ -54,6 +55,8 @@ internal static class Program
                 PhongLighting(); return;
             case 'f':
                 LightCasters(); return;
+            case >= 'g' and <= 'j':
+                TextureMapping(); return;
         }
         
     }
@@ -89,5 +92,20 @@ internal static class Program
         game.Run();
     }
     
+    /// <summary>
+    /// Demos 4.g to 4.j
+    /// Render Lit, Textured Quad with a Specular Lighting Map
+    /// Render Quad with a Normal Map
+    /// Render Quad with a Displacement Map
+    /// Draw On Texture Maps Using FrameBuffers
+    /// </summary>
+    public static void TextureMapping()
+    {
+        uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demos 4.g to 4.j";
+        
+        using var game = new TextureMappingDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
     
 }

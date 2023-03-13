@@ -44,6 +44,7 @@ internal static class Program
             LightCasters();
             TextureMapping();
             BasicShadows();
+            ComplexLighting();
 
             return;
         }
@@ -60,6 +61,8 @@ internal static class Program
                 TextureMapping(); return;
             case >= 'k' and <= 'm':
                 BasicShadows(); return;
+            default: // n-t
+                ComplexLighting(); return;
         }
         
     }
@@ -122,6 +125,25 @@ internal static class Program
         uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demos 4.k to 4.m";
         
         using var game = new BasicShadowDemo();
+        game.InitWindow(gameSettings, uiSettings);
+        game.Run();
+    }
+
+    /// <summary>
+    /// Demos 4.n to 4.t
+    /// Render 3D CubeMap Depth Sample of Scene
+    /// Render Omni-Directional Shadows
+    /// Render Exclusively the Bright Parts of the Scene
+    /// Render Bright Parts of the Scene Blurred
+    /// Render Full Scene with Bright Areas Blurred (Bloom)
+    /// Render Parts of the Scene where Light is Unable to Reach
+    /// Overlay Dark Areas of Scene onto Full Scene (SSAO)
+    /// </summary>
+    public static void ComplexLighting()
+    {
+        uiSettings.Title = "Dynamic Real-Time Lighting/Shadows - Demos 4.n to 4.t";
+        
+        using var game = new ComplexLightingDemo();
         game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }

@@ -1,4 +1,4 @@
-﻿using Assimp;
+using Assimp;
 using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
@@ -9,18 +9,16 @@ using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Vector3 = OpenTK.Mathematics.Vector3;
 using PostProcessShader = LumaDX.PostProcessing.PostProcessShader;
 
-namespace LightingDemo;
+namespace DynamicLighting;
 
-public class Game1 : LumaDX.Game
+public class ComplexLightingDemo: Game
 {
     StateHandler glState;
 
-    const string ShaderLocation = "Shaders/";
     ShaderProgram shader;
     ShaderProgram hdrShader;
     ShaderProgram aoShader;
     
-    const string AssetLocation = "Assets/";
     Texture skyBox;
     
     Texture backpackTexture;
@@ -74,8 +72,8 @@ public class Game1 : LumaDX.Game
         UnlockMouse();
 
         shader = new ShaderProgram(
-            ShaderLocation + "vertex.glsl",
-            ShaderLocation + "fragment.glsl",
+            Program.ShaderLocation + "ComplexLighting/vertex.glsl",
+            Program.ShaderLocation + "ComplexLighting/fragment.glsl",
             true
         );
 
@@ -84,18 +82,18 @@ public class Game1 : LumaDX.Game
             .SetDirection(-Vector3.UnitZ)
             .EnableNoClip();
 
-        skyBox = Texture.LoadCubeMap(AssetLocation + "skybox/", ".jpg", 0);
+        skyBox = Texture.LoadCubeMap(Program.AssetLocation + "skybox/", ".jpg", 0);
         cube = new Model(PresetMesh.Cube);
 
-        backpackTexture = new Texture(AssetLocation + "backpack/diffuse.bmp", 1);
-        backpackSpecular = new Texture(AssetLocation + "backpack/specular.bmp", 2);
-        backpackNormal = new Texture(AssetLocation + "backpack/normal.bmp", 3);
+        backpackTexture = new Texture(Program.AssetLocation + "backpack/diffuse.bmp", 1);
+        backpackSpecular = new Texture(Program.AssetLocation + "backpack/specular.bmp", 2);
+        backpackNormal = new Texture(Program.AssetLocation + "backpack/normal.bmp", 3);
 
-        woodTexture = new Texture(AssetLocation + "wood-diffuse.jpg", 1);
-        woodSpecular = new Texture(AssetLocation + "wood-specular.jpg", 2);
-        woodNormal = new Texture(AssetLocation + "wood-normal.jpg", 3);
+        woodTexture = new Texture(Program.AssetLocation + "wood-diffuse.jpg", 1);
+        woodSpecular = new Texture(Program.AssetLocation + "wood-specular.jpg", 2);
+        woodNormal = new Texture(Program.AssetLocation + "wood-normal.jpg", 3);
 
-        FileManager fm = new FileManager(AssetLocation + "backpack/backpack.obj")
+        FileManager fm = new FileManager(Program.AssetLocation + "backpack/backpack.obj")
             .AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
         backpack = fm.LoadModel();
         
@@ -111,7 +109,7 @@ public class Game1 : LumaDX.Game
             .UniformLight("light",light)
             .UniformTexture("normalMap",backpackNormal);
 
-        aoShader = new ShaderProgram(ShaderLocation + "ambientOcclusion.glsl");
+        aoShader = new ShaderProgram(Program.ShaderLocation + "ComplexLighting/ambientOcclusion.glsl");
         aoShader.Uniform1("samplePosition", 2);
         aoShader.Uniform1("sampleNormal", 3);
         aoShader.Uniform1("noiseTex", 4);
@@ -125,7 +123,7 @@ public class Game1 : LumaDX.Game
         
 
         // custom shader for handling blitting
-        hdrShader = new ShaderProgram(ShaderLocation+"postProcess.glsl");
+        hdrShader = new ShaderProgram(Program.ShaderLocation+"ComplexLighting/postProcess.glsl");
 
 
         postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f,

@@ -148,6 +148,7 @@ public class PhongLightingDemo: Game
     {
         glState.Unbind();
         
+        imGui.Dispose();
         quad.Dispose();
         cube.Dispose();
         shader.Dispose();

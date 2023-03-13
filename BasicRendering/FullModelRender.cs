@@ -191,6 +191,7 @@ public class FullModelRenderDemo: Game
         dingus.Dispose();
         texture.Dispose();
         
+        imGui.Dispose();
         shader.Dispose();
     }
 }

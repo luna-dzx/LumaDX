@@ -193,6 +193,7 @@ public class BasicShadowDemo: Game
 
         shader.Dispose();
 
+        imGui.Dispose();
         depthMap.Dispose();
         textRenderer.Dispose();
     }

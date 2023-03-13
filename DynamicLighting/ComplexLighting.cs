@@ -13,11 +13,14 @@ namespace DynamicLighting;
 
 public class ComplexLightingDemo: Game
 {
+    ImGuiController imGui;
+    
     StateHandler glState;
 
     ShaderProgram shader;
     ShaderProgram hdrShader;
     ShaderProgram aoShader;
+    ShaderProgram depthShader;
     
     Texture skyBox;
     
@@ -58,12 +61,18 @@ public class ComplexLightingDemo: Game
 
     bool ambientOcclusion = false;
     bool visualizeAO = false;
+    bool visualizeDepthSample = false;
+    bool renderShadows = false;
+    bool blurBrightComponent = false;
+    bool visualizeBrightComponent = false;
 
 
     protected override void Initialize()
     {
         glState = new StateHandler();
         glState.ClearColor = Color4.Transparent;
+        
+        imGui = new ImGuiController(Window);
 
         colourAttachments = OpenGL.GetDrawBuffers(4);
         brightColourAttachment = OpenGL.GetDrawBuffers(1,1);
@@ -76,6 +85,8 @@ public class ComplexLightingDemo: Game
             Program.ShaderLocation + "ComplexLighting/fragment.glsl",
             true
         );
+
+        depthShader = new ShaderProgram(Program.ShaderLocation + "ComplexLighting/depth.glsl");
 
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,10f))
@@ -135,6 +146,7 @@ public class ComplexLightingDemo: Game
         depthMap.UpdateMatrices();
         
         depthMap.UniformTexture(shader,"cubeMap", 0);
+        depthMap.UniformTexture(depthShader,"cubeMap", 0);
         shader.Uniform1("shadowThreshold", 0.9f);
     }
 
@@ -151,35 +163,32 @@ public class ComplexLightingDemo: Game
         player.Update(shader, args, Window.KeyboardState, GetPlayerMousePos());
         shader.Uniform3("cameraPos", player.Camera.Position);
         player.UpdateProjection(shader);
+        shader.Uniform1("renderShadows", renderShadows ? 1 : 0);
+        hdrShader.Uniform1("visualizeBrightComponent", visualizeBrightComponent ? 1 : 0);
+        hdrShader.Uniform1("exposure", exposure);
     }
 
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
     {
-        if (k.IsKeyPressed(Keys.Enter)) { bloomEnabled = !bloomEnabled; }
-
-        if (k.IsKeyPressed(Keys.Backspace)) ambientOcclusion = !ambientOcclusion;
-        if (k.IsKeyPressed(Keys.RightBracket)) visualizeAO = !visualizeAO;
-            
-
         if (k.IsKeyDown(Keys.Right)) rotation+=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Left))  rotation-=Vector3.UnitY*(float)args.Time;
         if (k.IsKeyDown(Keys.Up))    rotation+=Vector3.UnitX*(float)args.Time;
         if (k.IsKeyDown(Keys.Down))  rotation-=Vector3.UnitX*(float)args.Time;
         
         
-        if (k.IsKeyDown(Keys.L)) light.Position+=Vector3.UnitY*(float)args.Time;
-        if (k.IsKeyDown(Keys.J))  light.Position-=Vector3.UnitY*(float)args.Time;
-        if (k.IsKeyDown(Keys.I))    light.Position+=Vector3.UnitX*(float)args.Time;
-        if (k.IsKeyDown(Keys.K))  light.Position-=Vector3.UnitX*(float)args.Time;
+        if (k.IsKeyDown(Keys.L)) light.Position+=Vector3.UnitX*(float)args.Time*3f;
+        if (k.IsKeyDown(Keys.J))  light.Position-=Vector3.UnitX*(float)args.Time*3f;
+        if (k.IsKeyDown(Keys.I))    light.Position+=Vector3.UnitY*(float)args.Time*3f;
+        if (k.IsKeyDown(Keys.K))  light.Position-=Vector3.UnitY*(float)args.Time*3f;
 
         shader.UniformLight("light", light);
         depthMap.Position = light.Position;
-    }
-    
-    protected override void MouseHandling(FrameEventArgs args, MouseState mouseState)
-    {
-        exposure += mouseState.ScrollDelta.Y * (float)args.Time;
-        hdrShader.Uniform1("exposure", exposure);
+        
+        if (k.IsKeyPressed(Keys.Enter) && MouseLocked) // unlock mouse
+        {
+            UnlockMouse();
+            imGui.FocusWindow();
+        }
     }
 
     int currentEffect = 0;
@@ -199,96 +208,130 @@ public class ComplexLightingDemo: Game
         glState.DoCulling = true;
         shader.Use();
         GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
-
-
-        postProcessor.StartSceneRender(colourAttachments);
         
-        glState.Clear();
-        
-        // skyBox is maximum depth, so we want to render if it's <= instead of just <
-        glState.DepthFunc = DepthFunction.Lequal;
-        
-        backpackTexture.Use();
-
         depthMap.UseTexture();
-        depthMap.UniformClipFar(shader, "farPlane");
+        depthMap.UniformClipFar(depthShader, "farPlane");
 
-        backpackTexture.Use();
-        backpackSpecular.Use();
-        backpackNormal.Use();
-
-        shader.SetActive("scene");
-        backpack.Draw(shader, Vector3.Zero,  rotation, 2f);
-        
-        woodTexture.Use();
-        woodSpecular.Use();
-        woodNormal.Use();
-        
-        glState.CullFace = CullFaceMode.Front;
-        shader.Uniform1("flipNormals", 1);
-        cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 10f);
-        glState.CullFace = CullFaceMode.Back;
-        shader.Uniform1("flipNormals", 0);
-        
-
-        shader.SetActive(ShaderType.FragmentShader,"light");
-        cube.Draw(shader, light.Position,  Vector3.Zero, 0.2f);
-
-
-        postProcessor.EndSceneRender();
-        
-        postProcessor.BlurTexture = 1;
-        if (bloomEnabled) postProcessor.RenderEffect(PostProcessShader.GaussianBlur, brightColourAttachment);
-
-        
-        if (ambientOcclusion || visualizeAO)
+        if (visualizeDepthSample)
         {
-
-            postProcessor.ReadFbo.ReadMode();
-            aoShader.Use();
-            OpenGL.BindTexture(4,TextureTarget.Texture2D,noiseTexture);
-            aoShader.UniformMat4("proj", ref player.Camera.ProjMatrix);
-
-            postProcessor.WriteFbo.SetDrawBuffers(aoColourAttachment);
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer,(int)postProcessor.WriteFbo);
-            postProcessor.ReadFbo.UseTexture();
-
+            depthShader.Use();
             PostProcessing.Draw();
+        }
+        else
+        {
+            postProcessor.StartSceneRender(colourAttachments);
             
+            glState.Clear();
+            
+            // skyBox is maximum depth, so we want to render if it's <= instead of just <
+            glState.DepthFunc = DepthFunction.Lequal;
+            
+            backpackTexture.Use();
+            
+            depthMap.UniformClipFar(shader, "farPlane");
+
+            backpackTexture.Use();
+            backpackSpecular.Use();
+            backpackNormal.Use();
+
+            shader.SetActive("scene");
+            backpack.Draw(shader, Vector3.Zero,  rotation, 2f);
+            
+            woodTexture.Use();
+            woodSpecular.Use();
+            woodNormal.Use();
+            
+            glState.CullFace = CullFaceMode.Front;
+            shader.Uniform1("flipNormals", 1);
+            cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 10f);
+            glState.CullFace = CullFaceMode.Back;
+            shader.Uniform1("flipNormals", 0);
+            
+
+            shader.SetActive(ShaderType.FragmentShader,"light");
+            cube.Draw(shader, light.Position,  Vector3.Zero, 0.2f);
+
+
             postProcessor.EndSceneRender();
             
-            postProcessor.BlurTexture = 2;
-            postProcessor.RenderEffect(PostProcessShader.GaussianBlur, aoColourAttachment);
+            postProcessor.BlurTexture = 1;
+            if (bloomEnabled || (visualizeBrightComponent && blurBrightComponent)) postProcessor.RenderEffect(PostProcessShader.GaussianBlur, brightColourAttachment);
+
+            
+            if (ambientOcclusion || visualizeAO)
+            {
+
+                postProcessor.ReadFbo.ReadMode();
+                aoShader.Use();
+                OpenGL.BindTexture(4,TextureTarget.Texture2D,noiseTexture);
+                aoShader.UniformMat4("proj", ref player.Camera.ProjMatrix);
+
+                postProcessor.WriteFbo.SetDrawBuffers(aoColourAttachment);
+                GL.BindFramebuffer(FramebufferTarget.Framebuffer,(int)postProcessor.WriteFbo);
+                postProcessor.ReadFbo.UseTexture();
+
+                PostProcessing.Draw();
+                
+                postProcessor.EndSceneRender();
+                
+                postProcessor.BlurTexture = 2;
+                postProcessor.RenderEffect(PostProcessShader.GaussianBlur, aoColourAttachment);
+            }
+            
+            #region render to screen with HDR
+            
+            // combine scene with blurred bright component using HDR
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            
+            shader.DisableGammaCorrection();
+            skyBox.Use();
+            glState.DoCulling = false;
+            shader.SetActive("skyBox");
+            cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 1f);
+        
+            glState.DoCulling = true;
+            shader.EnableGammaCorrection();
+
+            glState.Blending = true;
+            
+            hdrShader.Use();
+            hdrShader.Uniform1("aoEnabled",ambientOcclusion?1:0);
+            hdrShader.Uniform1("visualizeAO",visualizeAO?1:0);
+
+            postProcessor.DrawFbo();
+            
+            glState.Blending = false;
+            
+            #endregion
         }
-        
-        #region render to screen with HDR
-        
-        // combine scene with blurred bright component using HDR
 
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        
-        shader.DisableGammaCorrection();
-        skyBox.Use();
-        glState.DoCulling = false;
-        shader.SetActive("skyBox");
-        cube.Draw(shader, Vector3.Zero,  Vector3.Zero, 1f);
-    
-        glState.DoCulling = true;
-        shader.EnableGammaCorrection();
 
-        glState.Blending = true;
-        
-        hdrShader.Use();
-        hdrShader.Uniform1("aoEnabled",ambientOcclusion?1:0);
-        hdrShader.Uniform1("visualizeAO",visualizeAO?1:0);
 
-        postProcessor.DrawFbo();
         
-        glState.Blending = false;
+        #region Debug UI
+        
+        imGui.Update((float)args.Time);
+        
+        if (!imGui.IsFocused()) LockMouse();;
+
+        ImGui.Checkbox("Visualize Depth Sample", ref visualizeDepthSample);
+        ImGui.Checkbox("Render Shadows", ref renderShadows);
+        
+        ImGui.Checkbox("Visualize Bright Component", ref visualizeBrightComponent);
+        ImGui.Checkbox("Blur Bright Component", ref blurBrightComponent);
+        ImGui.Checkbox("Bloom", ref bloomEnabled);
+        
+        ImGui.Checkbox("Visualize Ambient Occlusion", ref visualizeAO);
+        ImGui.Checkbox("Ambient Occlusion", ref ambientOcclusion);
+
+        ImGui.SliderFloat("exposure", ref exposure, 0f, 10f, "%.3f", ImGuiSliderFlags.Logarithmic);
+        
+
+
+        imGui.Render();
         
         #endregion
-
-
 
 
         Window.SwapBuffers();
@@ -306,6 +349,7 @@ public class ComplexLightingDemo: Game
         
         postProcessor.Dispose();
         
+        imGui.Dispose();
         hdrShader.Dispose();
         shader.Dispose();
     }

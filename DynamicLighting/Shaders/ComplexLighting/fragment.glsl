@@ -39,11 +39,13 @@ uniform float farPlane;
 
 uniform float shadowThreshold;
 
+uniform int renderShadows;
 
 [scene]
 void main()
 {
-    float shadow = lx_ShadowCalculation(cubeMap, fs_in.fragPos, light.position, cameraPos, farPlane);
+    float shadow = 1.0;
+    if (renderShadows == 1) shadow = lx_ShadowCalculation(cubeMap, fs_in.fragPos, light.position, cameraPos, farPlane);
     vec3 normal = lx_NormalMap(normalMap,fs_in.texCoords);
     vec3 viewNormal = fs_in.viewNormal;
     if (flipNormals == 1) normal *= -1.0;

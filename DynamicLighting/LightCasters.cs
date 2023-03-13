@@ -169,6 +169,7 @@ public class LightCasterDemo: Game
     {
         glState.Unbind();
         
+        imGui.Dispose();
         cube.Dispose();
         shader.Dispose();
     }

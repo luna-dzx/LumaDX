@@ -203,6 +203,7 @@ public class TextureMappingDemo: Game
     {
         glState.Unbind();
         
+        imGui.Dispose();
         quad.Dispose();
         shader.Dispose();
     }

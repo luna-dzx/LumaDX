@@ -11,6 +11,13 @@ public static class ObjectExtensions
     public static Vector3 GetVertex(this List<float> vertices, int index) => new (vertices[index * 3], vertices[index * 3 + 1], vertices[index * 3 + 2]);
     public static Vector3 GetVertex(this float[] vertices, int index) => new (vertices[index * 3], vertices[index * 3 + 1], vertices[index * 3 + 2]);
 
+    public static void SetVertex(this float[] vertices, int index, Vector3 vertex)
+    {
+        vertices[index * 3] = vertex.X;
+        vertices[index * 3 + 1] = vertex.Y;
+        vertices[index * 3 + 2] = vertex.Z;
+    }
+
     public static Vector3[] GetVertices(this float[] floats)
     {
         int length = floats.Length / 3;

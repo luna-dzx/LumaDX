@@ -3,7 +3,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
-namespace PhysicsDemo;
+namespace Physics;
 
 internal static class Program
 {
@@ -31,7 +31,7 @@ internal static class Program
 
         #endregion
 
-        using var game = new Game1();
+        using var game = new StairsDemo();
         game.InitWindow(gameSettings, uiSettings)
             .CursorState = CursorState.Normal;
         game.Run();

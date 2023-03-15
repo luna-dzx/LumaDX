@@ -8,9 +8,9 @@ using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Vector3 = OpenTK.Mathematics.Vector3;
 using Triangle = LumaDX.Maths.Triangle;
 
-namespace PhysicsDemo;
+namespace Physics;
 
-public class Game1 : Game
+public class StairsDemo: Game
 {
     StateHandler glState;
 
@@ -88,7 +88,8 @@ public class Game1 : Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,5f))
             .SetDirection(-Vector3.UnitZ)
-            .UpdateProjection(shader);
+            .UpdateProjection(shader)
+            .EnableNoClip();
         
         cube = new Model(PresetMesh.Cube);
         ellipsoid = new Model(Maths.GenerateIcoSphere(3));
@@ -116,15 +117,11 @@ public class Game1 : Game
             scale.Z -= 0.1f;
         }
 
-        // TODO: HSV <-> RGB Vector Conversion
         cubeColours = new float[30];
-        var hsv = new Vector4(0, 1f, 1f, 1f);
+        var hsv = new Vector3(0, 1f, 1f);
         for (int i = 0; i < 10; i++)
         {
-            var colour = Color4.FromHsv(hsv);
-            cubeColours[i * 3] = colour.R;
-            cubeColours[i * 3 +1] = colour.G;
-            cubeColours[i * 3 +2] = colour.B;
+            cubeColours.SetVertex(i, ColourUtils.HsvToRgb(hsv));
             hsv.X += 0.1f;
         }
 
@@ -171,8 +168,6 @@ public class Game1 : Game
         }
 
         if (k.IsKeyPressed(Keys.Backspace)) ResetPhysicsPlayer();
-        if (k.IsKeyPressed(Keys.J)) physicsPlayer.Jump();
-
     }
 
     protected override void RenderFrame(FrameEventArgs args)
@@ -208,9 +203,7 @@ public class Game1 : Game
         ImGui.SliderAngle("Angle", ref angle, -180f, 180f);
         if (lastAngle != angle) updateTransform = true;
         imGui.Render();
-        
-        
-                
+
         #endregion
         
 

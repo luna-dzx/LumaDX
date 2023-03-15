@@ -1,9 +1,10 @@
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using TextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
 
 namespace LumaDX;
 
-public class TexUtils
+public static class TexUtils
 {
     /// <summary>
     /// Generate an SSAO noise texture 
@@ -22,5 +23,18 @@ public class TexUtils
         GL.TexParameter(TextureTarget.Texture2D,TextureParameterName.TextureWrapT,(int)TextureWrapMode.Repeat);
 
         return noiseTexture;
+    }
+}
+
+public static class ColourUtils
+{
+    /// <summary>
+    /// Vector3 shorthand for converting colours from HSV to RGB
+    /// </summary>
+    public static Vector3 HsvToRgb(Vector3 hsv)
+    {
+        Vector4 colour = new Vector4(hsv.X, hsv.Y, hsv.Z, 1f);
+        var a = Color4.FromHsv(colour);
+        return new Vector3(a.R, a.G, a.B);
     }
 }

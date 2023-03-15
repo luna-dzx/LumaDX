@@ -39,15 +39,10 @@ public class Maths
         if (transpose) result.Transpose();
         return result;
     }
-
-    public static Matrix4 TranslateMatrix(float x, float y, float z)
-    {
-        Matrix4 result = Matrix4.Identity;
-        result.Row3 = new Vector4(x,y,z, 1f);
-        return result;
-    }
-
-
+    
+    /// <summary>
+    /// Given a triangle as individual vertices and its relative texture coordinates, approximate the tangents and bi-tangents (should follow the direction of texture coordinates)
+    /// </summary>
     public static (Vector3, Vector3) CalculateTangents((Vector3,Vector3,Vector3) positions, (Vector2,Vector2,Vector2) texCoords)
     {
         var (pos1, pos2, pos3) = positions;
@@ -75,8 +70,14 @@ public class Maths
     }
 
 
+    /// <summary>
+    /// Linear Interpolation
+    /// </summary>
     public static float Lerp(float a, float b, float f) => a + f * (b - a);
 
+    /// <summary>
+    /// Recursive sphere mesh generation using triangle subdivisions
+    /// </summary>
     public static Objects.Mesh GenerateIcoSphere(int iterations)
     {
         if (iterations <= 0) return PresetMesh.Icosahedron;
@@ -150,6 +151,9 @@ public class Maths
         return mesh;
     }
 
+    /// <summary>
+    /// Struct for caching important data about 3D triangles
+    /// </summary>
     public struct Triangle
     {
         public Vector3 Point0;
@@ -158,7 +162,8 @@ public class Maths
         
         public Vector3 Center;
         public Plane Plane;
-
+        
+        /// <param name="eRadius">Ellipsoid radius of player in collisions</param>
         public Triangle(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 eRadius)
         {
             if (eRadius == default) eRadius = Vector3.One;
@@ -173,18 +178,23 @@ public class Maths
         }
     }
 
+    /// <summary>
+    /// 3D infinite plane calculations in vector form (r*N = a*N)
+    /// </summary>
     public class Plane
     {
         // dot(normal,point) = value, where point is a point on the plane
         public Vector3 Normal;
         public float Value;
-
+        
+        /// <param name="equation">x,y,z is normal, w is a*N where a is a point on the plane</param>
         public Plane(Vector4 equation)
         {
             Normal = equation.Xyz.Normalized();
             Value = equation.W;
         }
-        
+
+        /// <param name="value">a*N where a is a point on the plane</param>
         public Plane(Vector3 normal, float value)
         {
             Normal = normal.Normalized();
@@ -192,12 +202,18 @@ public class Maths
         }
         
 
+        /// <summary>
+        /// Calculate plane values given the plane's normal and a point which lies on the plane
+        /// </summary>
         public static Plane FromNormalAndPoint(Vector3 normal, Vector3 point)
         {
             Vector3 norm = normal.Normalized();
             return new Plane(norm,Vector3.Dot(norm, point));
         }
 
+        /// <summary>
+        /// Calculate the plane which a triangle lies on
+        /// </summary>
         public static Plane FromTriangle(Triangle triangle)
         {
             Vector3 v0 = triangle.Point1 - triangle.Point0;
@@ -209,6 +225,9 @@ public class Maths
             return new Plane(normal, value);
         }
         
+        /// <summary>
+        /// Calculate the plane which a triangle lies on given the 3 vertices of that triangle
+        /// </summary>
         public static Plane FromTriangle(Vector3 p0,Vector3 p1,Vector3 p2)
         {
             Vector3 v0 = p1 - p0;
@@ -220,16 +239,25 @@ public class Maths
             return new Plane(normal, value);
         }
 
+        /// <summary>
+        /// Distance from plane to a position accounting for the side of the plane this is on (represented by the sign, +/-)
+        /// </summary>
         public float SignedDistance(Vector3 position)
         {
-            return (Vector3.Dot(Normal, position) - Value);
+            return Vector3.Dot(Normal, position) - Value;
         }
 
+        /// <summary>
+        /// Convert to a simplification of the plane equation for loading to the GPU.
+        /// x,y,z is normal, w is a*N where a is a point on the plane
+        /// </summary>
         public Vector4 AsVector() => new (Normal, Value);
-        
-
     }
     
+    
+    /// <summary>
+    /// Are first 2 points on the same side of the line through the last 2 points?
+    /// </summary>
     public static bool SameSide(Vector3 p1, Vector3 p2, Vector3 a, Vector3 b)
     {
         Vector3 cp1 = Vector3.Cross(b - a, p1 - a);
@@ -237,7 +265,9 @@ public class Maths
         return Vector3.Dot(cp1, cp2) >= 0;
     }
     
-    
+    /// <summary>
+    /// Given the three vertices of a triangle and a point, return whether the point lies within the triangle
+    /// </summary>
     public static bool CheckPointInTriangle(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 point)
     {
         return (SameSide(point, p0, p1, p2)&&
@@ -246,6 +276,9 @@ public class Maths
             );
     }
 
+    /// <summary>
+    /// Does the given point lie on the given triangle?
+    /// </summary>
     public static bool CheckPointInTriangle(Triangle triangle, Vector3 point) => CheckPointInTriangle(triangle.Point0,triangle.Point1,triangle.Point2,point);
 
 
@@ -294,6 +327,9 @@ public class Maths
 
     }
 
+    /// <summary>
+    /// Given any number of values, return the maximum
+    /// </summary>
     public static float Max(params float[] values)
     {
         float max = values[0];
@@ -304,7 +340,9 @@ public class Maths
         return max;
     }
     
-    
+    /// <summary>
+    /// Given any number of vectors, return the longest/largest (the one with the highest length calculated by pythagorean theorem)
+    /// </summary>
     public static Vector3 Largest(params Vector3[] values)
     {
         Vector3 vec = values[0];

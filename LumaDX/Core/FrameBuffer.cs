@@ -179,7 +179,7 @@ public class FrameBuffer : IDisposable
 
 
     /// <summary>
-    /// Bind the FBO's texture(/s) based on colour attachment index
+    /// Bind the FBOs texture(/s) based on colour attachment index
     /// </summary>
     public FrameBuffer UseTexture(int num = -1)
     {
@@ -206,9 +206,6 @@ public class FrameBuffer : IDisposable
         throw new Exception("Texture isn't handled by this FrameBuffer");
     }
 
-    // TODO: Handle all uniforms in the ShaderProgram
-    #region ToChange
-    
     /// <summary>
     /// Link the FBOs texture to a shader given the shader's OpenGL ID
     /// </summary>
@@ -231,10 +228,7 @@ public class FrameBuffer : IDisposable
         shaderProgram.Uniform1(name, textureUnit);
         return this;
     }
-    
-    #endregion
-    
-    
+
 
     /// <summary>
     /// Does nothing if complete, throws error if incomplete (incomplete FBOs cause hard to debug errors later on)
@@ -418,18 +412,21 @@ public class GeometryBuffer : FrameBuffer
             depthStencilRenderBuffer = new RenderBuffer(RenderbufferStorage.Depth24Stencil8, size);
             AttachRenderBuffer(depthStencilRenderBuffer, FramebufferAttachment.DepthStencilAttachment);
         }
-
-
     }
 
+    /// <summary>
+    /// Set the current outputs to this FBOs draw buffers
+    /// </summary>
     public FrameBuffer SetDrawBuffers()
     {
         this.WriteMode();
         GL.DrawBuffers(drawBuffers.Length,drawBuffers);
         return this;
     }
-
-
+    
+    /// <summary>
+    /// Add texture to FBO outputs (e.g. position data)
+    /// </summary>
     public GeometryBuffer AddTexture(
         PixelInternalFormat internalFormat = PixelInternalFormat.Rgb8,
         PixelFormat pixelFormat = PixelFormat.Rgb,
@@ -445,6 +442,9 @@ public class GeometryBuffer : FrameBuffer
         return this;
     }
 
+    /// <summary>
+    /// Actually create the FBO after initial settings
+    /// </summary>
     public GeometryBuffer Construct()
     {
         NumColourAttachments = colourAttachmentsList.Count;
@@ -460,7 +460,9 @@ public class GeometryBuffer : FrameBuffer
 }
 
 
-
+/// <summary>
+/// FBO for sampling only the depth of the scene
+/// </summary>
 public class DepthMap : IDisposable
 {
 
@@ -476,9 +478,14 @@ public class DepthMap : IDisposable
     public Vector3 Position;
     public Vector3 Direction;
 
-
+    /// <summary>
+    /// Standard initialization given the texture size and camera position/direction
+    /// </summary>
     public DepthMap(Vector2i size, Vector3 position, Vector3 direction) : this(Constants.LibraryShaderPath + "DepthMap/",size,position,direction) { }
 
+    /// <summary>
+    /// Custom shader program initialization
+    /// </summary>
     public DepthMap(string shaderPath, Vector2i size, Vector3 position, Vector3 direction)
     {
         Handle = GL.GenFramebuffer();
@@ -507,7 +514,10 @@ public class DepthMap : IDisposable
         ).SetModelLocation("model");
     }
 
-    public DepthMap DrawMode(int x = 0, int y = 0, int width = 0, int height = 0, CullFaceMode cullFaceMode = CullFaceMode.Front)
+    /// <summary>
+    /// After calling this function, subsequent renders will render to this FBOs texture(/s)
+    /// </summary>
+    public DepthMap WriteMode(int x = 0, int y = 0, int width = 0, int height = 0, CullFaceMode cullFaceMode = CullFaceMode.Front)
     {
         if (width == 0) width = Size.X;
         if (height == 0) height = Size.Y;
@@ -522,12 +532,18 @@ public class DepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// After calling this function, subsequent renders will render to the actual display
+    /// </summary>
     public DepthMap ReadMode()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
         return this;
     }
 
+    /// <summary>
+    /// Set the orthographic projection matrix in the depth map's shader
+    /// </summary>
     public DepthMap ProjectOrthographic(float orthoWidth = 24f, float orthoHeight = 24f, float clipNear = 0.05f, float clipFar = 50f, Vector3 up = default)
     {
         if (up == default) up = Vector3.UnitY;
@@ -540,6 +556,9 @@ public class DepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Set the perspective projection matrix in the depth map's shader
+    /// </summary>
     public DepthMap ProjectPerspective(float fieldOfView = MathHelper.PiOver3, float clipNear = 0.1f, float clipFar = 100f, Vector3 up = default)
     {
         if (up == default) up = Vector3.UnitY;
@@ -550,15 +569,20 @@ public class DepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Load the depth map's view space matrix to an external shader program
+    /// </summary>
     public DepthMap UniformMatrix(ShaderProgram shaderProgram, string name)
     {
         shaderProgram.Use();
         GL.UniformMatrix4(GL.GetUniformLocation((int)shaderProgram,name),false, ref ViewSpaceMatrix);
         return this;
     }
-
-
-    public DepthMap UniformTexture(string name, ShaderProgram shaderProgram, int textureUnit = 0)
+    
+    /// <summary>
+    /// Link the FBOs texture to a shader given a ShaderProgram object
+    /// </summary>
+    public DepthMap UniformTexture(ShaderProgram shaderProgram, string name, int textureUnit = 0)
     {
         shaderProgram.Use();
         GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
@@ -567,6 +591,9 @@ public class DepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Clear the resources used by this FBO on the GPU
+    /// </summary>
     public void Dispose()
     {
         GL.DeleteTexture(TextureHandle);
@@ -576,7 +603,9 @@ public class DepthMap : IDisposable
 
 }
 
-
+/// <summary>
+/// FBO for sampling only the depth of the scene in all 6 directions (of a cube)
+/// </summary>
 public class CubeDepthMap : IDisposable
 {
     public readonly ShaderProgram Shader;
@@ -594,6 +623,9 @@ public class CubeDepthMap : IDisposable
     public float ClipFar;
 
 
+    /// <summary>
+    /// Standard initialization given the texture size of one surface of the cube map, and camera position/direction
+    /// </summary>
     public CubeDepthMap(Vector2i size, Vector3 position, float clipNear = 0.05f, float clipFar = 100f)
     {
         Handle = GL.GenFramebuffer();
@@ -634,7 +666,10 @@ public class CubeDepthMap : IDisposable
             .SetModelLocation("model");
     }
 
-    public CubeDepthMap DrawMode(int x = 0, int y = 0, int width = 0, int height = 0)
+    /// <summary>
+    /// After calling this function, subsequent renders will render to this FBOs texture(/s)
+    /// </summary>
+    public CubeDepthMap WriteMode(int x = 0, int y = 0, int width = 0, int height = 0)
     {
         if (width == 0) width = Size.X;
         if (height == 0) height = Size.Y;
@@ -650,13 +685,18 @@ public class CubeDepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// After calling this function, subsequent renders will render to the actual display
+    /// </summary>
     public CubeDepthMap ReadMode()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
         return this;
     }
     
-
+    /// <summary>
+    /// Update 6 matrices to the gpu for the 6 directions of a cube for sampling to the cube map
+    /// </summary>
     public CubeDepthMap UpdateMatrices(Vector3[] directions = default, Vector3[] upDirections = default)
     {
         if (directions == default)
@@ -693,13 +733,18 @@ public class CubeDepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Load the 6 matrices for the depth map 
+    /// </summary>
     public CubeDepthMap UniformMatrices(ShaderProgram shaderProgram, string name)
     {
         shaderProgram.UniformMat4Array(name, ref ViewSpaceMatrices);
         return this;
     }
-
-
+    
+    /// <summary>
+    /// Link the FBOs cube sampler to a shader given a ShaderProgram object
+    /// </summary>
     public CubeDepthMap UniformTexture(ShaderProgram shaderProgram, string name, int unit = 0)
     {
         textureUnit = unit;
@@ -710,6 +755,9 @@ public class CubeDepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Link the FBOs clip distance to a shader given a ShaderProgram object
+    /// </summary>
     public CubeDepthMap UniformClipFar(ShaderProgram shaderProgram, string name)
     {
         shaderProgram.Use();
@@ -717,6 +765,9 @@ public class CubeDepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Bind the FBOs texture(/s) based on colour attachment index
+    /// </summary>
     public CubeDepthMap UseTexture()
     {
         GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
@@ -724,6 +775,9 @@ public class CubeDepthMap : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Clear the resources used by this FBO on the GPU
+    /// </summary>
     public void Dispose()
     {
         GL.DeleteTexture(TextureHandle);

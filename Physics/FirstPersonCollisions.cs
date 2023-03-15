@@ -61,7 +61,7 @@ public class FirstPersonCollisionDemo: Game
         depthMap.ProjectOrthographic(60f,50f,3f,100f);
         depthMap.UniformMatrix(shader, "lightSpaceMatrix");
         
-        depthMap.UniformTexture("depthMap",shader,1);
+        depthMap.UniformTexture(shader,"depthMap",1);
         
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
         material = PresetMaterial.Silver.SetAmbient(0.05f);
@@ -126,7 +126,7 @@ public class FirstPersonCollisionDemo: Game
         // culling for better shadows
         glState.DoCulling = true;
         
-        depthMap.DrawMode();
+        depthMap.WriteMode();
         foreach (var model in scene) model.Draw(depthMap.Shader);
         
         shader.Use();

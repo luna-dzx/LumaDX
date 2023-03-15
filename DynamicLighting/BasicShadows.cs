@@ -77,8 +77,8 @@ public class BasicShadowDemo: Game
         shader.UniformMaterial("material",material,texture)
             .UniformLight("light",light);
 
-        depthMap.UniformTexture("depthMap",shader,1);
-        depthMap.UniformTexture("depthMap",frameBufferShader,1);
+        depthMap.UniformTexture(shader,"depthMap",1);
+        depthMap.UniformTexture(frameBufferShader,"depthMap",1);
 
         textRenderer = new TextRenderer(30, Window.Size, Program.AssetLocation+"fonts/migu.ttf");
     }
@@ -125,7 +125,7 @@ public class BasicShadowDemo: Game
     protected override void RenderFrame(FrameEventArgs args)
     {
         glState.SaveState();
-        depthMap.DrawMode();
+        depthMap.WriteMode();
 
         shader.Uniform1("texCoordsMult", 0.4f);
         cube.Draw(depthMap.Shader, cubePosition, new Vector3(0f,0.2f,0f), 1f);

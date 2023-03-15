@@ -74,19 +74,24 @@ public class Model : VertexArray
         LoadMesh(meshData);
     }
     
+    /// <summary>
+    /// Enable transposing the Model matrix when loading to the gpu
+    /// </summary>
     public Model EnableTranspose()
     {
         transposeMatrix = true;
         return this;
     }
     
+    /// <summary>
+    /// Disable transposing the Model matrix when loading to the gpu
+    /// </summary>
     public Model DisableTranspose()
     {
         transposeMatrix = false;
         return this;
     }
     
-
     /// <summary>
     /// Loads all mesh data to the VAO
     /// </summary>
@@ -155,6 +160,9 @@ public class Model : VertexArray
         return this;
     }
     
+    
+    // TODO: FIX PLEASE :_(
+    #region Horrible Transform Code
 
     /// <summary>
     /// Load the transformation matrix onto the GPU
@@ -260,6 +268,8 @@ public class Model : VertexArray
         transform = matrix;
         return this;
     }
+    
+    #endregion
 
 
     /// <summary>
@@ -316,6 +326,9 @@ public class Model : VertexArray
         Draw(instanceCount, renderMode);
     }
 
+    /// <summary>
+    /// Draw a WireFrame shell around an already rendered object
+    /// </summary>
     public void DrawShell(StateHandler glState)
     {
         glState.SaveState();

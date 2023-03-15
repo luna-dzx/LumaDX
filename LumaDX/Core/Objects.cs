@@ -47,6 +47,9 @@ public static class Objects
 
     }
     
+    /// <summary>
+    /// Stores data about how light reacts to hitting a surface
+    /// </summary>
     public class Material
     {
         public Vector3 Ambient;
@@ -85,6 +88,9 @@ public static class Objects
             
     }
 
+    /// <summary>
+    /// Stores data about how light is emitted
+    /// </summary>
     public class Light
     {
         public Vector3 Position;

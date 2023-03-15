@@ -198,7 +198,7 @@ public class ComplexLightingDemo: Game
         glState.ClearColor = Color4.Transparent;
         glState.Clear();
 
-        depthMap.DrawMode();
+        depthMap.WriteMode();
         
         backpack.Draw(depthMap.Shader, Vector3.Zero,  rotation, 2f);
         cube.Draw(depthMap.Shader, Vector3.Zero,  Vector3.Zero, 10f);

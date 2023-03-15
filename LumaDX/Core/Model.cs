@@ -14,12 +14,6 @@ public class Model : VertexArray
 {
     private Objects.Mesh mesh;
 
-    public Model SetMesh(Objects.Mesh newMesh)
-    {
-        mesh = newMesh;
-        return this;
-    }
-
     //private int uTransform;
     private Matrix4 transform = Matrix4.Identity;
 

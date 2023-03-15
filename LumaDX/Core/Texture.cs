@@ -4,6 +4,9 @@ using StbImageSharp;
 
 namespace LumaDX;
 
+/// <summary>
+/// Struct which stores data about a loaded image file
+/// </summary>
 public struct ImageData
 {
     public string FileName;
@@ -21,6 +24,9 @@ public struct ImageData
         PixelData = data;
     }
 
+    /// <summary>
+    /// Output info as table
+    /// </summary>
     public override string ToString()
     {
         string output = "";
@@ -39,8 +45,10 @@ public struct ImageData
     }
 }
 
+// TODO: inheritance?
+
 /// <summary>
-/// Class for handling OpenGL texture objects
+/// Class for handling standard OpenGL texture objects
 /// </summary>
 public class Texture : IDisposable
 {
@@ -73,6 +81,9 @@ public class Texture : IDisposable
         LoadFile(path, textureTarget, flipOnLoad);
     }
 
+    /// <summary>
+    /// Load an image file and store its data onto this texture on the GPU
+    /// </summary>
     public Texture LoadFile(string path, TextureTarget textureTarget, bool flipOnLoad = true, bool generateMipMap = true)
     {
         var image = LoadImageData(path, flipOnLoad);
@@ -85,6 +96,9 @@ public class Texture : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Efficiently load data from an image file (bitmaps are faster to load with a separate library than most images)
+    /// </summary>
     public static ImageData LoadImageData(string path, bool flipOnLoad)
     {
         if (path.Substring(path.Length - 3) == "bmp") // significantly faster loads
@@ -119,7 +133,9 @@ public class Texture : IDisposable
 
 
 
-
+    /// <summary>
+    /// Given a folder and an image file extension, load all 6 textures of a cubemap onto this OpenGL texture
+    /// </summary>
     public static Texture LoadCubeMap(string filePath, string fileExtension, int textureUnit, bool flipOnLoad = false)
     {
         var texture = new Texture(textureUnit, TextureTarget.TextureCubeMap);
@@ -136,7 +152,9 @@ public class Texture : IDisposable
         return texture;
     }
 
-
+    /// <summary>
+    /// Load image data from a pointer in memory to the start of the data
+    /// </summary>
     public Texture LoadPtr(IntPtr pointer, int width, int height,
         PixelInternalFormat internalFormat = PixelInternalFormat.Rgba,
         PixelFormat pixelFormat = PixelFormat.Rgba,
@@ -163,14 +181,6 @@ public class Texture : IDisposable
     /// <summary>
     /// Load Image data from an IntPtr, and also set-up mip-mapping
     /// </summary>
-    /// <param name="pointer">IntPtr to the start of the data</param>
-    /// <param name="width">Width in pixels</param>
-    /// <param name="height">Height in pixels></param>
-    /// <param name="levels">Number of mip-mapping levels to generate</param>
-    /// <param name="internalFormat">Specify size of pixel data</param>
-    /// <param name="pixelFormat">Specify order/format of data within each pixel</param>
-    /// <param name="pixelType">Specify the data type that each part of each pixel is (e.g. Red in RGBA)</param>
-    /// <returns></returns>
     public Texture LoadPtrMipMapped(IntPtr pointer, int width, int height, int levels,
         SizedInternalFormat internalFormat = SizedInternalFormat.Rgba8,
         PixelFormat pixelFormat = PixelFormat.Rgba, PixelType pixelType = PixelType.UnsignedByte)
@@ -185,23 +195,6 @@ public class Texture : IDisposable
         return this;
     }
 
-    /// <summary>
-    /// Load the texture to the GPU
-    /// </summary>
-    /// <param name="program">the shader program you are loading the texture to</param>
-    /// <param name="name">the variable name of the sampler in glsl</param>
-    public Texture Uniform(int program, string name)
-    {
-        this.Use();
-        GL.UseProgram(program);
-        GL.Uniform1(GL.GetUniformLocation(program,name),unit);
-        return this;
-    }
-
-    public Texture Uniform(int program) => Uniform(program,"texture"+unit);
-        
-    public Texture Uniform(ShaderProgram program, string name) => Uniform((int)program,name);
-    public Texture Uniform(ShaderProgram program) => Uniform((int)program,"texture"+unit);
 
     /// <summary>
     /// Activate the correct texture unit and set up the OpenGL texture for editing properties
@@ -250,7 +243,10 @@ public class Texture : IDisposable
     /// <param name="filter">the filter for how surrounding pixels should be sampled (if at all)</param>
     public Texture MagFilter(TextureMagFilter filter) { this.Use(); GL.TexParameter(target,TextureParameterName.TextureMagFilter,(int)filter); return this; }
 
-    public enum TextureFilter // simplify the crossover of MagFilter and MinFilter
+    /// <summary>
+    /// simplify the crossover of MagFilter and MinFilter
+    /// </summary>
+    public enum TextureFilter
     {
         /// <summary>[requires: v1.0] Original was GL_NEAREST = 0x2600</summary>
         Nearest = 9728, // 0x00002600
@@ -316,6 +312,9 @@ public class TextureBuffer
     public readonly PixelType PixelType;
     public readonly Vector2i Size;
 
+    /// <summary>
+    /// Standard initialization with texture formatting and size
+    /// </summary>
     public TextureBuffer(PixelInternalFormat internalFormat, PixelFormat format, (int,int) size,
         TextureTarget target = TextureTarget.Texture2D, PixelType pixelType = PixelType.UnsignedByte, int samples = 4, int mipmap = 0, int border = 0)
     {
@@ -354,20 +353,23 @@ public class TextureBuffer
         GL.BindTexture(Target,0);
     }
     
-
+    /// <summary>
+    /// Standard initialization with texture formatting and size as a vector
+    /// </summary>
     public TextureBuffer(PixelInternalFormat internalFormat, PixelFormat format, Vector2i size,
         TextureTarget target = TextureTarget.Texture2D, PixelType pixelType = PixelType.UnsignedByte, int samples = 4, int mipmap = 0,
         int border = 0) :
         this(internalFormat, format, (size.X,size.Y),target,pixelType,samples,mipmap,border) { }
-    public TextureBuffer(PixelFormat format, Vector2i size,
-        TextureTarget target = TextureTarget.Texture2D, PixelType pixelType = PixelType.UnsignedByte, int samples = 4, int mipmap = 0,
-        int border = 0) :
-        this((PixelInternalFormat)format, format, (size.X,size.Y),target,pixelType,samples,mipmap,border) { }
 
+    /// <summary>
+    /// Allow int cast to return the OpenGL handle
+    /// </summary>
     public static explicit operator int(TextureBuffer textureBuffer) => textureBuffer.Handle;
 
+    /// <summary>
+    /// Bind for editing / rendering / etc.
+    /// </summary>
     public TextureBuffer Use() { GL.BindTexture(Target,Handle); return this; }
-    
     
     
     // have to repeat these instead of using inheritance to allow for interfacing
@@ -401,7 +403,6 @@ public class TextureBuffer
     /// </summary>
     /// <param name="filter">the filter for how surrounding pixels should be sampled (if at all)</param>
     public TextureBuffer MagFilter(TextureMagFilter filter) { this.Use(); GL.TexParameter(Target,TextureParameterName.TextureMagFilter,(int)filter); return this; }
-    
 
 }
 
@@ -416,6 +417,9 @@ public class RenderBuffer
     public readonly RenderbufferTarget Target;
     public readonly Vector2i Size;
 
+    /// <summary>
+    /// Standard initialization with texture formatting and size
+    /// </summary>
     public RenderBuffer(RenderbufferStorage format, (int,int) size, RenderbufferTarget target = RenderbufferTarget.Renderbuffer)
     {
         (Size.X, Size.Y) = size;
@@ -429,11 +433,20 @@ public class RenderBuffer
         GL.BindRenderbuffer(Target,0);
     }
 
+    /// <summary>
+    /// Standard initialization with texture formatting and size as a vector
+    /// </summary>
     public RenderBuffer(RenderbufferStorage internalformat, Vector2i resolution, RenderbufferTarget bufferTarget = RenderbufferTarget.Renderbuffer) : 
         this(internalformat, (resolution.X, resolution.Y), bufferTarget) { }
 
+    /// <summary>
+    /// Allow int cast to return the OpenGL handle
+    /// </summary>
     public static explicit operator int(RenderBuffer renderBuffer) => renderBuffer.Handle;
 
+    /// <summary>
+    /// Bind for editing / rendering / etc.
+    /// </summary>
     public RenderBuffer Use()
     {
         GL.BindRenderbuffer(Target,Handle);

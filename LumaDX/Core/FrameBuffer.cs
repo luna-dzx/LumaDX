@@ -312,7 +312,7 @@ public class FrameBuffer : IDisposable
     }
     
     /// <summary>
-    /// Clear the resources used by this FBO on the GPU
+    /// Clear the resources used by this FBO from the GPU
     /// </summary>
     public void Dispose()
     {
@@ -592,7 +592,7 @@ public class DepthMap : IDisposable
     }
 
     /// <summary>
-    /// Clear the resources used by this FBO on the GPU
+    /// Clear the resources used by this FBO from the GPU
     /// </summary>
     public void Dispose()
     {
@@ -776,7 +776,7 @@ public class CubeDepthMap : IDisposable
     }
 
     /// <summary>
-    /// Clear the resources used by this FBO on the GPU
+    /// Clear the resources used by this FBO from the GPU
     /// </summary>
     public void Dispose()
     {

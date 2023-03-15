@@ -113,7 +113,7 @@ public class VertexArray : IDisposable
     /// <param name="target">the type of data we are sending</param>
     /// <param name="buffer">what VBO to load this data to (-1 means create new buffer)</param>
     /// <param name="dataLength">number of variables per one group of data</param>
-    /// <param name="stride">number of variable between each group of data</param>
+    /// <param name="stride">number of variables between each group of data</param>
     /// <param name="offset">number of variables to offset the start of the reading from</param>
     /// <param name="normalized">sets all data to length 1</param>
     /// <typeparam name="T">general type for loading up any variable type</typeparam>
@@ -131,7 +131,7 @@ public class VertexArray : IDisposable
     }
 
     /// <summary>
-    /// Load a matrix into GPU memory as its individual vector components, NOTE: this takes up *matrixWidth* number of layout locations
+    /// Load an arrray of matrices into GPU memory as its individual vector components, NOTE: this takes up *matrixWidth* number of layout locations
     /// </summary>
     /// <param name="layoutLocation">shader layout location of data input</param>
     /// <param name="data">the data to send to the GPU</param>
@@ -139,7 +139,7 @@ public class VertexArray : IDisposable
     /// <param name="matrixHeight">how many rows are in the matrix you are loading</param>
     /// <param name="countPerInstance">how many matrices should be loaded per instance (-1 for all)</param>
     /// <param name="buffer">what VBO to load this data to (-1 means create new buffer)</param>
-    /// <param name="stride">number of variable between each group of data</param>
+    /// <param name="stride">number of variables between each group of data</param>
     /// <param name="offset">number of variables to offset the start of the reading from</param>
     /// <param name="normalized">sets all data to length 1</param>
     /// <typeparam name="T">general type for loading up any variable type</typeparam>
@@ -158,7 +158,18 @@ public class VertexArray : IDisposable
         return buffer;
     }
     
-    // TODO: Comments Here
+    /// <summary>
+    /// Load an array of vectors into GPU memory given a certain layout location
+    /// </summary>
+    /// <param name="layoutLocation">shader layout location of data input</param>
+    /// <param name="data">the data to send to the GPU</param>
+    /// <param name="vectorSize">the number of dimensions of the vector</param>
+    /// <param name="countPerInstance">how many vectors should be loaded per instance (-1 for all)</param>
+    /// <param name="buffer">what VBO to load this data to (-1 means create new buffer)</param>
+    /// <param name="stride">number of variables between each group of data</param>
+    /// <param name="offset">number of variables to offset the start of the reading from</param>
+    /// <typeparam name="T">general type for loading up any variable type</typeparam>
+    /// <returns>the VBO id that this data was loaded to</returns>
     public int LoadVector<T>(int layoutLocation, T[] data, int vectorSize, int countPerInstance = -1, int buffer = -1, int stride=0, int offset=0) where T : struct
     {
         if (buffer == -1) { buffer = GL.GenBuffer(); }
@@ -175,7 +186,7 @@ public class VertexArray : IDisposable
     /// Sets up a buffer for data storage on GPU memory
     /// </summary>
     /// <param name="layoutLocation">shader layout location of data input</param>
-    /// <param name="type">the type of data that is to be loaded to this buffer</param>
+    /// <param name="type">the type of data that is to be loaded to this buffer (using C# typeof)</param>
     /// <param name="dataLength">number of variables per one group of data</param>
     /// <param name="stride">number of variables between each group of data</param>
     /// <param name="offset">number of variables to offset the start of the reading from</param>
@@ -198,6 +209,15 @@ public class VertexArray : IDisposable
         GL.EnableVertexAttribArray(layoutLocation);
     }
     
+    /// <summary>
+    /// Sets up a buffer for data storage on GPU memory
+    /// </summary>
+    /// <param name="layoutLocation">shader layout location of data input</param>
+    /// <param name="type">the type of data that is to be loaded to this buffer</param>
+    /// <param name="dataLength">number of variables per one group of data</param>
+    /// <param name="stride">number of variables between each group of data</param>
+    /// <param name="offset">number of variables to offset the start of the reading from</param>
+    /// <param name="normalized">sets all data to length 1</param>
     public void SetupBuffer(int layoutLocation, VertexAttribPointerType type, int dataLength=3, int stride = 3, int offset=0, bool normalized = false)
     {
         this.Use();

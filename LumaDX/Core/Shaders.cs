@@ -5,6 +5,9 @@ using static LumaDX.Objects;
 
 namespace LumaDX;
 
+/// <summary>
+/// Simplification of OpenGL shader object (used to form shader programs)
+/// </summary>
 public class Shader : IDisposable
 {
     public readonly int ID;
@@ -46,14 +49,14 @@ public class Shader : IDisposable
     /// Delete this shader object
     /// </summary>
     public void Dispose() => GL.DeleteShader(ID);
-    
-
 }
 
 
+/// <summary>
+/// Simplification of OpenGL shader programs for rendering on the GPU
+/// </summary>
 public class ShaderProgram : IDisposable
 {
-
     public int NUM_LIGHTS = 64;
     
     private readonly int handle;
@@ -91,6 +94,9 @@ public class ShaderProgram : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// For a given shader, if it uses custom syntax, load the equivalent library functions to the top of the file
+    /// </summary>
     private static (string,string,string) ReadEngineShader(ShaderType type)
     {
         string mainFileDirectory = 
@@ -282,7 +288,9 @@ public class ShaderProgram : IDisposable
     }
     
     
-
+    /// <summary>
+    /// Change the maximum number of lights supported in rendering functions
+    /// </summary>
     public ShaderProgram SetLightCount(int numLights)
     {
         NUM_LIGHTS = numLights;
@@ -482,12 +490,18 @@ public class ShaderProgram : IDisposable
         }
     }
 
-
+    /// <summary>
+    /// Override the library's matrix loading with your own OpenGL binding
+    /// </summary>
     public ShaderProgram SetModelLocation(int binding)
     {
         customModelMatrixBinding = binding;
         return this;
     }
+    
+    /// <summary>
+    /// Override the library's matrix loading with your own uniform matrix name
+    /// </summary>
     public ShaderProgram SetModelLocation(string name)
     {
         customModelMatrixBinding = GetUniform(name);
@@ -512,20 +526,25 @@ public class ShaderProgram : IDisposable
         }
     }
 
+    /// <summary>
+    /// Enable colour adjustment before returning from this shader's rendering (very common and simple effect and therefore has a direct library implementation unlike most)
+    /// </summary>
     public ShaderProgram EnableGammaCorrection()
     {
         GL.Enable(EnableCap.FramebufferSrgb);
         Uniform1("lx_IsGammaCorrectionEnabled", 1);
         return this;
     }
+    
+    /// <summary>
+    /// Disable any behind the scenes colour adjustment on this shader, simply return the exact colour from a given fragment shader (useful for directly rendering textures)
+    /// </summary>
     public ShaderProgram DisableGammaCorrection()
     {
         GL.Disable(EnableCap.FramebufferSrgb);
         Uniform1("lx_IsGammaCorrectionEnabled", 0);
         return this;
     }
-
-
 
     #region Uniform Functions
 
@@ -603,7 +622,14 @@ public class ShaderProgram : IDisposable
     /// <returns>current object for ease of use</returns>
     public ShaderProgram Uniform2(string name, uint v0, uint v1) { GL.Uniform2(GetUniform(name), v0,v1); return this; }
 
-    public ShaderProgram UniformMat2(string name, ref Matrix2 matrix) { GL.UniformMatrix2(GetUniform(name), false, ref matrix); return this; }
+    /// <summary>
+    /// Set a 2x2 uniform matrix's value on the gpu (mat2)
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="matrix">the matrix to be loaded</param>
+    /// <param name="transpose">whether this matrix should be transposed upon loading</param>
+    /// <returns>current object for ease of use</returns>
+    public ShaderProgram UniformMat2(string name, ref Matrix2 matrix, bool transpose = false) { GL.UniformMatrix2(GetUniform(name), transpose, ref matrix); return this; }
     
     #endregion
         
@@ -705,23 +731,43 @@ public class ShaderProgram : IDisposable
     /// <returns>current object for ease of use</returns>
     public ShaderProgram Uniform4(string name, uint v0, uint v1, uint v2, uint v3) { GL.Uniform4(GetUniform(name), v0,v1,v2,v3); return this; }
     
-    public ShaderProgram UniformMat4(string name, ref Matrix4 matrix) { this.Use(); GL.UniformMatrix4(GetUniform(name),false,ref matrix); return this; }
+    /// <summary>
+    /// Set a 4x4 uniform matrix's value on the gpu (mat4)
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="matrix">the matrix to be loaded</param>
+    /// <param name="transpose">whether this matrix should be transposed upon loading</param>
+    /// <returns>current object for ease of use</returns>
+    public ShaderProgram UniformMat4(string name, ref Matrix4 matrix, bool transpose = false) { this.Use(); GL.UniformMatrix4(GetUniform(name),transpose,ref matrix); return this; }
 
     #endregion
 
 
     #region Uniform Arrays
 
-    public ShaderProgram UniformMat4Array(string name, ref Matrix4[] matrices)
+    /// <summary>
+    /// Load an array of 4x4 matrices to a uniform location given its name in this shader
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="matrices">the matrices to be loaded</param>
+    /// <param name="transpose">whether these matrices should be transposed upon loading</param>
+    /// <returns>current object for ease of use</returns>
+    public ShaderProgram UniformMat4Array(string name, ref Matrix4[] matrices, bool transpose = false)
     {
         for (int i = 0; i < matrices.Length; i++)
         {
-            GL.UniformMatrix4(GetUniform(name+"["+i+"]"),false,ref matrices[i]);
+            GL.UniformMatrix4(GetUniform(name+"["+i+"]"),transpose,ref matrices[i]);
         }
 
         return this;
     }
     
+    /// <summary>
+    /// Load an array of 3D vectors to a uniform location given its name in this shader
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="vectors">the matrices to be loaded</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformVec3Array(string name, Vector3[] vectors)
     {
         for (int i = 0; i < vectors.Length; i++)
@@ -737,6 +783,12 @@ public class ShaderProgram : IDisposable
         
     #region Engine Specific
 
+    /// <summary>
+    /// Load a LumaDX material directly to an equivalent lx_Material struct on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="material">LumaDX material to load</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformMaterial(string name, Material material)
     {
         Uniform3(name + ".ambient", material.Ambient);
@@ -745,69 +797,49 @@ public class ShaderProgram : IDisposable
         Uniform1(name + ".shininess", material.Shininess);
         return this;
     }
-    
+
+    /// <summary>
+    /// Load a textured LumaDX material directly to an equivalent lx_Material struct on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="material">LumaDX material to load</param>
+    /// <param name="texture">material's base / diffuse texture</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformMaterial(string name, Material material, Texture texture)
     {
         Uniform3(name + ".ambient", material.Ambient);
         Uniform3(name + ".diffuse", material.Diffuse);
         Uniform3(name + ".specular", material.Specular);
         Uniform1(name + ".shininess", material.Shininess);
-        texture.Uniform(this, name+".specTex");
+        UniformTexture(name + ".baseTex", texture);
         return this;
     }
-    
-    public ShaderProgram UniformMaterial(string name, Material material, int textureHandle, int textureUnit = 0, 
-        TextureTarget textureTarget = TextureTarget.Texture2D)
-    {
-        Uniform3(name + ".ambient", material.Ambient);
-        Uniform3(name + ".diffuse", material.Diffuse);
-        Uniform3(name + ".specular", material.Specular);
-        Uniform1(name + ".shininess", material.Shininess);
-        
-        GL.ActiveTexture((TextureUnit) (textureUnit + (int)TextureUnit.Texture0));
-        GL.BindTexture(textureTarget,textureHandle);
 
-        GL.UseProgram((int)this);
-        GL.Uniform1(GL.GetUniformLocation((int)this,name+".baseTex"),textureUnit);
-        return this;
-    }
-    
+    /// <summary>
+    /// Load a double-textured LumaDX material directly to an equivalent lx_Material struct on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="material">LumaDX material to load</param>
+    /// <param name="texture">material's base / diffuse texture</param>
+    /// <param name="textureSpecular">material's specular texture</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformMaterial(string name, Material material, Texture texture, Texture textureSpecular)
     {
         Uniform3(name + ".ambient", material.Ambient);
         Uniform3(name + ".diffuse", material.Diffuse);
         Uniform3(name + ".specular", material.Specular);
         Uniform1(name + ".shininess", material.Shininess);
-        texture.Uniform(this, name+".baseTex");
-        textureSpecular.Uniform(this, name+".specTex");
+        UniformTexture(name + ".baseTex", texture);
+        UniformTexture(name + ".specTex", textureSpecular);
         return this;
     }
-    
-    public ShaderProgram UniformMaterial(string name, Material material, int baseTexHandle, int specTexHandle, int baseTexUnit = 0, int specTexUnit = 1,
-        TextureTarget baseTexTarget = TextureTarget.Texture2D, TextureTarget specTexTarget = TextureTarget.Texture2D)
-    {
-        Uniform3(name + ".ambient", material.Ambient);
-        Uniform3(name + ".diffuse", material.Diffuse);
-        Uniform3(name + ".specular", material.Specular);
-        Uniform1(name + ".shininess", material.Shininess);
-        
-        GL.ActiveTexture((TextureUnit) (baseTexUnit + (int)TextureUnit.Texture0));
-        GL.BindTexture(baseTexTarget,baseTexHandle);
 
-        GL.UseProgram((int)this);
-        GL.Uniform1(GL.GetUniformLocation((int)this,name+".baseTex"),baseTexUnit);
-
-        
-        GL.ActiveTexture((TextureUnit) (specTexUnit + (int)TextureUnit.Texture0));
-        GL.BindTexture(specTexTarget,specTexHandle);
-
-        GL.UseProgram((int)this);
-        GL.Uniform1(GL.GetUniformLocation((int)this,name+".specTex"),specTexUnit);
-
-        return this;
-    }
-    
-
+    /// <summary>
+    /// Load a LumaDX light directly to an equivalent lx_Light struct on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="light">LumaDX light to load</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformLight(string name, Light light)
     {
         Uniform3(name + ".position", light.Position);
@@ -821,6 +853,12 @@ public class ShaderProgram : IDisposable
         return this;
     }
     
+    /// <summary>
+    /// Load an array of LumaDX lights directly to an equivalent lx_Light array on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="lights">the array of lights to load</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformLightArray(string name, Light[] lights)
     {
         for (int i = 0; i < lights.Length; i++)
@@ -830,20 +868,29 @@ public class ShaderProgram : IDisposable
         return this;
     }
 
-    // improve this whole thing pls
+    /// <summary>
+    /// Load a LumaDX texture to a uniform sampler on the GPU
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="texture">the texture to load</param>
+    /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformTexture(string name, Texture texture)
     {
-        texture.Uniform(this, name);
+        GL.Uniform1(GL.GetUniformLocation((int)this,name),texture.GetUnit());
         return this;
     }
     
-    public ShaderProgram UniformFrameBuffer(string name, int unit)
+    /// <summary>
+    /// Associate a uniform location with the supplied texture unit for loading textures and FBOs
+    /// </summary>
+    /// <param name="name">the uniform variable's name</param>
+    /// <param name="unit">the texture unit to associate with this uniform</param>
+    /// <returns>current object for ease of use</returns>
+    public ShaderProgram UniformTextureUnit(string name, int unit)
     {
         GL.Uniform1(GL.GetUniformLocation((int)this,name),unit);
         return this;
     }
-    
-    
 
     #endregion
         

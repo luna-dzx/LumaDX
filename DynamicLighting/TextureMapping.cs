@@ -91,10 +91,10 @@ public class TextureMappingDemo: Game
         UpdateView(Vector3.UnitZ);
         shader.UniformLight("light", light)
             .UniformMaterial("material", material)
-            .UniformFrameBuffer("material.baseTex", 0)
-            .UniformFrameBuffer("material.specTex", 1)
-            .UniformFrameBuffer("normalMap", 2)
-            .UniformFrameBuffer("displaceMap", 3)
+            .UniformTextureUnit("material.baseTex", 0)
+            .UniformTextureUnit("material.specTex", 1)
+            .UniformTextureUnit("normalMap", 2)
+            .UniformTextureUnit("displaceMap", 3)
             .EnableGammaCorrection();
     }
 

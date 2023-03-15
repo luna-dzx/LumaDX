@@ -12,10 +12,12 @@ flat in int instanceId;
 uniform vec3 cameraPos;
 uniform float refractionRatio;
 
+uniform int renderRefraction;
+
 [scene]
 void main()
 {
-    if (instanceId % 2 == 0)
+    if (instanceId % 2 == 0 && renderRefraction == 1)
     {
         vec3 viewDir = normalize(fragPos - cameraPos);
         vec3 refraction = refract(viewDir,normalize(normal), refractionRatio);

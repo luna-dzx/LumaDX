@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LumaDX", "LumaDX\LumaDX.csproj", "{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkyBoxDemo", "SkyBoxDemo\SkyBoxDemo.csproj", "{54629887-1394-44CE-8457-B28251BC1AFD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostProcessing", "PostProcessing\PostProcessing.csproj", "{B38090D3-4723-40AE-838B-5670E401A73D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicRendering", "BasicRendering\BasicRendering.csproj", "{45596FFA-FF81-459C-AF4C-032C699947B8}"
@@ -16,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileLoading", "FileLoading\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicLighting", "DynamicLighting\DynamicLighting.csproj", "{E8240CC3-E3E4-4DD9-8B89-9121A139C1A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComplexRendering", "ComplexRendering\ComplexRendering.csproj", "{315CB746-64B8-4FD1-AE21-7B0E86B88B1A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,10 +26,6 @@ Global
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD2A43D0-FCF6-4AB3-B632-58C97A7FDB1A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{54629887-1394-44CE-8457-B28251BC1AFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{54629887-1394-44CE-8457-B28251BC1AFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{54629887-1394-44CE-8457-B28251BC1AFD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B38090D3-4723-40AE-838B-5670E401A73D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,5 +50,9 @@ Global
 		{E8240CC3-E3E4-4DD9-8B89-9121A139C1A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E8240CC3-E3E4-4DD9-8B89-9121A139C1A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E8240CC3-E3E4-4DD9-8B89-9121A139C1A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{315CB746-64B8-4FD1-AE21-7B0E86B88B1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{315CB746-64B8-4FD1-AE21-7B0E86B88B1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{315CB746-64B8-4FD1-AE21-7B0E86B88B1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{315CB746-64B8-4FD1-AE21-7B0E86B88B1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

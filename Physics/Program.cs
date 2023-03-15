@@ -1,4 +1,5 @@
 ﻿using System;
+using LumaDX;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -34,6 +35,8 @@ internal static class Program
     
     #endregion
 
+    // don't want to generate this each time we do a demo so cache it here
+    public static readonly Objects.Mesh EllipsoidMesh = Maths.GenerateIcoSphere(3);
 
     /// <param name="args">'a'-'f' for which demo to run</param>
     public static void Main(string[] args)

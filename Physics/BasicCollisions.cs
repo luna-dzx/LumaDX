@@ -54,7 +54,7 @@ public class BasicCollisionDemo: Game
         FileManager fm = new FileManager(Program.AssetLocation + "dingus-the-cat/source/dingus.fbx");
         dingus = fm.LoadModel(0);
         Collision.World = fm.LoadTriangles(sceneTransform, physicsPlayer.Radius);
-        ellipsoid = new Model(Maths.GenerateIcoSphere(3));
+        ellipsoid = new Model(Program.EllipsoidMesh);
         
         texture = new Texture(Program.AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 0);
 

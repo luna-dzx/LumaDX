@@ -91,7 +91,7 @@ public class StairsDemo: Game
             .EnableNoClip();
         
         cube = new Model(PresetMesh.Cube);
-        ellipsoid = new Model(Maths.GenerateIcoSphere(3));
+        ellipsoid = new Model(Program.EllipsoidMesh);
 
         physicsPlayer = new PhysicsPlayer(Vector3.Zero, new(0.4f, 1f, 0.4f));
 

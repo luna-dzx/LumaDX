@@ -97,7 +97,7 @@ internal static class Program
     {
         uiSettings.Title = "Physics - Demos 5.e to 5.f";
         
-        using var game = new StairsDemo();
+        using var game = new FirstPersonCollisionDemo();
         game.InitWindow(gameSettings, uiSettings)
             .CursorState = CursorState.Normal;
         game.Run();

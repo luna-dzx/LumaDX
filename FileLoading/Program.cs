@@ -72,6 +72,7 @@ internal static class Program
     {
         FileManager fm = new FileManager(AssetLocation + "dingus-the-cat/source/dingus.fbx");
         Console.WriteLine(fm.GetInfo()); // formatted into table in ModelInfo struct
+        Console.ReadLine();
     }
     
     /// <summary>
@@ -96,6 +97,7 @@ internal static class Program
     {
         // formatted in ImageData struct
         Console.WriteLine(Texture.LoadImageData(AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", true));
+        Console.ReadLine();
     }
     
     /// <summary>
@@ -125,6 +127,7 @@ internal static class Program
         {
             Console.WriteLine(target+ "\n" + Texture.LoadImageData(path + side + fileExtension, false)+"\n");
         }
+        Console.ReadLine();
     }
 
 

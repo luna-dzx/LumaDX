@@ -48,10 +48,8 @@ internal static class Program
 
             return;
         }
-        
-        char demo = args[0][0];
 
-        switch (demo)
+        switch (args[0][0])
         {
             case <= 'e':
                 PhongLighting(); return;

@@ -47,11 +47,11 @@ internal static class Program
             return;
         }
         
-        switch (args[0])
+        switch (args[0][0])
         {
-            case "a": ProjectedTriangle(); return;
-            case "b": PrimitivesRender(); return;
-            case "c": PrimitivesRender(); return;
+            case 'a': ProjectedTriangle(); return;
+            case 'b': PrimitivesRender(); return;
+            case 'c': PrimitivesRender(); return;
             default: FullModelRender(); return;
         }
     }

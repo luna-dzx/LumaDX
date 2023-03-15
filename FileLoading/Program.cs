@@ -51,15 +51,15 @@ internal static class Program
             return;
         }
         
-        switch (args[0])
+        switch (args[0][0])
         {
-            case "a": ModelToConsole(); return;
-            case "b": FlattenedRender(); return;
-            case "c": TextureToConsole(); return;
-            case "d": RenderTexture(); return;
-            case "e": SkyBoxToConsole(); return;
-            case "f": SkyBoxFlatRender(); return;
-            case "g": SkyBoxFullRender(); return;
+            case 'a': ModelToConsole(); return;
+            case 'b': FlattenedRender(); return;
+            case 'c': TextureToConsole(); return;
+            case 'd': RenderTexture(); return;
+            case 'e': SkyBoxToConsole(); return;
+            case 'f': SkyBoxFlatRender(); return;
+            case 'g': SkyBoxFullRender(); return;
         }
     }
     

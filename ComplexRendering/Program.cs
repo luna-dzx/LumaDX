@@ -46,10 +46,10 @@ internal static class Program
             return;
         }
         
-        switch (args[0])
+        switch (args[0][0])
         {
             default: SkyBoxInScene(); return;
-            case "c": case "d": InstancedRendering(); return;
+            case 'c': case 'd': InstancedRendering(); return;
         }
     }
     

@@ -45,9 +45,10 @@ internal static class Program
             return;
         }
         
-        switch (args[0])
+        switch (args[0][0])
         {
-            case "d": Stairs(); return;
+            case <= 'c': Stairs(); return;
+            case 'd': Stairs(); return;
         }
     }
     

@@ -15,8 +15,7 @@ public class StairsDemo: Game
     StateHandler glState;
 
     ImGuiController imGui;
-
-    const string ShaderLocation = "Shaders/";
+    
     ShaderProgram shader;
 
     Model cube;
@@ -80,8 +79,8 @@ public class StairsDemo: Game
         UnlockMouse();
 
         shader = new ShaderProgram(
-            ShaderLocation + "vertex.glsl",
-            ShaderLocation + "fragment.glsl",
+            Program.ShaderLocation + "Stairs/vertex.glsl",
+            Program.ShaderLocation + "Stairs/fragment.glsl",
             true
         );
 

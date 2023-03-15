@@ -3,7 +3,9 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
-
+/// <summary>
+/// Store common values of the OpenGL state
+/// </summary>
 public struct GlState
 {
     public bool DepthTest;
@@ -50,9 +52,19 @@ public class StateHandler
     public GlState ActiveState;
     public GlState StoredState;
 
+    /// <summary>
+    /// Initialize with the default state
+    /// </summary>
     public StateHandler() : this(new GlState()) { }
+    
+    /// <summary>
+    /// Initialize with supplied state
+    /// </summary>
     public StateHandler(GlState state) { LoadState(state); }
 
+    /// <summary>
+    /// Load the supplied state to the current OpenGL state and to this State Handler
+    /// </summary>
     public void LoadState(GlState state)
     {
         ActiveState = state;
@@ -71,15 +83,28 @@ public class StateHandler
         BlendDst = ActiveState.BlendDst;
     }
 
+    /// <summary>
+    /// Unbind current VAO and shader program for disposing resources
+    /// </summary>
     public void Unbind()
     {
         GL.BindVertexArray(0);
         GL.UseProgram(0);
     }
 
+    /// <summary>
+    /// Load the saved state
+    /// </summary>
     public void LoadState() => LoadState(StoredState);
+    
+    /// <summary>
+    /// Save the current state, to later be loaded
+    /// </summary>
     public void SaveState() => StoredState = ActiveState;
-
+    
+    
+    #region OpenGL State Getters/Setters
+    
     public bool DepthTest
     {
         set
@@ -195,7 +220,7 @@ public class StateHandler
         BlendSrc = sFactor;
         BlendDst = dFactor;
     }
-
-
+    
+    #endregion
 
 }

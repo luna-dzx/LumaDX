@@ -72,13 +72,7 @@ public class Camera
     {
         aspect = newAspect;
     }
-    
-    public void Resize(ShaderProgram shaderProgram, float newAspect)
-    {
-        aspect = newAspect;
-        UpdateProjection(shaderProgram.GetHandle(),shaderProgram.DefaultProjection);
-    }
-        
+
     /// <summary>
     /// Update matrices according to a new screen size
     /// </summary>
@@ -87,7 +81,12 @@ public class Camera
     {
         Resize((float)newSize.X / newSize.Y);
     }
-    
+
+    /// <summary>
+    /// Update matrices according to a new screen size, and load these matrices to the GPU
+    /// </summary>
+    /// <param name="shaderProgram">shader to load matrices to</param>
+    /// <param name="newSize">the new size of the screen</param>
     public void Resize(ShaderProgram shaderProgram, Vector2i newSize)
     {
         Resize((float)newSize.X / newSize.Y);

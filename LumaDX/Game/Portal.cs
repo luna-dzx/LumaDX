@@ -3,6 +3,9 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
+/// <summary>
+/// Complex FBO handling for scene sampling and seamless teleportation
+/// </summary>
 public class Portal : IDisposable
 {
     // these things stay the same across all portals
@@ -47,6 +50,9 @@ public class Portal : IDisposable
     private Maths.Triangle _triangle1;
     
     
+    /// <summary>
+    /// Initialize from the FBOs resolution, along with the position and rotation (scale is universally set by "Size" as this must match between portals)
+    /// </summary>
     public Portal(Vector2i resolution, Vector3 position, Vector3 rotation)
     {
         Position = position;
@@ -57,6 +63,9 @@ public class Portal : IDisposable
         UpdateTransformation();
     }
 
+    /// <summary>
+    /// Update the cached values for portal calculations relative to the new position and/or rotation
+    /// </summary>
     public void UpdateTransformation()
     {
         Transformation = Maths.CreateTransformation(Position, Rotation, Size);
@@ -79,6 +88,9 @@ public class Portal : IDisposable
 
     public Vector3 RelativeCameraPos = Vector3.Zero;
 
+    /// <summary>
+    /// Update view matrix of sample 
+    /// </summary>
     public void Update(Vector3 cameraPos, Vector3 cameraDirection, Portal destination)
     {
         DestinationPos = destination.Position;
@@ -96,8 +108,9 @@ public class Portal : IDisposable
     }
     
     
-  
-
+    /// <summary>
+    /// Test whether or not the player should be teleported, and output the new position and direction if they should be
+    /// </summary>
     public bool Teleport(Portal destination, FirstPersonPlayer player, out Vector3 position, out Vector3 lookDir)
     {
         position = Vector3.Zero;
@@ -138,18 +151,28 @@ public class Portal : IDisposable
 
     }
     
-
+    /// <summary>
+    /// Start writing to the FBO
+    /// </summary>
     public void StartSample() => FrameBuffer.WriteMode();
+    /// <summary>
+    /// Stop writing to the FBO
+    /// </summary>
     public void EndSample() => FrameBuffer.ReadMode();
     
     
-    
+    /// <summary>
+    /// Draw the rectangle representing the portal using the given shader
+    /// </summary>
     public void Draw(ShaderProgram shader)
     {
         Rectangle.Transform(shader,Transformation);
         Rectangle.Draw(shader);
     }
 
+    /// <summary>
+    /// Clear the resources used by the portal's FBO and rectangle from the GPU
+    /// </summary>
     public void Dispose()
     {
         Rectangle.Dispose();

@@ -1,5 +1,8 @@
 namespace LumaDX;
 
+/// <summary>
+/// String manipulation for shader loading
+/// </summary>
 public class String
 {
     /// <summary>

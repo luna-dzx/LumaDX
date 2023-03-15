@@ -4,6 +4,9 @@ using SharpFont;
 
 namespace LumaDX;
 
+/// <summary>
+/// Handler for rendering 2D text onto the screen, or to an FBO for rendering text in 3D
+/// </summary>
 public class TextRenderer : IDisposable
 {
     private VertexArray vao;
@@ -14,9 +17,15 @@ public class TextRenderer : IDisposable
     
     private const int MaxCharacterRender = 100000;
 
+    /// <summary>
+    /// Initialize text renderer and cache standard ascii characters
+    /// </summary>
     public TextRenderer(uint fontSize, Vector2i screenSize, string fontFile) : this(
         fontSize,screenSize,fontFile,Enumerable.Range(' ','~')) { }
     
+    /// <summary>
+    /// Initialize text renderer and cache the supplied characters
+    /// </summary>
     public TextRenderer(uint fontSize, Vector2i screenSize, string fontFile, IEnumerable<int> characters)
     {
         FontSize = fontSize;
@@ -71,6 +80,9 @@ public class TextRenderer : IDisposable
         vao.SetupBuffer(0,typeof(float),4,4);
     }
     
+    /// <summary>
+    /// Store data about cached character textures including positional information for rendering
+    /// </summary>
     struct GlChar
     {
         public int TextureId;
@@ -87,6 +99,9 @@ public class TextRenderer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Draw coloured text at position
+    /// </summary>
     public void Draw(string text, float x, float y, float scale, Vector3 colour, bool centered = true)
     {
         textShader.Use();
@@ -170,11 +185,17 @@ public class TextRenderer : IDisposable
         GL.BindTexture(TextureTarget.Texture2D,0);
     }
 
+    /// <summary>
+    /// Update the text renderer with the new screen size (rendering is based on the resolution of the output window/display)
+    /// </summary>
     public void UpdateScreenSize(Vector2i screenSize)
     {
         if (textShader.Compiled) textShader.Uniform2("screenSize", new Vector2(screenSize.X,screenSize.Y));
     }
 
+    /// <summary>
+    /// Clear the resources used by the cached images of the text renderer
+    /// </summary>
     public void Dispose()
     {
         vao.Dispose();

@@ -5,51 +5,9 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace LumaDX;
 
-/*
- 
- TODO: make all this not suck
-
 /// <summary>
-/// Simplification of movement and camera handling - dependent on Camera class
+/// Physics player with a Camera
 /// </summary>
-public abstract class Player
-{
-    public Vector3 Position;
-    public Camera Camera;
-    
-    /// <summary>
-    /// Create new player and create camera based off window size
-    /// </summary>
-    /// <param name="windowSize">the screen's size</param>
-    /// <param name="fov">the camera's field of view in radians</param>
-    public Player(Vector2i windowSize, float fov = MathHelper.PiOver3)
-    {
-        Camera = new Camera(windowSize, fov);
-    }    
-    
-    /// <summary>
-    /// Create new player and create camera based off aspect ratio
-    /// </summary>
-    /// <param name="aspectRatio">the screen's aspect ratio</param>
-    /// <param name="fov">the camera's field of view in radians</param>
-    public Player(float aspectRatio, float fov = MathHelper.PiOver3)
-    {
-        Camera = new Camera(aspectRatio, fov);
-    }    
-    
-    /// <summary>
-    /// Create a new player with a pre-existing camera
-    /// </summary>
-    /// <param name="camera">the camera to attach to the player</param>
-    public Player(ref Camera camera)
-    {
-        Camera = camera;
-    }
-
-}
-*/
-
-
 public class FirstPersonPlayer : PhysicsPlayer
 {
 
@@ -112,57 +70,24 @@ public class FirstPersonPlayer : PhysicsPlayer
 
     private bool capPitch = true;
     private bool isCameraFlipped = false;
-    
-    /*
-    /// <summary>
-    /// Move and rotate the player and camera, as well as updating the camera's view
-    /// </summary>
-    /// <param name="args">args from the window's update function</param>
-    /// <param name="keyboardState">the keyboard state to check inputs from</param>
-    /// <param name="relativeMousePos">the relative mouse pos from the last call of SetMouseOrigin()</param>
-    public FirstPersonPlayer Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
-    {
-        var input = Input.DirectionWASD(keyboardState) * Speed * (float)args.Time;
-        yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
-        pitch += (relativeMousePos.Y - lastMousePos.Y) * Sensitivity;
 
-        yaw %= 360;
-        pitch %= 360;
-
-        // 90 degrees gives gimbal locking so lock to 89
-        if (capPitch) pitch = Math.Clamp(pitch, -89f, 89f);
-
-        Camera.Direction = Matrix3.CreateRotationY(MathHelper.DegreesToRadians(yaw)) * Matrix3.CreateRotationX(MathHelper.DegreesToRadians(pitch)) * -Vector3.UnitZ;
-        
-        Vector3 up = ((keyboardState.IsKeyDown(Keys.Space) ?1:0) - (keyboardState.IsKeyDown(Keys.LeftControl) ?1:0)) * Speed * (float)args.Time * Vector3.UnitY;
-        
-        Vector3 directionFlat = Camera.Direction;
-        directionFlat.Y = 0;
-        directionFlat.Normalize();
-
-        Velocity = input.Z * directionFlat + input.X * (rightTransform * directionFlat) + up;
-        
-        Position += Velocity;
-        Camera.Position = Position;
-
-        isCameraFlipped = (Math.Abs(pitch) + 90) % 360 >= 180;
-        
-        lastMousePos = relativeMousePos;
-
-        return this;
-    }*/
-    
     public Vector3 LastPosition = Vector3.Zero;
     
     
     public bool NoClip;
 
+    /// <summary>
+    /// Set NoClip to true with interfacing
+    /// </summary>
     public FirstPersonPlayer EnableNoClip()
     {
         NoClip = true;
         return this;
     }
     
+    /// <summary>
+    /// Set NoClip to false with interfacing
+    /// </summary>
     public FirstPersonPlayer DisableNoClip()
     {
         NoClip = false;
@@ -172,6 +97,9 @@ public class FirstPersonPlayer : PhysicsPlayer
 
     private Vector3 directionFlat;
 
+    /// <summary>
+    /// Update look direction based on mouse movement
+    /// </summary>
     public PhysicsPlayer UpdateCamera(FrameEventArgs args, Vector2 relativeMousePos)
     {
         yaw += (relativeMousePos.X - lastMousePos.X) * Sensitivity;
@@ -197,6 +125,9 @@ public class FirstPersonPlayer : PhysicsPlayer
         return this;
     }
 
+    /// <summary>
+    /// Update movement based on keyboard inputs, and physics if NoClip is disabled
+    /// </summary>
     public PhysicsPlayer Update(FrameEventArgs args, KeyboardState keyboardState)
     {
         LastPosition = Position;
@@ -225,17 +156,9 @@ public class FirstPersonPlayer : PhysicsPlayer
         return this;
     }
     
-    
-
-    
     /// <summary>
-    /// ... - only for use with single shader programs
+    /// Update camera and player, then load matrices to the GPU
     /// </summary>
-    /// <param name="shaderProgram"></param>
-    /// <param name="args"></param>
-    /// <param name="keyboardState"></param>
-    /// <param name="relativeMousePos"></param>
-    /// <returns></returns>
     public FirstPersonPlayer Update(ShaderProgram shaderProgram, FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
         UpdateCamera(args, relativeMousePos);
@@ -244,7 +167,9 @@ public class FirstPersonPlayer : PhysicsPlayer
         return this;
     }
     
-    
+    /// <summary>
+    /// Update camera, then load matrices to the GPU
+    /// </summary>
     public FirstPersonPlayer UpdateCamera(ShaderProgram shaderProgram, FrameEventArgs args, Vector2 relativeMousePos)
     {
         UpdateCamera(args, relativeMousePos);
@@ -252,13 +177,15 @@ public class FirstPersonPlayer : PhysicsPlayer
         return this;
     }
     
+    /// <summary>
+    /// Update camera and player
+    /// </summary>
     public void Update(FrameEventArgs args, KeyboardState keyboardState, Vector2 relativeMousePos)
     {
         UpdateCamera(args, relativeMousePos);
         Update(args, keyboardState);
     }
-    
-    
+
 
     /// <summary>
     /// Direction handled in the player's camera
@@ -269,38 +196,27 @@ public class FirstPersonPlayer : PhysicsPlayer
         set => Camera.Direction=value;
     }
 
+    /// <summary>
+    /// Set field of view
+    /// </summary>
     public FirstPersonPlayer SetFov(float angle)
     {
         Camera.SetFov(angle);
         return this;
     }
-    
-    public FirstPersonPlayer UpdateProjection(int programId, int binding)
-    {
-        Camera.UpdateProjection(programId,binding);
-        return this;
-    }
-    public FirstPersonPlayer UpdateProjection(int programId, string name)
-    {
-        Camera.UpdateProjection(programId, GL.GetUniformLocation(programId, name));
-        return this;
-    }
+
+    /// <summary>
+    /// Update camera projection matrix to the GPU
+    /// </summary>
     public FirstPersonPlayer UpdateProjection(ShaderProgram program)
     {
         Camera.UpdateProjection(program.GetHandle(), program.DefaultProjection);
         return this;
     }
     
-    public FirstPersonPlayer UpdateView(int programId, int binding)
-    {
-        Camera.UpdateView(programId,binding,isCameraFlipped);
-        return this;
-    }
-    public FirstPersonPlayer UpdateView(int programId, string name)
-    {
-        Camera.UpdateView(programId, GL.GetUniformLocation(programId, name));
-        return this;
-    }
+    /// <summary>
+    /// Update camera view matrix to the GPU
+    /// </summary>
     public FirstPersonPlayer UpdateView(ShaderProgram program)
     {
         Camera.UpdateView(program.GetHandle(), program.DefaultView);

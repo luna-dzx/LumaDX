@@ -47,6 +47,9 @@ public class OpenGL
         return 4;
     }
 
+    /// <summary>
+    /// Get an array of draw buffers based on the colour attachment numbers (offset to offset+numBuffers)
+    /// </summary>
     public static DrawBuffersEnum[] GetDrawBuffers(int numBuffers, int offset=0)
     {
         DrawBuffersEnum[] buffers = new DrawBuffersEnum[numBuffers];
@@ -57,13 +60,13 @@ public class OpenGL
 
         return buffers;
     }
-
-
+    
+    /// <summary>
+    /// Shorthand for binding textures to a certain texture unit
+    /// </summary>
     public static void BindTexture(int unit, TextureTarget target, int texture)
     {
         GL.ActiveTexture(TextureUnit.Texture0 + unit);
         GL.BindTexture(target,texture);
     }
-    
-    
 }

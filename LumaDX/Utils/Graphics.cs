@@ -4,6 +4,9 @@ using TextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
 
 namespace LumaDX;
 
+/// <summary>
+/// Texture Utilities
+/// </summary>
 public static class TexUtils
 {
     /// <summary>
@@ -26,6 +29,9 @@ public static class TexUtils
     }
 }
 
+/// <summary>
+/// Colour Utilities
+/// </summary>
 public static class ColourUtils
 {
     /// <summary>

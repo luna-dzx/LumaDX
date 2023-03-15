@@ -2,6 +2,9 @@ using OpenTK.Mathematics;
 
 namespace LumaDX;
 
+/// <summary>
+/// Player for physics simulations
+/// </summary>
 public class PhysicsPlayer
 {
     public Vector3 Position;
@@ -18,6 +21,9 @@ public class PhysicsPlayer
         Radius = radius;
     }
 
+    /// <summary>
+    /// Carry out physics simulation to adjust position and velocity
+    /// </summary>
     public void PhysicsUpdate(float deltaTime, float gravity = 0.3f, float terminalVelocity = 0.2f, bool checkGravity = true)
     {
         Grounded = !checkGravity;
@@ -110,12 +116,8 @@ public static class Collision
     
     
     /// <summary>
-    /// 
+    /// Recursive collisions individually with horizontal velocity and gravity (to allow for walking up stairs)
     /// </summary>
-    /// <param name="vel"></param>
-    /// <param name="gravity"></param>
-    /// <param name="grounded"></param>
-    /// <returns></returns>
     public static (Vector3,Vector3) CollideAndSlide(Vector3 position, Vector3 vel, Vector3 gravity, Vector3 eRadius, ref bool grounded)
     {
         // Adjust scene relative to ellipsoid scale in order to treat the ellipsoid as a sphere
@@ -187,6 +189,9 @@ public static class Collision
     }
     
 
+    /// <summary>
+    /// Recursive collision response
+    /// </summary>
     public static Vector3 CollideWithWorld(Vector3 pos, Vector3 vel, ref List<Maths.Triangle> toCheck, int recursionDepth = 0)
     {
         // base case of maximum accuracy (otherwise could go forever bouncing between 2 walls if we're stuck)

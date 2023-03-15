@@ -13,7 +13,10 @@ public abstract class Game : IDisposable
 {
     protected static GameWindow Window;
 
-    
+    /// <summary>
+    /// Callback for when OpenGL errors happen to output detailed error info at the time which the error initially happens.
+    /// Otherwise, the error can be called after subsequent OpenGL calls and it becomes hard to locate the error
+    /// </summary>
     private static void DebugCallback(DebugSource source,
         DebugType type,
         int id,
@@ -39,12 +42,18 @@ public abstract class Game : IDisposable
 
     public bool MouseLocked = false;
 
+    /// <summary>
+    /// Lock mouse to window and therefore start moving player mouse pos
+    /// </summary>
     public void LockMouse()
     {
         MouseLocked = true;
         Window.CursorState = CursorState.Grabbed;
     }
     
+    /// <summary>
+    /// Unlock mouse from window and therefore stop moving player mouse pos
+    /// </summary>
     public void UnlockMouse()
     {
         MouseLocked = false;
@@ -133,6 +142,9 @@ public abstract class Game : IDisposable
     /// </summary>
     protected virtual void Load(){}
 
+    /// <summary>
+    /// Function for binding multiple library functions to the window's load functions
+    /// </summary>
     private void Boot()
     {
         Initialize();
@@ -140,6 +152,9 @@ public abstract class Game : IDisposable
         SetMouseOrigin();
     }
 
+    /// <summary>
+    /// Function for calculating player mouse pos before standard mouse move
+    /// </summary>
     private void ExtraMouseMoveFunctions(MouseMoveEventArgs moveInfo)
     {
         if (MouseLocked) { playerMousePos += moveInfo.Delta; }

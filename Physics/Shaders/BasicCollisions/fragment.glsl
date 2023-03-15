@@ -1,12 +1,14 @@
 #version luma-dx
 
-in vec3 vertexColour;
+uniform sampler2D dingus;
 uniform vec3 colour;
 
-[cube]
+in vec2 texCoords;
+
+[dingus]
 void main()
 {
-    lx_FragColour = lx_Colour(vertexColour);
+    lx_FragColour = texture(dingus,texCoords);
 }
 
 [sphere]

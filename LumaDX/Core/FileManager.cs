@@ -206,25 +206,30 @@ public class FileManager
     /// Translates Assimp Meshes to LumaDX Meshes
     /// </summary>
     /// <returns>Array of Meshes in File</returns>
-    public Objects.Mesh[] LoadMeshes()
+    public Objects.Mesh[] LoadMeshes(int id = -1)
     {
         int meshCount = Scene.Meshes.Count;
-        meshes = new Objects.Mesh[meshCount];
+        int start = 0;
+        var meshList = new List<Objects.Mesh>();
+
         Mesh mesh;
 
-        for (int m = 0; m < meshCount; m++)
+        if (id != -1) { start = id; meshCount = id + 1; }
+
+        for (int m = start; m < meshCount; m++)
         {
             mesh = Scene.Meshes[m];
 
-            meshes[m] = new Objects.Mesh(
+            meshList.Add( new Objects.Mesh(
                 vertices: mesh.Vertices.Count > 0 ? mesh.Vertices.SelectMany(v => new [] { v.X, v.Y, v.Z }).ToArray() : null,
                 indices: mesh.HasFaces ? mesh.Faces.SelectMany(f => f.Indices).ToArray() : null,
                 texCoords: mesh.HasTextureCoords(0) ? mesh.TextureCoordinateChannels[0].SelectMany(c => new [] { c.X, c.Y }).ToArray() : null,
                 normals: mesh.Normals.Count > 0 ? mesh.Normals.SelectMany(n => new [] { n.X, n.Y, n.Z }).ToArray() : null,
                 tangents: mesh.Tangents.Count > 0 ? mesh.Tangents.SelectMany(t => new [] { t.X, t.Y, t.Z }).ToArray() : null
-            );
+            ));
         }
-        
+
+        meshes = meshList.ToArray();
         return meshes;
     }
 
@@ -239,7 +244,7 @@ public class FileManager
     /// Translates One Assimp Mesh to One LumaDX Mesh
     /// </summary>
     /// <returns>Single LumaDX Mesh</returns>
-    public Objects.Mesh LoadMesh(int i) => LoadMeshes()[i];
+    public Objects.Mesh LoadMesh(int i) => LoadMeshes(i)[0];
     
     /// <summary>
     /// Translates Assimp Meshes to One Single LumaDX Model
@@ -251,7 +256,7 @@ public class FileManager
     /// Translates One Assimp Mesh to One LumaDX Model
     /// </summary>
     /// <returns>Single LumaDX Model</returns>
-    public Model LoadModel(int i) => new Model(LoadMeshes()[i]);
+    public Model LoadModel(int i) => new Model(LoadMesh(i));
     
     
     public Triangle[] LoadTriangles(Matrix4 transform = default, Vector3 eRadius = default)

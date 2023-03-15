@@ -40,16 +40,35 @@ internal static class Program
     {
         if (args.Length < 1)
         {
+            BasicCollisions();
             Stairs();
+            FirstPersonCollisions();
 
             return;
         }
         
         switch (args[0][0])
         {
-            case <= 'c': Stairs(); return;
+            case <= 'c': BasicCollisions(); return;
             case 'd': Stairs(); return;
+            case >= 'e': FirstPersonCollisions(); return;
         }
+    }
+    
+    /// <summary>
+    /// Demos 5.a to 5.c
+    /// Highlight Triangles Near Player with Threshold
+    /// Change Colour of Ellipsoid as it Passes Through Triangle
+    /// Change Velocity of Ellipsoid After Collision
+    /// </summary>
+    public static void BasicCollisions()
+    {
+        uiSettings.Title = "Physics - Demos 5.a to 5.c";
+        
+        using var game = new BasicCollisionDemo();
+        game.InitWindow(gameSettings, uiSettings)
+            .CursorState = CursorState.Normal;
+        game.Run();
     }
     
     /// <summary>
@@ -58,6 +77,23 @@ internal static class Program
     /// </summary>
     public static void Stairs()
     {
+        uiSettings.Title = "Physics - Demo 5.d";
+        
+        using var game = new StairsDemo();
+        game.InitWindow(gameSettings, uiSettings)
+            .CursorState = CursorState.Normal;
+        game.Run();
+    }
+    
+    /// <summary>
+    /// Demos 5.e to 5.f
+    /// Jumping When Grounded
+    /// Hitting Head on Ceiling to Stop Vertical Velocity
+    /// </summary>
+    public static void FirstPersonCollisions()
+    {
+        uiSettings.Title = "Physics - Demos 5.e to 5.f";
+        
         using var game = new StairsDemo();
         game.InitWindow(gameSettings, uiSettings)
             .CursorState = CursorState.Normal;

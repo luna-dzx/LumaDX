@@ -18,11 +18,11 @@ public class PhysicsPlayer
         Radius = radius;
     }
 
-    public void PhysicsUpdate(float deltaTime, float gravity = 0.3f, float terminalVelocity = 0.2f)
+    public void PhysicsUpdate(float deltaTime, float gravity = 0.3f, float terminalVelocity = 0.2f, bool checkGravity = true)
     {
-        Grounded = false;
+        Grounded = !checkGravity;
 
-        (Position,Gravity) = Collision.CollideAndSlide(Position, Velocity, Gravity, Radius, ref Grounded);
+        (Position,Gravity) = Collision.CollideAndSlide(Position, Velocity, checkGravity?Gravity:Vector3.Zero, Radius, ref Grounded);
 
         if (!Grounded)
         {

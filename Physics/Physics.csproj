@@ -12,10 +12,6 @@
       <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Assets" />
-    </ItemGroup>
-
     <Target Name="CopyFiles" AfterTargets="Build">
         <ItemGroup>
             <_LibShaders Include="$(SolutionDir)LumaDX\Shaders\**\*.*" />

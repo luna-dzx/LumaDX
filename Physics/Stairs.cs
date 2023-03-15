@@ -40,7 +40,7 @@ public class StairsDemo: Game
         physicsPlayer.Gravity = -Vector3.UnitY;
     }
 
-    void ConstructWorld()
+    void ConstructWorld() // construct triangles on the cpu based on our transformed cubes for collisions
     {
         List<Triangle> collisionTriangles = new List<Triangle>();
         
@@ -93,10 +93,7 @@ public class StairsDemo: Game
         cube = new Model(PresetMesh.Cube);
         ellipsoid = new Model(Maths.GenerateIcoSphere(3));
 
-        physicsPlayer = new PhysicsPlayer(
-            new(0f, 1f, 1.5f), 
-            new(0.4f, 1f, 0.4f)
-        );
+        physicsPlayer = new PhysicsPlayer(Vector3.Zero, new(0.4f, 1f, 0.4f));
 
         cubeTransforms = new Matrix4[10];
 

@@ -316,4 +316,14 @@ public class Model : VertexArray
         Draw(instanceCount, renderMode);
     }
 
+    public void DrawShell(StateHandler glState)
+    {
+        glState.SaveState();
+        glState.DepthFunc = DepthFunction.Always;
+        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+        Draw();
+        GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+        glState.LoadState();
+    }
+
 }

@@ -12,6 +12,8 @@ namespace Physics;
 
 public class BasicCollisionDemo: Game
 {
+    ImGuiController imGui;
+    
     StateHandler glState;
 
     ShaderProgram shader;
@@ -25,7 +27,11 @@ public class BasicCollisionDemo: Game
     PhysicsPlayer physicsPlayer;
     
     Matrix4 sceneTransform = Maths.CreateTransformation(Vector3.UnitY * -0.7f, new Vector3(MathF.PI / -2f, MathF.PI / 4f, 0f), 0.1f * Vector3.One, true);
-    
+
+    bool collisionResponse = false;
+    bool highlightTriangles = false;
+    bool highlightPlayer = false;
+    bool playerColliding = false;
 
     void ResetPhysicsPlayer() => physicsPlayer.Position = new (0f, 0f, 5f);
     
@@ -33,6 +39,8 @@ public class BasicCollisionDemo: Game
     protected override void Initialize()
     {
         UnlockMouse();
+
+        imGui = new ImGuiController(Window);
         
         glState = new StateHandler();
         glState.ClearColor = Color4.Black;
@@ -78,12 +86,43 @@ public class BasicCollisionDemo: Game
         player.UpdateProjection(shader);
 
         physicsPlayer.Velocity = -Vector3.UnitZ * 2f * (float)args.Time;
-        physicsPlayer.PhysicsUpdate((float)args.Time, checkGravity: false);
+        var ePos = physicsPlayer.Position / physicsPlayer.Radius;
+        var eVel = physicsPlayer.Velocity / physicsPlayer.Radius;
+        
+        if (collisionResponse) physicsPlayer.PhysicsUpdate((float)args.Time, checkGravity: false);
+        else
+        {
+            // transform by ellipsoid radius
+            var closeTriangles = Collision.GetCloseTriangles(ePos, eVel);
+            
+            eVel *= 3f; // for visualization, since velocity is extremely small after multiplying it by args.Time
+            var (_,distance) = Collision.SceneIntersection(ePos, eVel, ref closeTriangles);
+            playerColliding = !(distance  >= float.PositiveInfinity);
+            physicsPlayer.Position += physicsPlayer.Velocity;
+        }
+
+        if (highlightTriangles)
+        {
+            shader.Uniform3("playerPos", ePos);
+            shader.Uniform3("playerRadius", physicsPlayer.Radius);
+            shader.Uniform1("triangleDistance", eVel.Length);
+            shader.Uniform1("renderCloseTriangles", 1);
+        }
+        else shader.Uniform1("renderCloseTriangles", 0);
+
+
+        if (physicsPlayer.Position.Z < -5f) ResetPhysicsPlayer();
     }
 
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
     {
         if (k.IsKeyPressed(Keys.Backspace)) ResetPhysicsPlayer();
+        
+        if (k.IsKeyPressed(Keys.Enter) && MouseLocked) // unlock mouse
+        {
+            UnlockMouse();
+            imGui.FocusWindow();
+        }
     }
 
     protected override void RenderFrame(FrameEventArgs args)
@@ -93,7 +132,7 @@ public class BasicCollisionDemo: Game
         ellipsoid.UpdateTransform(shader, physicsPlayer.Position, Vector3.Zero, physicsPlayer.Radius);
 
         shader.SetActive(ShaderType.FragmentShader,"sphere");
-        shader.Uniform3("colour", Vector3.One * 0.8f);
+        shader.Uniform3("colour", (playerColliding && highlightPlayer)? Vector3.UnitX : (Vector3.One * 0.8f));
         ellipsoid.Draw();
         shader.Uniform3("colour", Vector3.Zero);
         ellipsoid.DrawShell(glState);
@@ -102,6 +141,20 @@ public class BasicCollisionDemo: Game
         dingus.EnableTranspose();
         dingus.Transform(shader, sceneTransform);
         dingus.Draw();
+        
+        #region Debug UI
+        
+        imGui.Update((float)args.Time);
+        
+        if (!imGui.IsFocused()) LockMouse();;
+        
+        ImGui.Checkbox("Change Velocity", ref collisionResponse);
+        ImGui.Checkbox("Highlight Player", ref highlightPlayer);
+        ImGui.Checkbox("Highlight Triangles", ref highlightTriangles);
+
+        imGui.Render();
+        
+        #endregion
 
         Window.SwapBuffers();
     }
@@ -110,6 +163,7 @@ public class BasicCollisionDemo: Game
     {
         glState.Unbind();
         
+        imGui.Dispose();
         dingus.Dispose();
         ellipsoid.Dispose();
         shader.Dispose();

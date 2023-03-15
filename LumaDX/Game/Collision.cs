@@ -55,7 +55,7 @@ public static class Collision
     /// </summary>
     /// <param name="pos">The player's current position</param>
     /// <param name="vel">The player's current velocity</param>
-    private static List<Maths.Triangle> GetCloseTriangles(Vector3 pos, Vector3 vel)
+    public static List<Maths.Triangle> GetCloseTriangles(Vector3 pos, Vector3 vel)
     {
         // usually when calculating distances, you would use a Sqrt() operation
         // this is inefficient, so instead we do comparisons with all the distances squared (ignoring the square root step)
@@ -242,8 +242,6 @@ public static class Collision
     /// <summary>
     /// Check Intersections with the Entire Scene
     /// </summary>
-    /// <param name="position">The Player's Position</param>
-    /// <param name="velocity"><The Player's Velocity/param>
     /// /// <returns>IntersectionPoint (closest point of intersection with all of the triangles), Distance (to intersection point)</returns>
     public static (Vector3,float) SceneIntersection(Vector3 position, Vector3 velocity, ref List<Maths.Triangle> toCheck)
     {

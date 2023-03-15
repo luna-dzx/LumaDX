@@ -45,7 +45,11 @@ public struct ImageData
     }
 }
 
-// TODO: inheritance?
+
+// I kept the following 3 classes separate instead of using inheritance because i want interfacing to work
+// An example of this would be "Texture test = new Texture(...).LoadFile(...).Wrapping(...).Use();
+// If these functions were inherited, calling them would return the base class, and this would no longer work
+
 
 /// <summary>
 /// Class for handling standard OpenGL texture objects
@@ -370,10 +374,7 @@ public class TextureBuffer
     /// Bind for editing / rendering / etc.
     /// </summary>
     public TextureBuffer Use() { GL.BindTexture(Target,Handle); return this; }
-    
-    
-    // have to repeat these instead of using inheritance to allow for interfacing
-    
+
     /// <summary>
     /// Set parameters for how textures handle texture coordinates when they lie outside of the range of 0->1
     /// </summary>

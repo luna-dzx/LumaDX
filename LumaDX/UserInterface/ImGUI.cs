@@ -102,9 +102,7 @@ public class ImGuiController : IDisposable
         #endregion
 
         #region Vertex Array
-            
-        // TODO: better VAO handling so that these can be automatically created and deleted, etc.
-            
+
         vao = new VertexArray(BufferUsageHint.DynamicDraw);
 
         vertexBuffer = vao.EmptyBuffer(vertexBufferSize, BufferTarget.ArrayBuffer);

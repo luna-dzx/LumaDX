@@ -171,7 +171,7 @@ public class StairsDemo: Game
 
         glState.Clear();
 
-        ellipsoid.UpdateTransform(shader, physicsPlayer.Position, Vector3.Zero, physicsPlayer.Radius);
+        ellipsoid.LoadTransformation(shader, physicsPlayer.Position, Vector3.Zero, physicsPlayer.Radius);
 
         shader.SetActive("sphere");
         shader.Uniform3("colour", Vector3.One);

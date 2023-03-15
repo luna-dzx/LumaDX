@@ -47,15 +47,12 @@ public class FirstPersonCollisionDemo: Game
 
         player.Radius = new Vector3(0.2f,0.5f,0.2f);
 
-
         FileManager fm = new FileManager(Program.AssetLocation+"dust2/source/de_dust2.obj");
         scene = fm.LoadMeshes().GetModels();
         Collision.World = fm.LoadTriangles(sceneTransform, player.Radius);
         textures = fm.LoadTextures(TextureType.Diffuse, 0);
         scene.EnableTranspose().Transform(sceneTransform);
         
-
-        // TODO: Higher Res for Videos (possibly move sample relative to player, or apply a gaussian blur to the shadow from the player's perspective)
         depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
         
         depthMap.ProjectOrthographic(60f,50f,3f,100f);

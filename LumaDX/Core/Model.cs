@@ -153,118 +153,54 @@ public class Model : VertexArray
         LoadData(layoutLocation, normals);
         return this;
     }
-    
-    
-    // TODO: FIX PLEASE :_(
-    #region Horrible Transform Code
 
     /// <summary>
-    /// Load the transformation matrix onto the GPU
+    /// Set a new transformation matrix based on parameters
     /// </summary>
-    public Model UpdateTransform(int programId, int binding)
-    {
-        GL.UseProgram(programId);
-        GL.UniformMatrix4(binding,transposeMatrix, ref transform);
-        return this;
-    }
-    public Model UpdateTransform(int programId, string name)
-    {
-        GL.UseProgram(programId);
-        GL.UniformMatrix4(GL.GetUniformLocation(programId,name),transposeMatrix, ref transform);
-        return this;
-    }
-    public Model UpdateTransform(ShaderProgram program)
-    {
-        program.Use();
-        GL.UniformMatrix4(program.DefaultModel,transposeMatrix, ref transform);
-        return this;
-    }
-
-    /// <summary>
-    /// Set a new transformation matrix
-    /// </summary>
-    /// <param name="translation">position relative to the origin</param>
-    /// <param name="rotation">rotation in the x,y and z axis</param>
-    /// <param name="scale">scale in x,y and z</param>
-    public Model Transform(Vector3 translation = default, Vector3 rotation = default, Vector3 scale = default)
+    public Model Transform(Vector3 translation, Vector3 rotation, Vector3 scale)
     {
         transform = Maths.CreateTransformation(translation, rotation, scale);
         return this;
     }
 
-    public Model UpdateTransform(ShaderProgram shader, Vector3 translation, Vector3 rotation = default, Vector3 scale = default)
-    {
-        if (scale == default) scale = Vector3.One;
-        Transform(translation, rotation, scale);
-        UpdateTransform(shader);
-        return this;
-    }
-    public Model UpdateTransform(ShaderProgram shader, Vector3 translation, Vector3 rotation, float scale)
-    {
-        Transform(translation, rotation, scale);
-        UpdateTransform(shader);
-        return this;
-    }
-
     /// <summary>
-    /// Set a new transformation matrix
+    /// Replace transformation matrix with supplied matrix
     /// </summary>
-    /// <param name="translation">position relative to the origin</param>
-    /// <param name="rotation">rotation in the x,y and z axis</param>
-    /// <param name="scale">scale of the overall object in all 3 dimensions</param>
-    public Model Transform(Vector3 translation = default, Vector3 rotation = default, float scale = 1f)
-    {
-        transform = Maths.CreateTransformation(translation, rotation, new Vector3(scale,scale,scale));
-        return this;
-    }
-
-
-
-    /// <summary>
-    /// Multiply the current object's scale by this value
-    /// </summary>
-    /// <param name="scale">scale in x,y and z</param>
-    public Model Scale(Vector3 scale)
-    {
-        transform = Matrix4.CreateScale(scale) * transform;
-        return this;
-    }
-
-    /// <summary>
-    /// Multiply the current object's scale by this value
-    /// </summary>
-    /// <param name="scale">scale of the overall object in all 3 dimensions</param>
-    public Model Scale(float scale)
-    {
-        transform = Matrix4.CreateScale(scale,scale,scale) * transform;
-        return this;
-    }
-
-
-    /// <summary>
-    /// Sets the transform to default (at origin, no rotation, scale 1)
-    /// </summary>
-    public Model ResetTransform()
-    {
-        transform = Matrix4.Identity;
-        return this;
-    }
-
-    public Model Transform(ShaderProgram shader, Matrix4 matrix)
-    {
-        transform = matrix;
-        UpdateTransform(shader);
-        return this;
-    }
-    
     public Model Transform(Matrix4 matrix)
     {
         transform = matrix;
         return this;
     }
     
-    #endregion
-
+    /// <summary>
+    /// Replace transformation matrix with supplied matrix and load to GPU
+    /// </summary>
+    public Model LoadTransformation(ShaderProgram shader, Matrix4 matrix)
+    {
+        Transform(matrix);
+        LoadTransformation(shader);
+        return this;
+    }
+    
+    /// <summary>
+    /// Set a new transformation matrix based on parameters and load to GPU
+    /// </summary>
+    public Model LoadTransformation(ShaderProgram shader, Vector3 translation, Vector3 rotation, Vector3 scale)
+    {
+        Transform(translation, rotation, scale);
+        LoadTransformation(shader);
+        return this;
+    }
+    
+    /// <summary>
+    /// Load current transformation matrix to the GPU
+    /// </summary>
+    public Model LoadTransformation(ShaderProgram shader)
+    {
+        shader.Use();
+        GL.UniformMatrix4(shader.DefaultModel, transposeMatrix, ref transform);
+        return this;
+    }
 
     /// <summary>
     /// Draw the object based on the current configuration
@@ -307,7 +243,7 @@ public class Model : VertexArray
     /// </summary>
     public void Draw(ShaderProgram program, Vector3 position, Vector3 rotation, float scale, int instanceCount = 1, PrimitiveType renderMode = PrimitiveType.Triangles)
     {
-        UpdateTransform(program, position, rotation, scale);
+        LoadTransformation(program, position, rotation, Vector3.One * scale);
         Draw(instanceCount, renderMode);
     }
     
@@ -316,7 +252,7 @@ public class Model : VertexArray
     /// </summary>
     public void Draw(ShaderProgram program, int instanceCount = 1, PrimitiveType renderMode = PrimitiveType.Triangles)
     {
-        UpdateTransform(program);
+        LoadTransformation(program);
         Draw(instanceCount, renderMode);
     }
 

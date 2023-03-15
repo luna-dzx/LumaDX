@@ -58,7 +58,7 @@ public class BasicShadowDemo: Game
 
         cube = new Model(PresetMesh.Cube);
             
-        quad = new Model(PresetMesh.Square).Transform(new Vector3(0f,-5f,0f), new Vector3(MathHelper.DegreesToRadians(-90f),0f,0f),10f);
+        quad = new Model(PresetMesh.Square).Transform(new Vector3(0f,-5f,0f), new Vector3(MathHelper.DegreesToRadians(-90f),0f,0f),10f * Vector3.One);
 
         texture = new Texture(Program.AssetLocation+"tiled.jpg",0);
         

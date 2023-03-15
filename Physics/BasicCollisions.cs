@@ -129,7 +129,7 @@ public class BasicCollisionDemo: Game
     {
         glState.Clear();
 
-        ellipsoid.UpdateTransform(shader, physicsPlayer.Position, Vector3.Zero, physicsPlayer.Radius);
+        ellipsoid.LoadTransformation(shader, physicsPlayer.Position, Vector3.Zero, physicsPlayer.Radius);
 
         shader.SetActive(ShaderType.FragmentShader,"sphere");
         shader.Uniform3("colour", (playerColliding && highlightPlayer)? Vector3.UnitX : (Vector3.One * 0.8f));
@@ -139,7 +139,7 @@ public class BasicCollisionDemo: Game
         
         shader.SetActive(ShaderType.FragmentShader,"dingus");
         dingus.EnableTranspose();
-        dingus.Transform(shader, sceneTransform);
+        dingus.LoadTransformation(shader, sceneTransform);
         dingus.Draw();
         
         #region Debug UI

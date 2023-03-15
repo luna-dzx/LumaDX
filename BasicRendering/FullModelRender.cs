@@ -104,7 +104,7 @@ public class FullModelRenderDemo: Game
         shader.Uniform3("colour", Vector3.UnitX); // red
         glState.DepthFunc = DepthFunction.Less;
         
-        dingus.UpdateTransform(shader, Vector3.Zero, Vector3.UnitX * MathF.PI * -0.5f, 0.4f);
+        dingus.LoadTransformation(shader, Vector3.Zero, Vector3.UnitX * MathF.PI * -0.5f, 0.4f * Vector3.One);
 
         switch (primitiveType)
         {

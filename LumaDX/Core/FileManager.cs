@@ -8,6 +8,9 @@ using Vector4 = OpenTK.Mathematics.Vector4;
 
 namespace LumaDX;
 
+/// <summary>
+/// Struct storing useful info about a 3D model
+/// </summary>
 public struct ModelInfo
 {
     public string FileName;
@@ -24,6 +27,9 @@ public struct ModelInfo
     public bool[] HasColours;
 
 
+    /// <summary>
+    /// Output info as table
+    /// </summary>
     public override string ToString()
     {
         var modelInfo = this; // copy to make this visible to local functions
@@ -122,6 +128,9 @@ public struct Bounds
     }
 }
 
+/// <summary>
+/// Handling 3D model loading
+/// </summary>
 public class FileManager
 {
     private FileInfo fileInfo;
@@ -130,6 +139,9 @@ public class FileManager
     private Scene scene;
     private Objects.Mesh[]? meshes = null;
 
+    /// <summary>
+    /// All data from 3D model file - load if not loaded yet
+    /// </summary>
     private Scene Scene
     {
         get
@@ -143,25 +155,35 @@ public class FileManager
         }
     }
     
-
+    /// <summary>
+    /// Initialize loader with path
+    /// </summary>
     public FileManager(string path)
     { 
         fileInfo = new FileInfo(path);
     }
 
+    /// <summary>
+    /// Reset 3D model loading flags to argument provided
+    /// </summary>
     public FileManager SetFlags(PostProcessSteps postProcessSteps)
     {
         postProcessFlags = postProcessSteps;
         return this;
     }
 
-    public FileManager AddFlag(PostProcessSteps postProcessSteps)
+    /// <summary>
+    /// Bitwise or with the current 3D model loading flags to add more
+    /// </summary>
+    public FileManager AddFlags(PostProcessSteps postProcessSteps)
     {
         postProcessFlags = postProcessFlags | postProcessSteps;
         return this;
     }
 
-
+    /// <summary>
+    /// Return useful information about the loaded 3D model
+    /// </summary>
     public ModelInfo GetInfo()
     {
         // Assimp BoundingBox often not populated
@@ -203,9 +225,9 @@ public class FileManager
     
     
     /// <summary>
-    /// Translates Assimp Meshes to LumaDX Meshes
+    /// Translates Assimp Meshes to LumaDX meshes
     /// </summary>
-    /// <returns>Array of Meshes in File</returns>
+    /// <returns>Array of meshes in file</returns>
     public Objects.Mesh[] LoadMeshes(int id = -1)
     {
         int meshCount = Scene.Meshes.Count;
@@ -235,30 +257,32 @@ public class FileManager
 
 
     /// <summary>
-    /// Translates Assimp Meshes to One Single LumaDX Mesh
+    /// Translates Assimp meshes to one Single LumaDX mesh
     /// </summary>
-    /// <returns>Single Mesh of All Data</returns>
+    /// <returns>Single mesh of all data</returns>
     public Objects.Mesh LoadMesh() => LoadMeshes().Flatten();
     
     /// <summary>
-    /// Translates One Assimp Mesh to One LumaDX Mesh
+    /// Translates one Assimp mesh to one LumaDX mesh
     /// </summary>
-    /// <returns>Single LumaDX Mesh</returns>
+    /// <returns>Single LumaDX mesh</returns>
     public Objects.Mesh LoadMesh(int i) => LoadMeshes(i)[0];
     
     /// <summary>
-    /// Translates Assimp Meshes to One Single LumaDX Model
+    /// Translates Assimp meshes to one single LumaDX model
     /// </summary>
-    /// <returns>Single Model of All Data</returns>
+    /// <returns>Single model of all data</returns>
     public Model LoadModel() => new Model(LoadMeshes().Flatten());
     
     /// <summary>
-    /// Translates One Assimp Mesh to One LumaDX Model
+    /// Translates one Assimp mesh to one LumaDX model
     /// </summary>
-    /// <returns>Single LumaDX Model</returns>
+    /// <returns>Single LumaDX model</returns>
     public Model LoadModel(int i) => new Model(LoadMesh(i));
     
-    
+    /// <summary>
+    /// Load data from the previously loaded meshes to array of triangles for collisions
+    /// </summary>
     public Triangle[] LoadTriangles(Matrix4 transform = default, Vector3 eRadius = default)
     {
         if (eRadius == default) eRadius = Vector3.One;
@@ -272,13 +296,14 @@ public class FileManager
         return vertices.Transform(transform).GetTriangles(eRadius);
     }
 
+    /// <summary>
+    /// Load all materials in the entire scene
+    /// </summary>
     public Material[] LoadMaterials() => Scene.Meshes.Select(m => Scene.Materials[m.MaterialIndex]).ToArray();
 
+    /// <summary>
+    /// Load all textures of a certain type and unit
+    /// </summary>
     public Texture[] LoadTextures(TextureType type, int textureUnit, int index = 0)
         => LoadMaterials().Select(m => new Texture(fileInfo.DirectoryName+"/"+m.GetTextureSlot(type, index).FilePath, textureUnit)).ToArray();
-    
-    
-    
-    
-    
 }

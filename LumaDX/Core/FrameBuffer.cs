@@ -4,11 +4,12 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace LumaDX;
 
+/// <summary>
+/// Off screen textures which can be rendered to
+/// </summary>
 public class FrameBuffer : IDisposable
 {
     private int handle = -1;
-    
-    // optional extras for simplification
     protected bool usingPreset = false;
     public int NumColourAttachments;
     protected TextureBuffer[] colourAttachments;
@@ -17,17 +18,17 @@ public class FrameBuffer : IDisposable
     protected bool usingRenderBuffer = true;
     public Vector2i Size;
 
-
+    /// <summary>
+    /// Initialize OpenGL object
+    /// </summary>
     public FrameBuffer()
     {
         handle = GL.GenFramebuffer();
     }
 
     /// <summary>
-    /// Create a common FBO with n textures bound to colour attachment 0,1,2... and a render buffer bound to the depth/stencil buffer
+    /// Most general case of creating a standard FBO with the option of multiple colour attachments
     /// </summary>
-    /// <param name="pixelFormat"></param>
-    /// <param name="size"></param>
     public FrameBuffer(Vector2i size, TextureTarget target = TextureTarget.Texture2D, PixelFormat pixelFormat= PixelFormat.Rgb,
         PixelInternalFormat internalFormat = PixelInternalFormat.Rgba8, int numSamples = 4, int numColourAttachments = 1, bool readableDepth = false) : this()
     {
@@ -86,7 +87,7 @@ public class FrameBuffer : IDisposable
     }
     
     /// <summary>
-    /// Special Case of Loading an Image Directly to a FrameBuffer
+    /// Special case of loading an image directly to an FBO
     /// </summary>
     public FrameBuffer(string fileName, bool flipOnLoad = true) : this()
     {
@@ -112,8 +113,10 @@ public class FrameBuffer : IDisposable
 
     }
     
-
-
+    /// <summary>
+    /// Create a common FBO with n textures and a render buffer bound to the depth/stencil buffer
+    /// </summary>
+    /// <param name="size"></param>
     public FrameBuffer(Vector2i size, PixelInternalFormat[]? internalFormats = null,
         TextureTarget target = TextureTarget.Texture2D, PixelFormat pixelFormat = PixelFormat.Rgb, int numSamples = 4, bool readableDepth = false) : this()
     {
@@ -175,6 +178,9 @@ public class FrameBuffer : IDisposable
     }
 
 
+    /// <summary>
+    /// Bind the FBO's texture(/s) based on colour attachment index
+    /// </summary>
     public FrameBuffer UseTexture(int num = -1)
     {
         if (usingPreset)
@@ -200,6 +206,12 @@ public class FrameBuffer : IDisposable
         throw new Exception("Texture isn't handled by this FrameBuffer");
     }
 
+    // TODO: Handle all uniforms in the ShaderProgram
+    #region ToChange
+    
+    /// <summary>
+    /// Link the FBOs texture to a shader given the shader's OpenGL ID
+    /// </summary>
     public FrameBuffer UniformTexture(int shader, string name, int unit)
     {
         GL.UseProgram(shader);
@@ -208,8 +220,10 @@ public class FrameBuffer : IDisposable
         return this;
     }
     
-    // TEMPORARY THING, REMOVE THIS PLS
-    public FrameBuffer UniformTexture(string name, ShaderProgram shaderProgram, int textureUnit = 0)
+    /// <summary>
+    /// Link the FBOs texture to a shader given a ShaderProgram object
+    /// </summary>
+    public FrameBuffer UniformTexture(ShaderProgram shaderProgram, string name, int textureUnit = 0)
     {
         shaderProgram.Use();
         GL.ActiveTexture(TextureUnit.Texture0 + textureUnit);
@@ -218,22 +232,13 @@ public class FrameBuffer : IDisposable
         return this;
     }
     
-    
-    public FrameBuffer UniformTextures(int shader, string[] names, int offset=0)
-    {
-        GL.UseProgram(shader);
-        UseTexture();
-        for (int i = 0; i < names.Length; i++) { GL.Uniform1(GL.GetUniformLocation(shader,names[i]),offset+i); }
-        return this;
-    }
-
+    #endregion
     
     
 
     /// <summary>
-    /// Does nothing if complete, throws error if incomplete
+    /// Does nothing if complete, throws error if incomplete (incomplete FBOs cause hard to debug errors later on)
     /// </summary>
-    /// <exception cref="Exception"></exception>
     public void CheckCompletion()
     {
         var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
@@ -243,8 +248,11 @@ public class FrameBuffer : IDisposable
         }
     }
 
-
-    public FrameBuffer AttachTexture(TextureTarget textureTarget, int textureHandle, FramebufferAttachment attachment, FramebufferTarget target = FramebufferTarget.Framebuffer, int mipmap = 0)
+    /// <summary>
+    /// Attach an existing OpenGL texture to this FBO before it is finalized
+    /// </summary>
+    public FrameBuffer AttachTexture(TextureTarget textureTarget, int textureHandle, FramebufferAttachment attachment,
+        FramebufferTarget target = FramebufferTarget.Framebuffer, int mipmap = 0)
     {
         WriteMode();
         GL.FramebufferTexture2D(target,attachment,textureTarget,textureHandle,mipmap);
@@ -252,12 +260,18 @@ public class FrameBuffer : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Attach an existing texture buffer object to this FBO before it is finalized
+    /// </summary>
     public FrameBuffer AttachTexture(TextureBuffer textureBuffer, FramebufferAttachment attachment,
         FramebufferTarget target = FramebufferTarget.Framebuffer, int mipmap = 0)
     {
         return AttachTexture(textureBuffer.Target, textureBuffer.Handle,attachment,target,mipmap);
     }
 
+    /// <summary>
+    /// Attach an existing OpenGL render buffer to this FBO before it is finalized
+    /// </summary>
     public FrameBuffer AttachRenderBuffer(RenderbufferTarget renderBufferTarget, int renderBufferHandle, FramebufferAttachment attachment, FramebufferTarget target = FramebufferTarget.Framebuffer)
     {
         WriteMode();
@@ -266,25 +280,36 @@ public class FrameBuffer : IDisposable
         return this;
     }
 
+    /// <summary>
+    /// Attach an existing render buffer object to this FBO before it is finalized
+    /// </summary>
     public FrameBuffer AttachRenderBuffer(RenderBuffer renderBuffer,
         FramebufferAttachment attachment, FramebufferTarget target = FramebufferTarget.Framebuffer)
     {
         return AttachRenderBuffer(renderBuffer.Target, renderBuffer.Handle, attachment, target);
     }
 
+    /// <summary>
+    /// After calling this function, subsequent renders will render to this FBOs texture(/s)
+    /// </summary>
     public FrameBuffer WriteMode()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,handle);
         return this;
     }
     
+    /// <summary>
+    /// After calling this function, subsequent renders will render to the actual display
+    /// </summary>
     public FrameBuffer ReadMode()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
         return this;
     }
 
-
+    /// <summary>
+    /// Define which draw buffers this FBO is to use in a render (for multiple textures, which textures to render to)
+    /// </summary>
     public FrameBuffer SetDrawBuffers(DrawBuffersEnum[] colourAttachments)
     {
         this.WriteMode();
@@ -292,7 +317,9 @@ public class FrameBuffer : IDisposable
         return this;
     }
     
-
+    /// <summary>
+    /// Clear the resources used by this FBO on the GPU
+    /// </summary>
     public void Dispose()
     {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer,0);
@@ -314,10 +341,15 @@ public class FrameBuffer : IDisposable
         GL.DeleteFramebuffer(handle);
     }
     
+    /// <summary>
+    /// Return the OpenGL handle upon casting to an integer
+    /// </summary>
     public static explicit operator int(FrameBuffer fbo) => fbo.handle;
 
 
-
+    /// <summary>
+    /// Transfer the FBOs depth to the screen's depth
+    /// </summary>
     public FrameBuffer BlitDepth(Vector2i size, bool gammaCorrection = false)
     {
         if (gammaCorrection) GL.Disable(EnableCap.FramebufferSrgb);
@@ -330,11 +362,12 @@ public class FrameBuffer : IDisposable
         
         if (gammaCorrection) GL.Enable(EnableCap.FramebufferSrgb);
         
-        
-        
         return this;
     }
     
+    /// <summary>
+    /// Transfer the FBOs depth to another FBO
+    /// </summary>
     public FrameBuffer BlitDepth(FrameBuffer frameBuffer, bool gammaCorrection = false)
     {
         if (gammaCorrection) GL.Disable(EnableCap.FramebufferSrgb);
@@ -346,25 +379,24 @@ public class FrameBuffer : IDisposable
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         
         if (gammaCorrection) GL.Enable(EnableCap.FramebufferSrgb);
-        
-        
-        
+
         return this;
     }
-    
-    
-
 }
 
 
 /// <summary>
-/// different way of constructing FBOs for complex combinations of 2D textures and one depth/stencil attachment
+/// Different way of constructing FBOs for complex combinations of 2D textures and one depth/stencil attachment
 /// </summary>
 public class GeometryBuffer : FrameBuffer
 {
     private List<TextureBuffer> colourAttachmentsList;
     private DrawBuffersEnum[] drawBuffers;
 
+    /// <summary>
+    /// Initialize a new Geometry Buffer
+    /// </summary>
+    /// <remarks>All FBOs must have a depth attachment, which in this case isn't usually very useful</remarks>
     public GeometryBuffer(Vector2i size, bool readableDepth = false) : base()
     {
         Size = size;

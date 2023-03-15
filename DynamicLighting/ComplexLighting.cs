@@ -105,7 +105,7 @@ public class ComplexLightingDemo: Game
         woodNormal = new Texture(Program.AssetLocation + "wood-normal.jpg", 3);
 
         FileManager fm = new FileManager(Program.AssetLocation + "backpack/backpack.obj")
-            .AddFlag(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
+            .AddFlags(PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
         backpack = fm.LoadModel();
         
         light = new Objects.Light().PointMode().SetPosition(new Vector3(-2f,2f,5f))

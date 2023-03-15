@@ -76,8 +76,8 @@ public class Game1 : Game
         depthMap.UniformTexture("depthMap",shader,1);
 
 
-        portal1.FrameBuffer.UniformTexture("sceneSample", shader, 2);
-        portal2.FrameBuffer.UniformTexture("sceneSample", shader, 2);
+        portal1.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
+        portal2.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
         
 
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);

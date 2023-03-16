@@ -16,7 +16,7 @@ out vec2 texCoords;
 void main()
 {
     colour = inColour;
-    texCoord = inTexCoords;
+    texCoords = inTexCoords;
     vec2 screenPos = (inPosition / screenSize) * 2.0 - 1.0;
     gl_Position = vec4(screenPos * vec2(1.0,-1.0), 0, 1);
 }

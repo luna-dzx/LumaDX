@@ -8,12 +8,10 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace PortalRendering;
 
-public class Game1 : Game
+public class PortalDemo: Game
 {
     StateHandler glState;
     TextRenderer textRenderer;
-    
-    const string ShaderLocation = "Shaders/";
 
     ShaderProgram shader;
 
@@ -27,25 +25,19 @@ public class Game1 : Game
     Objects.Light light;
     Objects.Material material;
 
-    ImGuiController _controller;
-    
     DepthMap depthMap;
 
 
     Portal portal1;
     Portal portal2;
 
-
-    bool mouseLocked = true;
-    System.Numerics.Vector3 bgCol = new (0, 0.5f, 0.5f);
-
     protected override void Initialize()
     {
         glState = new StateHandler();
 
         shader = new ShaderProgram(
-            ShaderLocation + "vertex.glsl", 
-            ShaderLocation + "fragment.glsl", 
+            Program.ShaderLocation + "vertex.glsl", 
+            Program.ShaderLocation + "fragment.glsl", 
             true);
         
         player = new FirstPersonPlayer(Window.Size)
@@ -60,7 +52,7 @@ public class Game1 : Game
         portal2 = new Portal(Window.Size,new Vector3(-15.277727f, 1.8839195f, 0.7277828f), new Vector3(0f, MathF.PI/2f, 0f));
         
         
-        FileManager fm = new FileManager("Assets/dust2/source/de_dust2.obj");
+        FileManager fm = new FileManager(Program.AssetLocation+"dust2/source/de_dust2.obj");
         scene = fm.LoadMeshes().GetModels();
         Collision.World = fm.LoadTriangles(sceneTransform, player.Radius);
         textures = fm.LoadTextures(TextureType.Diffuse, 0);
@@ -90,19 +82,16 @@ public class Game1 : Game
 
         shader.DisableGammaCorrection();
 
-
         
         shader.UniformMaterial("material", material, textures[0])
             .UniformLight("light", light);
 
         glState.Blending = true;
-
-        _controller = new ImGuiController(Window);
     }
 
     protected override void Load()
     {
-        textRenderer = new TextRenderer(48,Window.Size, "Assets/fonts/IBMPlexSans-Regular.ttf");
+        textRenderer = new TextRenderer(48,Window.Size, Program.AssetLocation+"fonts/IBMPlexSans-Regular.ttf");
         player.UpdateProjection(shader);
         
         Window.CursorState = CursorState.Grabbed;
@@ -114,27 +103,9 @@ public class Game1 : Game
         textRenderer.UpdateScreenSize(newWin.Size);
     }
 
-
-    Vector2 playerMousePos = Vector2.Zero;
-    
-    private double deltaCounter = 0.0;
-    private int framesCounted = 0;
-
-    int frameRate = 0;
-
     protected override void UpdateFrame(FrameEventArgs args)
     {
-        player.Update(args, Window.KeyboardState, playerMousePos);
-
-        deltaCounter += args.Time;
-        framesCounted++;
-        if (deltaCounter > 1.0)
-        {
-            frameRate = framesCounted;
-            deltaCounter -= 1.0;
-            framesCounted = 0;
-        }
-
+        player.Update(args, Window.KeyboardState, GetPlayerMousePos());
 
         bool t1 = portal1.Teleport(portal2,player, out Vector3 pos1, out Vector3 dir1);
         bool t2 = portal2.Teleport(portal1,player, out Vector3 pos2, out Vector3 dir2);
@@ -157,44 +128,13 @@ public class Game1 : Game
         portal2.Update(player.Camera.Position, player.Camera.Direction, portal1);
     }
 
-    protected override void MouseMove(MouseMoveEventArgs moveInfo)
-    {
-        if (mouseLocked)
-        {
-            playerMousePos += moveInfo.Delta;
-        }
-    }
-
-    bool focusWindow = false;
-    bool checkFocus = false;
-
     protected override void KeyboardHandling(FrameEventArgs args, KeyboardState k)
     {
-        if (k.IsKeyPressed(Keys.Enter)) // unlock mouse
-        {
-            if (mouseLocked)
-            {
-                mouseLocked = false;
-                Window.CursorState = CursorState.Normal;
-                focusWindow = true;
-            }
-        }
-        
         if (k.IsKeyPressed(Keys.N))
         {
             player.NoClip = !player.NoClip;
         }
     }
-
-    protected override void MouseHandling(FrameEventArgs args, MouseState mouseState)
-    {
-        if (mouseState.IsButtonPressed(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left))
-        {
-            checkFocus = true;
-        }
-    }
-
-    private bool clipSideThing = false;
 
     protected override void RenderFrame(FrameEventArgs args)
     {
@@ -231,7 +171,6 @@ public class Game1 : Game
         shader.SetActive(ShaderType.FragmentShader, "scene");
         shader.Uniform3("cameraPos",portal2.RelativeCameraPos);
         
-        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
         for (int i = 0; i < scene.Length; i++)
@@ -256,7 +195,6 @@ public class Game1 : Game
         shader.SetActive(ShaderType.FragmentShader, "scene");
         shader.Uniform3("cameraPos",portal1.RelativeCameraPos);
         
-        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
         for (int i = 0; i < scene.Length; i++)
@@ -277,7 +215,6 @@ public class Game1 : Game
         shader.SetActive(ShaderType.FragmentShader, "scene");
         shader.Uniform3("cameraPos", player.Position);
         
-        glState.ClearColor = new Color4(bgCol.X,bgCol.Y,bgCol.Z, 1f);
         glState.Clear();
 
         for (int i = 0; i < scene.Length; i++)
@@ -285,9 +222,9 @@ public class Game1 : Game
             textures[i].Use();
             scene[i].Draw(shader);
         }
-
         
         GL.Enable(EnableCap.DepthClamp);
+
         #region Draw Portals
         
         GL.ActiveTexture(TextureUnit.Texture0);
@@ -333,30 +270,7 @@ public class Game1 : Game
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
         //textRenderer.Draw(""+frameRate, 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
         glState.DepthTest = true;
-        
-        glState.SaveState();
-        
-        _controller.Update((float)args.Time);
-        if (focusWindow)
-        {
-            ImGui.SetWindowFocus();
-            focusWindow = false;
-        }
 
-        if (checkFocus)
-        {
-            if (!ImGui.IsWindowFocused(ImGuiFocusedFlags.AnyWindow))
-            {
-                Window.CursorState = CursorState.Grabbed;
-                mouseLocked = true;
-            }
-        }
-        ImGui.ColorPicker3("BgCol", ref bgCol);
-        _controller.Render();
-        
-        // TODO: Implement all parts of the ImGui Save/Restore into this function
-        glState.LoadState();
-        
         #endregion
 
         Window.SwapBuffers();
@@ -380,6 +294,5 @@ public class Game1 : Game
         portal2.Dispose();
         
         textRenderer.Dispose();
-        _controller.Dispose();
     }
 }

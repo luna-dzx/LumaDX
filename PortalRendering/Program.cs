@@ -6,33 +6,43 @@ namespace PortalRendering;
 
 internal static class Program
 {
+    public const string ShaderLocation = "Shaders/";
+    public const string AssetLocation = "Assets/";
+    
+    
+    #region Window Settings
+
     private const int FPS = 60;
 
+    static GameWindowSettings gameSettings = new()
+    {
+        RenderFrequency = FPS,
+        UpdateFrequency = FPS
+    };
 
+    static NativeWindowSettings uiSettings = new()
+    {
+        APIVersion = Version.Parse("4.1.0"),
+        Size = new Vector2i(1600, 900),
+        NumberOfSamples = 4,
+
+        WindowState = WindowState.Normal,
+        WindowBorder = WindowBorder.Resizable,
+        IsEventDriven = false,
+        StartFocused = true
+    };
+
+    #endregion
+
+    /// <summary>
+    /// Demos 7.a to 7.d 
+    /// </summary>
     public static void Main(string[] args)
     {
-        #region settings
-    
-        var gameSettings = GameWindowSettings.Default;
-        gameSettings.RenderFrequency = FPS;
-        gameSettings.UpdateFrequency = FPS;
-
-        var uiSettings = NativeWindowSettings.Default;
-        uiSettings.APIVersion = Version.Parse("4.1.0");
-        uiSettings.Size = new Vector2i(1600,900);
-        uiSettings.Title = "LearnOpenGL";
-        uiSettings.NumberOfSamples = 4;
-
-        uiSettings.WindowState = WindowState.Normal;
-        uiSettings.WindowBorder = WindowBorder.Resizable;
-        uiSettings.IsEventDriven = false;
-        uiSettings.StartFocused = true;
-
-        #endregion
-
-        using var game = new Game1();
-        game.InitWindow(gameSettings, uiSettings)
-            .CursorState = CursorState.Normal;
+        uiSettings.Title = "Portal Rendering - Demos 7.a to 7.d";
+        
+        using var game = new PortalDemo();
+        game.InitWindow(gameSettings, uiSettings);
         game.Run();
     }
 }

@@ -70,9 +70,7 @@ public class PortalDemo: Game
         scene.EnableTranspose().Transform(sceneTransform);
         
         depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
-        
-        depthMap.ProjectOrthographic(60f,50f,3f,100f);
-        
+
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
         material = PresetMaterial.Silver.SetAmbient(0.05f);
 
@@ -89,6 +87,7 @@ public class PortalDemo: Game
         shader.UniformMaterial("material", material, textures[0])
             .UniformLight("light", light);
         
+        depthMap.ProjectOrthographic(60f,50f,3f,100f);
         depthMap.UniformMatrix(shader, "lightSpaceMatrix");
         
         depthMap.UniformTexture(shader,"depthMap",1);

@@ -6,7 +6,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace PortalDemo;
+namespace PortalRendering;
 
 public class Game1 : Game
 {

@@ -2,7 +2,7 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
-namespace PortalDemo;
+namespace PortalRendering;
 
 internal static class Program
 {

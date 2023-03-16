@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
+        <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
     </ItemGroup>
 
     <Target Name="CopyFiles" AfterTargets="Build">

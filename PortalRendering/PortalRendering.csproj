@@ -6,11 +6,10 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <RootNamespace>PortalDemo</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
+        <ProjectReference Include="..\LumaDX\LumaDX.csproj" />
     </ItemGroup>
 
     <Target Name="CopyFiles" AfterTargets="Build">

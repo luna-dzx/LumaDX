@@ -1,3 +1,5 @@
+// --------------- TextureMapping/fragment.glsl --------------- //
+
 #version luma-dx
 
 uniform lx_Material material;

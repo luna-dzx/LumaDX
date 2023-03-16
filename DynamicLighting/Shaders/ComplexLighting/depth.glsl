@@ -1,3 +1,5 @@
+// --------------- ComplexLighting/depth.glsl --------------- //
+
 #version luma-dx
 
 uniform samplerCube cubeMap;

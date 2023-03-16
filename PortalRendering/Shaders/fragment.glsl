@@ -1,3 +1,5 @@
+// -------------------- fragment.glsl -------------------- //
+
 #version luma-dx
 
 in vec2 texCoords;

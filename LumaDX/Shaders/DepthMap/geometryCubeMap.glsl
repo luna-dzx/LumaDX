@@ -1,3 +1,5 @@
+// -------------------- geometryCubeMap.glsl -------------------- //
+
 #version 330 core
 
 layout (triangles) in;
@@ -5,17 +7,17 @@ layout (triangle_strip, max_vertices=18) out;
 
 uniform mat4 shadowMatrices[6];
 
-out vec4 FragPos; // (per emitvertex)
+out vec3 cubePos; // outputs 6 times, one for each side
 
 void main()
 {
-    for (int face = 0; face < 6; face++)
+    for (int cubeSide = 0; cubeSide < 6; cubeSide++)
     {
-        gl_Layer = face;
+        gl_Layer = cubeSide;
         for (int i = 0; i < 3; i++)
         {
-            FragPos = gl_in[i].gl_Position;
-            gl_Position = shadowMatrices[face] * FragPos;//shadowMatrices[face] * FragPos;
+            cubePos = gl_in[i].gl_Position.xyz;
+            gl_Position = shadowMatrices[cubeSide] * gl_in[i].gl_Position;
             EmitVertex();
         }
         

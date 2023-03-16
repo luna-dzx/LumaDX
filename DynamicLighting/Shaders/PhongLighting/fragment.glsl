@@ -1,3 +1,5 @@
+// --------------- PhongLighting/fragment.glsl --------------- //
+
 #version luma-dx
 
 uniform lx_Light light;

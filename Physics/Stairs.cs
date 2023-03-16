@@ -1,4 +1,6 @@
-﻿using LumaDX;
+﻿// -------------------- Stairs.cs -------------------- //
+
+using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

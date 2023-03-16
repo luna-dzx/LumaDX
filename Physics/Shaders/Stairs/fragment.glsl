@@ -1,3 +1,5 @@
+// --------------- Stairs/fragment.glsl --------------- //
+
 #version luma-dx
 
 in vec3 vertexColour;

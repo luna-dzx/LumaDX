@@ -1,3 +1,5 @@
+// --------------- LightCasters/vertex.glsl --------------- //
+
 #version luma-dx
 layout (location = 0) in vec3 inPosition;
 layout (location = 2) in vec3 inNormal;

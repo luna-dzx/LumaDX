@@ -7,6 +7,8 @@ using Vector2 = System.Numerics.Vector2;
 
 namespace LumaDX;
 
+// adapted from https://github.com/NogginBops/ImGui.NET_OpenTK_Sample
+
 /// <summary>
 /// Control ImGui 
 /// </summary>

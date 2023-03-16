@@ -1,4 +1,5 @@
-﻿using System;
+﻿// -------------------- Program.cs -------------------- //
+
 using LumaDX;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;

@@ -1,3 +1,5 @@
+// -------------------- PhongLighting.cs -------------------- //
+
 using ImGuiNET;
 using LumaDX;
 using OpenTK.Graphics.OpenGL4;

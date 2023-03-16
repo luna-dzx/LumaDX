@@ -1,3 +1,5 @@
+// --------------- FullModelRender/fragment.glsl --------------- //
+
 #version luma-dx
 
 uniform sampler2D dingus;

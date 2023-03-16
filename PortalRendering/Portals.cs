@@ -1,4 +1,6 @@
-﻿using Assimp;
+﻿// -------------------- Portals.cs -------------------- //
+
+using Assimp;
 using ImGuiNET;
 using LumaDX;
 using OpenTK.Graphics.OpenGL4;

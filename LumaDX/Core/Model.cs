@@ -1,5 +1,4 @@
-﻿using Assimp;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using PrimitiveType = OpenTK.Graphics.OpenGL4.PrimitiveType;
 

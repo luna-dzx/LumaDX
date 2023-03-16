@@ -1,18 +1,22 @@
+// -------------------- vertex.glsl -------------------- //
+
+// this is a standard shader needed to render ImGui to my OpenGL context
+
 #version 330 core
 
 uniform vec2 screenSize;
 
-layout(location = 0) in vec2 in_position;
-layout(location = 1) in vec2 in_texCoord;
-layout(location = 2) in vec4 in_colour;
+layout(location = 0) in vec2 inPosition;
+layout(location = 1) in vec2 inTexCoords;
+layout(location = 2) in vec4 inColour;
 
 out vec4 colour;
-out vec2 texCoord;
+out vec2 texCoords;
 
 void main()
 {
-    vec2 glPos = ((in_position / screenSize) * 2.0 - 1.0) * vec2(1.0,-1.0);
-    gl_Position = vec4(glPos, 0, 1);
-    colour = in_colour;
-    texCoord = in_texCoord;
+    colour = inColour;
+    texCoord = inTexCoords;
+    vec2 screenPos = (inPosition / screenSize) * 2.0 - 1.0;
+    gl_Position = vec4(screenPos * vec2(1.0,-1.0), 0, 1);
 }

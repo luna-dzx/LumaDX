@@ -1,3 +1,5 @@
+// --------------- ProjectedTriangle/fragment.glsl --------------- //
+
 #version luma-dx
 
 void main()

@@ -1,3 +1,5 @@
+// --------------- ComplexLighting/ambientOcclusion.glsl --------------- //
+
 #version luma-dx
 
 uniform sampler2D samplePosition;

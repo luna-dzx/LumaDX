@@ -1,10 +1,8 @@
-using System.Numerics;
 using Assimp;
 using OpenTK.Mathematics;
 using Steps = Assimp.PostProcessSteps;
 using Triangle = LumaDX.Maths.Triangle;
 using Vector3 = OpenTK.Mathematics.Vector3;
-using Vector4 = OpenTK.Mathematics.Vector4;
 
 namespace LumaDX;
 

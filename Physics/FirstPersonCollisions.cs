@@ -1,5 +1,6 @@
+// -------------------- FirstPersonCollisions.cs -------------------- //
+
 using Assimp;
-using ImGuiNET;
 using LumaDX;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

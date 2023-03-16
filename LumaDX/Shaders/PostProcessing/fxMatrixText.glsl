@@ -1,3 +1,5 @@
+// -------------------- fxMatrixText.glsl -------------------- //
+
 #version 330 core
 
 uniform sampler2D texture0;
@@ -8,7 +10,10 @@ out vec4 fragColour;
 
 void main()
 {
-    vec3 sample = texture(texture0, floor(texCoords * pixelateResolution) / pixelateResolution).rgb;
+    // clamp texture coordinates to pixelate
+    vec2 coords = floor(texCoords * pixelateResolution) / pixelateResolution;
+    vec3 sample = texture(texture0, coords).rgb;
+    // approximate brightness
     float value = (sample.r + sample.g + sample.b) / 3.0;
     if (value > 0.63 && value < 0.86) {value = 0.86;}
     value += 0.235;

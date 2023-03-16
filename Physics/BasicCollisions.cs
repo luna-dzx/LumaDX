@@ -1,3 +1,5 @@
+// -------------------- BasicCollisions.cs -------------------- //
+
 using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
@@ -6,7 +8,6 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using MouseClick = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using Vector3 = OpenTK.Mathematics.Vector3;
-using Triangle = LumaDX.Maths.Triangle;
 
 namespace Physics;
 

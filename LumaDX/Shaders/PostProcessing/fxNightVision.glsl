@@ -1,3 +1,5 @@
+// -------------------- fxNightVision.glsl -------------------- //
+
 #version 330 core
 
 uniform sampler2D texture0;
@@ -8,7 +10,7 @@ uniform float noiseStrength = 0.15;
 uniform vec3 goggles = vec3(0.264, 0.394, 18.0);
 uniform vec2 screenSize = vec2(1600.0,900.0);
 
-
+// standard hashing noise function
 float noise(vec2 fragCoord, uint seed)
 {
     // increase size of pixels

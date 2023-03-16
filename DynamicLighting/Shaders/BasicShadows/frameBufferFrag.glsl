@@ -1,3 +1,5 @@
+// --------------- BasicShadows/frameBufferFrag.glsl --------------- //
+
 #version luma-dx
 
 uniform sampler2D depthMap;

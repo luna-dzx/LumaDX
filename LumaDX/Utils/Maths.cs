@@ -1,5 +1,4 @@
-﻿using Assimp;
-using OpenTK.Mathematics;
+﻿using OpenTK.Mathematics;
 
 namespace LumaDX;
 

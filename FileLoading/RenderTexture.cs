@@ -1,3 +1,5 @@
+// -------------------- RenderTexture.cs -------------------- //
+
 using LumaDX;
 using OpenTK.Windowing.Common;
 

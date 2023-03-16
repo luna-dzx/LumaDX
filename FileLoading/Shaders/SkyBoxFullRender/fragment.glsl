@@ -1,3 +1,5 @@
+// --------------- SkyBoxFullRender/fragment.glsl --------------- //
+
 #version luma-dx
 
 uniform samplerCube cubeMap;

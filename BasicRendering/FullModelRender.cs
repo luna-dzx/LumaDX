@@ -1,4 +1,6 @@
-﻿using LumaDX;
+﻿// -------------------- FullModelRender.cs -------------------- //
+
+using LumaDX;
 using ImGuiNET;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

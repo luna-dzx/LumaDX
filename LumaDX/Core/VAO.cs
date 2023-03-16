@@ -1,5 +1,4 @@
-﻿using System;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 
 namespace LumaDX;

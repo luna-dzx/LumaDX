@@ -1,3 +1,5 @@
+// -------------------- fxGreyScale.glsl -------------------- //
+
 #version 330 core
 
 uniform sampler2D texture0;

@@ -150,6 +150,16 @@ public class Portal : IDisposable
         return false;
 
     }
+
+    
+    /// <summary>
+    /// Return 1 or -1 for which side of the plane the camera is on, to know which direction from the portal to clip
+    /// </summary>
+    public int GetClipSide(Vector3 cameraPos)
+    {
+        return Vector3.Dot(Position - cameraPos, ClippingPlane.Normal) < 0 ? 1 : -1;
+    }
+    
     
     /// <summary>
     /// Start writing to the FBO

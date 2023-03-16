@@ -37,8 +37,8 @@ public abstract class Game : IDisposable
         }
     }
     
-    private static DebugProc _debugProcCallback = DebugCallback;
-    private static GCHandle _debugProcCallbackHandle;
+    private static DebugProc debugProcCallback = DebugCallback;
+    private static GCHandle debugProcCallbackHandle;
 
     public bool MouseLocked = false;
 
@@ -79,9 +79,9 @@ public abstract class Game : IDisposable
 
         if (debugging)
         {
-            _debugProcCallbackHandle = GCHandle.Alloc(_debugProcCallback);
+            debugProcCallbackHandle = GCHandle.Alloc(debugProcCallback);
 
-            GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
+            GL.DebugMessageCallback(debugProcCallback, IntPtr.Zero);
             GL.Enable(EnableCap.DebugOutput);
             GL.Enable(EnableCap.DebugOutputSynchronous);
         }

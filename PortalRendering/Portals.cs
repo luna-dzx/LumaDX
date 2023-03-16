@@ -10,6 +10,8 @@ namespace PortalRendering;
 
 public class PortalDemo: Game
 {
+    ImGuiController imGui;
+
     StateHandler glState;
     TextRenderer textRenderer;
 
@@ -20,6 +22,9 @@ public class PortalDemo: Game
     Model[] scene;
     Texture[] textures;
     
+    Model cube;
+    Texture skyBox;
+    
     Matrix4 sceneTransform = Maths.CreateTransformation(new (0f, 0f, -5f), new (-MathF.PI/2f, 0f, 0f), 0.01f * Vector3.One, true);
     
     Objects.Light light;
@@ -27,6 +32,10 @@ public class PortalDemo: Game
 
     DepthMap depthMap;
 
+    bool renderPortal1;
+    bool renderPortal2;
+    bool doTeleportation;
+    bool doViewAdjustment;
 
     Portal portal1;
     Portal portal2;
@@ -34,6 +43,9 @@ public class PortalDemo: Game
     protected override void Initialize()
     {
         glState = new StateHandler();
+        glState.Blending = true;
+        
+        imGui = new ImGuiController(Window);
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "vertex.glsl", 
@@ -44,7 +56,6 @@ public class PortalDemo: Game
             .SetPosition(new Vector3(-3.8289409f, -0.14746195f, -25.35519f))
             .SetDirection(new Vector3(0, 0, 1));
         player.Camera.SetFov(MathHelper.DegreesToRadians(80f));
-        player.UpdateProjection(shader);
 
         player.Radius = new Vector3(0.2f,0.5f,0.2f);
 
@@ -58,43 +69,36 @@ public class PortalDemo: Game
         textures = fm.LoadTextures(TextureType.Diffuse, 0);
         scene.EnableTranspose().Transform(sceneTransform);
         
-
-        // TODO: Higher Res for Videos (possibly move sample relative to player, or apply a gaussian blur to the shadow from the player's perspective)
         depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
         
         depthMap.ProjectOrthographic(60f,50f,3f,100f);
-        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
         
-        depthMap.UniformTexture(shader,"depthMap",1);
-
-
-        portal1.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
-        portal2.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
-        
-
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
         material = PresetMaterial.Silver.SetAmbient(0.05f);
+
+        cube = new Model(PresetMesh.Cube);
+        skyBox = Texture.LoadCubeMap(Program.AssetLocation + "skybox/", ".jpg", 3);
         
-
-        glState.DepthTest = true;
-        glState.DoCulling = true;
-        glState.DepthMask = true;
-
-        shader.DisableGammaCorrection();
-
-        
-        shader.UniformMaterial("material", material, textures[0])
-            .UniformLight("light", light);
-
-        glState.Blending = true;
+        textRenderer = new TextRenderer(48,Window.Size, Program.AssetLocation+"fonts/IBMPlexSans-Regular.ttf");
     }
 
     protected override void Load()
     {
-        textRenderer = new TextRenderer(48,Window.Size, Program.AssetLocation+"fonts/IBMPlexSans-Regular.ttf");
         player.UpdateProjection(shader);
+
+        shader.UniformMaterial("material", material, textures[0])
+            .UniformLight("light", light);
         
-        Window.CursorState = CursorState.Grabbed;
+        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
+        
+        depthMap.UniformTexture(shader,"depthMap",1);
+        
+        portal1.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
+        portal2.FrameBuffer.UniformTexture(shader,"sceneSample", 2);
+        
+        shader.UniformTexture("skyBox", skyBox);
+
+        LockMouse();
     }
     
     protected override void Resize(ResizeEventArgs newWin)
@@ -112,13 +116,13 @@ public class PortalDemo: Game
 
         if (t1)
         {
-            player.Position = pos1;
-            player.SetDirection(dir1);
+            if (doTeleportation) player.Position = pos1;
+            if (doViewAdjustment) player.SetDirection(dir1);
         }
         else if (t2)
         {
-            player.Position = pos2;
-            player.SetDirection(dir2);
+            if (doTeleportation) player.Position = pos2;
+            if (doViewAdjustment) player.SetDirection(dir2);
         }
 
 
@@ -134,7 +138,55 @@ public class PortalDemo: Game
         {
             player.NoClip = !player.NoClip;
         }
+        
+        if (k.IsKeyPressed(Keys.Enter) && MouseLocked) // unlock mouse
+        {
+            UnlockMouse();
+            imGui.FocusWindow();
+        }
     }
+    
+    public void PortalSample(int id) // id = 1 or 2 referring to portal1 and portal2
+    {
+        var (destination, source) = (id == 1) ? (portal1, portal2) : (portal2, portal1);
+        GL.Viewport(0,0,destination.FrameBuffer.Size.X, destination.FrameBuffer.Size.Y);
+        
+        destination.StartSample();
+
+        shader.Uniform4("clip_plane", source.ClippingPlane.AsVector());
+        shader.Uniform1("clip_side", destination.GetClipSide(player.Camera.Position));
+
+        shader.UniformMat4("lx_View", ref destination.ViewMatrix);
+        shader.Uniform3("cameraPos", destination.RelativeCameraPos);
+
+        RenderScene();
+
+        destination.EndSample();
+        GL.Viewport(0,0,Window.Size.X, Window.Size.Y);
+    }
+
+    public void RenderScene()
+    {
+        glState.Clear();
+
+        for (int i = 0; i < scene.Length; i++)
+        {
+            textures[i].Use();
+            scene[i].Draw(shader);
+        }
+        
+        glState.SaveState();
+
+        skyBox.Use();
+        glState.DoCulling = false;
+        glState.DepthFunc = DepthFunction.Lequal;
+        shader.SetActive("skyBox");
+        cube.Draw();
+
+        glState.LoadState();
+        shader.SetActive("scene");
+    }
+    
 
     protected override void RenderFrame(FrameEventArgs args)
     {
@@ -144,7 +196,7 @@ public class PortalDemo: Game
         #region Shadow Map
         
         // culling for better shadows
-        GL.Enable(EnableCap.CullFace);
+        glState.DoCulling = true;
         
         depthMap.WriteMode();
         foreach (var model in scene) model.Draw(depthMap.Shader);
@@ -152,125 +204,70 @@ public class PortalDemo: Game
         shader.Use();
         depthMap.ReadMode();
         
-        // TODO: use glState for this
-        GL.Disable(EnableCap.CullFace);
+        glState.DoCulling = false;
         GL.Viewport(0,0,Window.Size.X,Window.Size.Y);
         
         #endregion
         
 
-        #region Portal 2 Sample
-
-        portal2.StartSample();
-        
-        shader.Uniform4("clip_plane", portal1.ClippingPlane.AsVector());
-        shader.Uniform1("clip_side", Vector3.Dot(portal2.Position - player.Camera.Position, portal2.ClippingPlane.Normal) < 0 ? 1:-1);
-
-
-        shader.UniformMat4("lx_View", ref portal2.ViewMatrix);
         shader.SetActive(ShaderType.FragmentShader, "scene");
-        shader.Uniform3("cameraPos",portal2.RelativeCameraPos);
-        
-        glState.Clear();
 
-        for (int i = 0; i < scene.Length; i++)
-        {
-            textures[i].Use();
-            scene[i].Draw(shader);
-        }
-        
-        shader.UniformMat4("lx_View", ref player.Camera.ViewMatrix);
 
-        portal2.EndSample();
-        #endregion
-        
-        
-        #region Portal 1 Sample
-        portal1.StartSample();
-        
-        shader.Uniform4("clip_plane", portal2.ClippingPlane.AsVector());
-        shader.Uniform1("clip_side", Vector3.Dot(portal1.Position - player.Camera.Position, portal1.ClippingPlane.Normal) < 0 ? 1:-1);
-
-        shader.UniformMat4("lx_View", ref portal1.ViewMatrix);
-        shader.SetActive(ShaderType.FragmentShader, "scene");
-        shader.Uniform3("cameraPos",portal1.RelativeCameraPos);
-        
-        glState.Clear();
-
-        for (int i = 0; i < scene.Length; i++)
-        {
-            textures[i].Use();
-            scene[i].Draw(shader);
-        }
-        
-        shader.UniformMat4("lx_View", ref player.Camera.ViewMatrix);
-
-        portal1.EndSample();
-        #endregion
+        if (renderPortal1) PortalSample(1);
+        if (renderPortal2) PortalSample(2);
         
 
-        shader.Uniform4("clip_plane", Vector4.Zero);
-        
+        shader.Uniform4("clip_plane", Vector4.Zero); // disable clipping plane
+        player.UpdateView(shader); // reset view matrix to actual camera pos
+        shader.Uniform3("cameraPos", player.Position); // update camera pos
 
-        shader.SetActive(ShaderType.FragmentShader, "scene");
-        shader.Uniform3("cameraPos", player.Position);
-        
-        glState.Clear();
-
-        for (int i = 0; i < scene.Length; i++)
-        {
-            textures[i].Use();
-            scene[i].Draw(shader);
-        }
-        
-        GL.Enable(EnableCap.DepthClamp);
+        RenderScene();
 
         #region Draw Portals
-        
-        GL.ActiveTexture(TextureUnit.Texture0);
-        textures[0].Use();
-        
-        GL.ActiveTexture(TextureUnit.Texture2);
-        
+
         shader.SetActive(ShaderType.FragmentShader, "portal");
+        GL.Enable(EnableCap.DepthClamp); // render triangles no matter how close they are to the camera
         
-        portal1.FrameBuffer.UseTexture(0);
-        portal1.Draw(shader);
-        
-        portal2.FrameBuffer.UseTexture(0);
-        portal2.Draw(shader);
-        
+        // bind portal samples to texture unit 2
+        GL.ActiveTexture(TextureUnit.Texture2);
+
+        if (renderPortal1)
+        {
+            portal1.FrameBuffer.UseTexture(0);
+            portal1.Draw(shader);
+        }
+
+        if (renderPortal2)
+        {
+            portal2.FrameBuffer.UseTexture(0);
+            portal2.Draw(shader);
+        }
+
         GL.Disable(EnableCap.DepthClamp);
-
         
-        /*
-        glState.DepthTest = false;
-        shader.SetActive(ShaderType.FragmentShader, "point");
-        GL.PointSize(10f);
-        
-        portal2.Transformation.Transpose();
-        
-        var p0 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[0], PresetMesh.Square.Vertices[1], PresetMesh.Square.Vertices[2],1f);
-        var p1 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[3], PresetMesh.Square.Vertices[4], PresetMesh.Square.Vertices[5],1f);
-        var p2 = portal2.Transformation * new Vector4(PresetMesh.Square.Vertices[6], PresetMesh.Square.Vertices[7], PresetMesh.Square.Vertices[8],1f);
-        
-        portal2.Transformation.Transpose();
-        
-        point.Draw(shader,p0.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
-        point.Draw(shader,p1.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
-        point.Draw(shader,p2.Xyz, Vector3.Zero, 1f, renderMode: PrimitiveType.Points);
-        glState.DepthTest = true;
-        */
-
         #endregion
         
         #region UI
 
+        // no point in correcting the colours of the UI as they are already as we want them
+        shader.DisableGammaCorrection();
+        
+        // render crosshair
         glState.DepthTest = false;
         textRenderer.Draw("+", Window.Size.X/2f, Window.Size.Y/2f, 0.5f, new Vector3(0f));
-        //textRenderer.Draw(""+frameRate, 10f, Window.Size.Y - 48f, 1f, new Vector3(0.5f, 0.8f, 0.2f), false);
         glState.DepthTest = true;
 
+        imGui.Update((float)args.Time);
+        
+        if (!imGui.IsFocused()) LockMouse();;
+        
+        ImGui.Checkbox("Render Portal 1", ref renderPortal1);
+        ImGui.Checkbox("Render Portal 2", ref renderPortal2);
+        ImGui.Checkbox("Teleport", ref doTeleportation);
+        ImGui.Checkbox("Adjust View", ref doViewAdjustment);
+
+        imGui.Render();
+        
         #endregion
 
         Window.SwapBuffers();
@@ -285,13 +282,17 @@ public class PortalDemo: Game
             textures[i].Dispose();
             scene[i].Dispose();
         }
+        cube.Dispose();
 
         shader.Dispose();
         
+        skyBox.Dispose();
         depthMap.Dispose();
 
         portal1.Dispose();
         portal2.Dispose();
+        
+        imGui.Dispose();
         
         textRenderer.Dispose();
     }

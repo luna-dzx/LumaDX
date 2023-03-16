@@ -19,7 +19,6 @@ void main()
 }
 
 [skyBox]
-
 void main()
 {
     textureDir = inPosition;

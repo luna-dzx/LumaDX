@@ -4,13 +4,14 @@ in vec2 texCoords;
 in vec3 fragPos;
 in vec3 normal;
 in vec4 fragPosLightSpace;
+in vec3 textureDir;
 
 uniform lx_Light light;
 uniform lx_Material material;
 uniform sampler2D depthMap;
 uniform vec3 cameraPos;
-
 uniform sampler2D sceneSample;
+uniform samplerCube skyBox;
 
 uniform vec4 clip_plane;
 // -1 or +1
@@ -39,4 +40,10 @@ void main()
 void main()
 {
     lx_FragColour = vec4(1.0,0.0,0.0,1.0);
+}
+
+[skyBox]
+void main()
+{
+    lx_FragColour = lx_GammaCorrect(texture(skyBox,textureDir * vec3(-1.0,1.0,-1.0)),2.5);
 }

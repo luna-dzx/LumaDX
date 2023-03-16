@@ -43,7 +43,6 @@ public class BasicCollisionDemo: Game
         imGui = new ImGuiController(Window);
         
         glState = new StateHandler();
-        glState.ClearColor = Color4.Black;
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "BasicCollisions/vertex.glsl",
@@ -54,7 +53,6 @@ public class BasicCollisionDemo: Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0f,0f,5f))
             .SetDirection(-Vector3.UnitZ)
-            .UpdateProjection(shader)
             .EnableNoClip();
         
         physicsPlayer = new PhysicsPlayer(Vector3.Zero, new(0.4f, 1f, 0.4f));

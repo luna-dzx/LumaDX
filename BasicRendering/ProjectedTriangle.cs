@@ -33,10 +33,14 @@ public class ProjectedTriangleDemo: Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(Vector3.UnitZ * 5f)
             .SetDirection(-Vector3.UnitZ)
-            .UpdateProjection(shader)
             .EnableNoClip();
 
         triangle = new Model(PresetMesh.Triangle);
+    }
+
+    protected override void Load()
+    {
+        player.UpdateProjection(shader);
     }
 
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(shader, newWin.Size);

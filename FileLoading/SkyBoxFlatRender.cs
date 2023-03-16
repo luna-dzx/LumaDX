@@ -24,7 +24,10 @@ public class SkyBoxFlatRenderDemo: Game
         quad = new Model(PresetMesh.Square);
         
         skyBox = Texture.LoadCubeMap(Program.AssetLocation + "skybox/", ".jpg", 0);
-        
+    }
+
+    protected override void Load()
+    {
         shader.Use();
         skyBox.Use();
 

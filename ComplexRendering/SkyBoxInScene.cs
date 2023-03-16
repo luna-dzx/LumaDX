@@ -32,13 +32,13 @@ public class SkyBoxInSceneDemo: Game
 
     protected override void Initialize()
     {
+        UnlockMouse();
+        
         glState = new StateHandler();
         
         glState.ClearColor = Color4.Black;
 
         imGui = new ImGuiController(Window);
-        
-        UnlockMouse();
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "SkyBoxInScene/vertex.glsl",

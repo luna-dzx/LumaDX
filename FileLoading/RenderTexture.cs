@@ -23,6 +23,10 @@ public class RenderTextureDemo: Game
 
         quad = new Model(PresetMesh.Square);
         texture = new Texture(Program.AssetLocation + "dingus-the-cat/textures/dingus_nowhiskers.jpg", 0);
+    }
+
+    protected override void Load()
+    {
         shader.Use();
         texture.Use();
 

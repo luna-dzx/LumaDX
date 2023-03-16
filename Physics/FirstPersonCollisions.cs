@@ -33,6 +33,7 @@ public class FirstPersonCollisionDemo: Game
     protected override void Initialize()
     {
         glState = new StateHandler();
+        glState.Blending = true;
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "FirstPersonCollisions/vertex.glsl", 
@@ -43,7 +44,6 @@ public class FirstPersonCollisionDemo: Game
             .SetPosition(new Vector3(-3.8289409f, -0.14746195f, -25.35519f))
             .SetDirection(new Vector3(0, 0, 1));
         player.Camera.SetFov(MathHelper.DegreesToRadians(80f));
-        player.UpdateProjection(shader);
 
         player.Radius = new Vector3(0.2f,0.5f,0.2f);
 
@@ -54,26 +54,9 @@ public class FirstPersonCollisionDemo: Game
         scene.EnableTranspose().Transform(sceneTransform);
         
         depthMap = new DepthMap((4096,4096),(13.811773f, 24.58587f, 9.137938f),(-0.43924624f, -0.63135237f, -0.63910633f));
-        
-        depthMap.ProjectOrthographic(60f,50f,3f,100f);
-        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
-        
-        depthMap.UniformTexture(shader,"depthMap",1);
-        
+
         light = new Objects.Light().SunMode().SetAmbient(0.1f).SetDirection(depthMap.Direction);
         material = PresetMaterial.Silver.SetAmbient(0.05f);
-        
-
-        glState.DepthTest = true;
-        glState.DoCulling = true;
-        glState.DepthMask = true;
-
-        shader.DisableGammaCorrection();
-
-        shader.UniformMaterial("material", material, textures[0])
-            .UniformLight("light", light);
-
-        glState.Blending = true;
 
         skyBox = Texture.LoadCubeMap(Program.AssetLocation + "skybox/", ".jpg", 2);
         cube = new Model(PresetMesh.Cube);
@@ -81,6 +64,18 @@ public class FirstPersonCollisionDemo: Game
 
     protected override void Load()
     {
+        player.UpdateProjection(shader);
+        
+        shader.DisableGammaCorrection();
+
+        shader.UniformMaterial("material", material, textures[0])
+            .UniformLight("light", light);
+        
+        depthMap.ProjectOrthographic(60f,50f,3f,100f);
+        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
+        
+        depthMap.UniformTexture(shader,"depthMap",1);
+
         skyBox.Use();
         shader.Uniform1("skyBox", 2);
         

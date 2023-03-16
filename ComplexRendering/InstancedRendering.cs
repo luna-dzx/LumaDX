@@ -32,13 +32,13 @@ public class InstancedRenderingDemo: Game
 
     protected override void Initialize()
     {
+        UnlockMouse();
+        
         glState = new StateHandler();
         
         glState.ClearColor = Color4.Black;
 
         imGui = new ImGuiController(Window);
-        
-        LockMouse();
 
         shader = new ShaderProgram(
             Program.ShaderLocation + "InstancedRendering/vertex.glsl",
@@ -66,6 +66,8 @@ public class InstancedRenderingDemo: Game
         shader.UniformTexture("skyBox", skyBox);
         shader.UniformTexture("dingus", texture);
         shader.Uniform1("dingusCount", dingusCount);
+        
+        LockMouse();
     }
     
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);

@@ -36,6 +36,8 @@ public class BasicShadowDemo: Game
 
     protected override void Initialize()
     {
+        UnlockMouse();
+        
         glState = new StateHandler();
         glState.ClearColor = Color4.Black;
         
@@ -51,10 +53,7 @@ public class BasicShadowDemo: Game
         player = new FirstPersonPlayer(Window.Size)
             .SetPosition(new Vector3(0,0,6))
             .SetDirection(new Vector3(0, 0, -1))
-            .UpdateProjection(shader)
             .EnableNoClip();
-
-
 
         cube = new Model(PresetMesh.Cube);
             
@@ -67,11 +66,13 @@ public class BasicShadowDemo: Game
         light = new Objects.Light().SunMode().SetDirection(depthMap.Direction).SetAmbient(0.1f);
         material = PresetMaterial.Silver.SetAmbient(0.1f);
 
-        shader.EnableGammaCorrection();
+        textRenderer = new TextRenderer(30, Window.Size, Program.AssetLocation+"fonts/migu.ttf");
+    }
 
-        depthMap.ProjectOrthographic();
-        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
-
+    protected override void Load()
+    {
+        player.UpdateProjection(shader);
+        
         texture.Use();
         
         shader.UniformMaterial("material",material,texture)
@@ -79,12 +80,12 @@ public class BasicShadowDemo: Game
 
         depthMap.UniformTexture(shader,"depthMap",1);
         depthMap.UniformTexture(frameBufferShader,"depthMap",1);
-
-        textRenderer = new TextRenderer(30, Window.Size, Program.AssetLocation+"fonts/migu.ttf");
-    }
-
-    protected override void Load()
-    {
+        
+        depthMap.ProjectOrthographic();
+        depthMap.UniformMatrix(shader, "lightSpaceMatrix");
+        
+        shader.EnableGammaCorrection();
+        
         LockMouse();
     }
     
@@ -170,6 +171,7 @@ public class BasicShadowDemo: Game
         
         
         #region Debug UI
+        shader.DisableGammaCorrection();
         
         imGui.Update((float)args.Time);
         
@@ -179,6 +181,7 @@ public class BasicShadowDemo: Game
 
         imGui.Render();
         
+        shader.EnableGammaCorrection();
         #endregion
 
         Window.SwapBuffers();

@@ -111,7 +111,25 @@ public class ComplexLightingDemo: Game
         light = new Objects.Light().PointMode().SetPosition(new Vector3(-2f,2f,5f))
             .SetAmbient(0.01f).SetSpecular(Vector3.One*12f).SetDiffuse(Vector3.One*12f);
         material = PresetMaterial.Silver.SetAmbient(0.01f);
+        
 
+        aoShader = new ShaderProgram(Program.ShaderLocation + "ComplexLighting/ambientOcclusion.glsl");
+
+        ssaoKernel = RandUtils.SsaoKernel(SampleCount);
+        noiseTexture = TexUtils.GenSsaoNoiseTex(NoiseWidth);
+        
+
+        // custom shader for handling blitting
+        hdrShader = new ShaderProgram(Program.ShaderLocation+"ComplexLighting/postProcess.glsl");
+        
+        postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f, colourAttachments);
+
+        depthMap = new CubeDepthMap((2048, 2048), Vector3.Zero);
+        depthMap.Position = light.Position;
+    }
+
+    protected override void Load()
+    {
         backpackTexture.Use();
         
         shader.EnableGammaCorrection();
@@ -119,39 +137,22 @@ public class ComplexLightingDemo: Game
         shader.UniformMaterial("material",material,backpackTexture,backpackSpecular)
             .UniformLight("light",light)
             .UniformTexture("normalMap",backpackNormal);
-
-        aoShader = new ShaderProgram(Program.ShaderLocation + "ComplexLighting/ambientOcclusion.glsl");
+        
         aoShader.Uniform1("samplePosition", 2);
         aoShader.Uniform1("sampleNormal", 3);
         aoShader.Uniform1("noiseTex", 4);
         
-        ssaoKernel = RandUtils.SsaoKernel(SampleCount);
-        noiseTexture = TexUtils.GenSsaoNoiseTex(NoiseWidth);
-        
         aoShader.UniformVec3Array("samples", ssaoKernel);
         aoShader.Uniform2("noiseScale", new Vector2(Window.Size.X / 4f, Window.Size.Y / 4f));
-
         
-
-        // custom shader for handling blitting
-        hdrShader = new ShaderProgram(Program.ShaderLocation+"ComplexLighting/postProcess.glsl");
-
-
-        postProcessor = new PostProcessing(PostProcessShader.GaussianBlur, Window.Size, PixelInternalFormat.Rgba16f,
-                colourAttachments)
-            .UniformTextures(hdrShader, new[] { "sampler", "brightSample", "occlusionSample" });
-
-        depthMap = new CubeDepthMap((2048, 2048), Vector3.Zero);
-        depthMap.Position = light.Position;
+        postProcessor.UniformTextures(hdrShader, new[] { "sampler", "brightSample", "occlusionSample" });
+        
         depthMap.UpdateMatrices();
-        
+
         depthMap.UniformTexture(shader,"cubeMap", 0);
         depthMap.UniformTexture(depthShader,"cubeMap", 0);
         shader.Uniform1("shadowThreshold", 0.9f);
-    }
-
-    protected override void Load()
-    {
+        
         shader.UniformTexture("cubeMap", skyBox);
     }
     
@@ -310,6 +311,7 @@ public class ComplexLightingDemo: Game
 
         
         #region Debug UI
+        shader.DisableGammaCorrection();
         
         imGui.Update((float)args.Time);
         
@@ -326,11 +328,10 @@ public class ComplexLightingDemo: Game
         ImGui.Checkbox("Ambient Occlusion", ref ambientOcclusion);
 
         ImGui.SliderFloat("exposure", ref exposure, 0f, 10f, "%.3f", ImGuiSliderFlags.Logarithmic);
-        
-
 
         imGui.Render();
         
+        shader.EnableGammaCorrection();
         #endregion
 
 

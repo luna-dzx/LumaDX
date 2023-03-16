@@ -876,7 +876,7 @@ public class ShaderProgram : IDisposable
     /// <returns>current object for ease of use</returns>
     public ShaderProgram UniformTexture(string name, Texture texture)
     {
-        GL.Uniform1(GL.GetUniformLocation((int)this,name),texture.GetUnit());
+        Uniform1(name, texture.GetUnit());
         return this;
     }
     

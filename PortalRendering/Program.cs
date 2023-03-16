@@ -35,7 +35,11 @@ internal static class Program
     #endregion
 
     /// <summary>
-    /// Demos 7.a to 7.d 
+    /// Demos 7.a to 7.d
+    /// Render a 3D Portal Sampled from Another Part of the Scene
+    /// Render a Matching 2nd Portal on the Other End
+    /// Teleport Through Portal upon Collision
+    /// Adjust View Direction After Teleportation
     /// </summary>
     public static void Main(string[] args)
     {

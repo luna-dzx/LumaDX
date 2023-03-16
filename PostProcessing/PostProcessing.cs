@@ -37,13 +37,13 @@ public class PostProcessingDemo: Game
 
     protected override void Initialize()
     {
+        UnlockMouse();
+        
         glState = new StateHandler();
         
         glState.ClearColor = Color4.Black;
 
         imGui = new ImGuiController(Window);
-        
-        UnlockMouse();
 
         shader = new ShaderProgram(
             ShaderLocation + "vertex.glsl",
@@ -81,6 +81,8 @@ public class PostProcessingDemo: Game
     {
         shader.UniformTexture("skyBox", skyBox);
         shader.UniformTexture("dingus", texture);
+        
+        LockMouse();
     }
     
     protected override void Resize(ResizeEventArgs newWin) => player.Camera.Resize(newWin.Size);

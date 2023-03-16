@@ -182,6 +182,7 @@ public class TextureMappingDemo: Game
         glState.LoadState();
         
         #region Debug UI
+        shader.DisableGammaCorrection();
         
         imGui.Update((float)args.Time);
 
@@ -194,6 +195,8 @@ public class TextureMappingDemo: Game
         ImGui.SliderFloat("Height Displacement", ref heightScale, 0f, 0.2f);
         ImGui.Checkbox("Normal Map", ref normalMap);
         imGui.Render();
+        
+        shader.EnableGammaCorrection();
         #endregion
         
         Window.SwapBuffers();
